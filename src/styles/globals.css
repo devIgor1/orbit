@@ -325,6 +325,36 @@ body:has(.app-shell) {
   .app-footer { margin-inline: 20px; font-size: var(--font-size-caption); }
 }
 
+/* 07 — Team */
+.team-intro { display: flex; align-items: center; gap: 22px; padding: 27px 30px; border: 1px solid var(--primary-border); background: var(--primary-soft); border-radius: var(--radius); }
+.team-intro-icon { height: 48px; width: 48px; display: grid; place-items: center; border: 1px solid var(--primary-border); background: var(--primary-soft); color: var(--primary); border-radius: 14px; flex-shrink: 0; }
+.team-intro-icon svg { width: 25px; height: 25px; }
+.team-intro h2 { font-size: var(--font-size-title-sm); letter-spacing: -.55px; color: var(--foreground); }
+.team-intro p { font-size: var(--font-size-label); color: var(--muted-foreground); margin-top: 6px; }
+.team-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
+.member-card { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 25px; min-width: 0; }
+.member-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.member-card-top .ui-avatar { width: 48px; height: 48px; }
+.member-card-top .ui-avatar-fallback { font-size: var(--font-size-body); }
+.member-card:nth-child(3n+2) .ui-avatar { background: var(--success-soft); }
+.member-card:nth-child(3n+2) .ui-avatar-fallback { color: var(--success); }
+.member-card:nth-child(3n+3) .ui-avatar { background: var(--warning-soft); }
+.member-card:nth-child(3n+3) .ui-avatar-fallback { color: var(--warning); }
+.member-role { display: inline-flex; align-items: center; gap: 4px; padding: 4px 7px; border-radius: 5px; background: var(--surface-muted); color: var(--muted-foreground); font-size: var(--font-size-caption); }
+.member-role svg { width: 11px; height: 11px; }
+.member-role[data-role=admin] { color: var(--primary); background: var(--primary-soft); }
+.member-card h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: var(--font-size-body-lg); overflow-wrap: anywhere; }
+.member-self { font-family: var(--font-body); font-size: var(--font-size-caption); color: var(--primary); background: var(--primary-soft); border-radius: 3px; padding: 2px 5px; }
+.member-title { color: var(--muted-foreground); font-size: var(--font-size-label); margin-top: 5px; }
+.member-workload { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 23px; }
+.member-workload > span { display: inline-flex; gap: 4px; align-items: center; font-size: var(--font-size-caption); color: var(--muted-foreground); }
+.member-workload svg { width: 12px; height: 12px; }
+.member-workload strong { color: var(--foreground); font-weight: 500; }
+.results-count { font-size: var(--font-size-label); color: var(--muted-foreground); }
+.profile-form-intro { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.profile-form-intro p { color: var(--muted-foreground); font-size: var(--font-size-label); }
+.success-notice { padding: 14px 18px; background: var(--success-soft); color: var(--success); border: 1px solid var(--success-border); font-size: var(--font-size-label); border-radius: var(--radius-sm); }
+
 /* 08 — Authentication & settings */
 .login-page { min-height: 100dvh; display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); background: var(--surface); }
 .login-story { --login-story-background: var(--inverse); --login-story-foreground: var(--on-inverse); --login-story-muted: var(--inverse-muted); --login-story-decoration: var(--inverse-decoration); position: relative; isolation: isolate; display: flex; flex-direction: column; padding: 38px 44px 28px; overflow: hidden; background: var(--login-story-background); color: var(--login-story-foreground); min-height: 760px; }
