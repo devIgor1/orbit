@@ -811,6 +811,24 @@ Registro da primeira versão. A composição atual está documentada na seção 
   em desktop/celular. Capturas locais em `test-results/login-palette`, ignoradas
   pelo Git. Nenhuma dependência, consulta, contrato ou migration foi alterada.
 
+## 25. Acabamento dos botões azuis — 08/10/2026
+
+- Botões primários do login e workspace passam a usar degradê diagonal em três
+  tons de azul, borda de luz interna e sombra suave. Hover reforça a iluminação;
+  o estado pressionado reduz a sombra externa e adiciona profundidade interna.
+  Foco visível e preferência por movimento reduzido continuam respeitados.
+- Tokens `--button-primary-*` centralizam o acabamento no CSS. A regra usa o
+  escopo compartilhado de login/workspace e também alcança diálogos e painéis em
+  portal. Removido o degradê anterior restrito aos descendentes do AppShell.
+  Controles desabilitados ficam sem sombra e não recebem o efeito de hover.
+- Verificados login em desktop/celular, foco, hover, pressionamento, estado
+  desabilitado e movimento reduzido. Dashboard autenticado e formulário em portal
+  confirmaram o mesmo degradê, sem escritas de negócio. Cores do degradê mantêm
+  contraste com branco de pelo menos 5,09:1 em repouso e 4,67:1 no hover.
+- Lint, estilos, arquitetura, TypeScript/build, 48 testes unitários/integração e
+  dois E2E existentes de login aprovados. Capturas em `test-results/blue-buttons`,
+  ignoradas pelo Git. Nenhuma dependência ou regra de negócio foi alterada.
+
 ## 26. Select shadcn com Base UI em todo o sistema — 08/10/2026
 
 - Substituído o select nativo compartilhado pelo código do

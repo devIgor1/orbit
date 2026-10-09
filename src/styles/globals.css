@@ -80,6 +80,10 @@
 .ui-button-icon { width: 36px; height: 36px; padding: 8px; }
 .ui-button-primary { color: var(--primary-foreground); background: var(--primary); box-shadow: 0 2px 3px color-mix(in srgb, var(--primary) 8%, transparent); }
 .ui-button-primary:hover { background: var(--primary-hover); box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 15%, transparent); }
+/* Blue actions share the same finish in login, workspace and portalled forms. */
+body:has(.app-shell,.login-page) .ui-button-primary { background: var(--button-primary-fill); border-color: var(--button-primary-edge); box-shadow: var(--button-primary-shadow); }
+body:has(.app-shell,.login-page) .ui-button-primary:hover:not(:disabled):not([aria-disabled=true]) { background: var(--button-primary-fill-hover); box-shadow: var(--button-primary-shadow-hover); }
+body:has(.app-shell,.login-page) .ui-button-primary:active:not(:disabled):not([aria-disabled=true]) { box-shadow: var(--button-primary-shadow-pressed); }
 body:has(.app-shell,.login-page) .ui-button-primary:is(:disabled,[aria-disabled=true]) { box-shadow: none; }
 .ui-button-outline { background: var(--surface); border-color: var(--border); color: var(--foreground); }
 .ui-button-outline:hover { border-color: var(--primary-border); background: var(--primary-soft); color: var(--primary-hover); }
@@ -338,6 +342,12 @@ body:has(.app-shell,.login-page) {
   --foreground: #242627; --muted-foreground: #626568; --subtle-foreground: #686b70;
   --primary: #0868ce; --primary-hover: #0554ad; --primary-foreground: #ffffff;
   --primary-soft: #eef5fd; --primary-border: #cbdcf0;
+  --button-primary-fill: linear-gradient(135deg,#2369dc 0%,var(--primary) 48%,#06479e 100%);
+  --button-primary-fill-hover: linear-gradient(135deg,#2c70e0 0%,#0866cb 48%,#08428e 100%);
+  --button-primary-edge: #0755ae;
+  --button-primary-shadow: inset 0 1px 0 #ffffff38,inset 0 -1px 0 #033b8033,0 2px 3px #06479e1a,0 5px 12px #0868ce1f;
+  --button-primary-shadow-hover: inset 0 1px 0 #ffffff45,inset 0 -1px 0 #033b8033,0 3px 5px #06479e1f,0 7px 16px #0868ce2b;
+  --button-primary-shadow-pressed: inset 0 2px 4px #033b804d,0 1px 2px #0868ce1a;
   --border: #e2e3df; --input: #a0a5aa; --input-hover: #68788c; --ring: #0868ce;
   --blue: #2863a2; --blue-soft: #edf4fd;
   --accent: #70baff; --accent-hover: #a2d2ff; --accent-foreground: #101113;
@@ -364,8 +374,6 @@ body:has(.app-shell,.login-page) {
 .navigation-link-active > svg { color: var(--primary); }
 .sidebar-profile .ui-avatar { width: 34px; height: 34px; }
 .connection-indicator > span { width: 6px; height: 6px; }
-.app-shell .ui-button-primary { background: linear-gradient(#1477df,var(--primary)); border-color: #075ec0; box-shadow: inset 0 1px 0 #ffffff2b,0 2px 3px #0868ce1a; }
-.app-shell .ui-button-primary:hover { background: var(--primary-hover); }
 @media (max-width: 1250px) {
   body:has(.app-shell) { --sidebar-width: 224px; }
   .topbar { padding-inline: 26px; }

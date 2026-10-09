@@ -114,6 +114,11 @@ O painel de apresentação do login usa os mesmos tokens escuros da sidebar, com
 texto claro e detalhes em azul. A landing usa uma variação escura própria,
 descrita abaixo.
 
+Botões primários azuis usam um degradê diagonal com brilho interno e sombra suave.
+O acabamento é compartilhado pelo login, workspace e formulários em portal, com
+estados de hover, pressionado, foco e desabilitado. As regras e os tokens
+`--button-primary-*` ficam exclusivamente em `globals.css`.
+
 Os principais tokens compartilhados são:
 
 | Papel | Cor |
