@@ -13,6 +13,7 @@ export function SignupPage() {
   if (user) return <Navigate to={destination} replace />
   return (
     <AuthLayout
+      variant="signup"
       eyebrow="SEU PRÓXIMO PROJETO COMEÇA AQUI"
       title="Entre para a sua próxima órbita."
       description="Crie sua conta para organizar sua empresa ou fazer parte de uma equipe."

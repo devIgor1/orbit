@@ -1392,3 +1392,23 @@ Registro da primeira versão. A composição atual está documentada na seção 
 - Frontend integrado ao fluxo de publicação por push para `main`. Referências:
   [cadastro no Supabase Auth](https://github.com/supabase/auth/blob/master/internal/api/signup.go)
   e [controle de acesso e requisições](https://supabase.com/docs/guides/api/securing-your-api).
+
+## 47. Cadastro ajustado à altura da tela — 09/10/2026
+
+- Removida a frase **Menos ruído. Mais criação.** do cadastro. `AuthLayout`
+  recebe a variante semântica `signup`; o login mantém sua composição existente.
+- Largura, título, espaçamentos e campos ajustados exclusivamente no CSS central.
+  Requisitos de senha usam duas colunas no desktop e uma no celular. No celular,
+  o cabeçalho da marca fica compacto para priorizar o formulário. Controles mantêm
+  altura mínima de 44 px e os campos preservam fonte de 16 px.
+- O formulário inicial cabe sem rolagem nos desktops verificados, incluindo
+  2550×800 e 1280×720, nos tablets e em 390×844. Em telas mais baixas (375×667 e
+  320×568), zoom ou avisos adicionais, a rolagem natural preserva o acesso ao
+  conteúdo. Não há bloqueio de overflow do formulário; o painel escuro acompanha
+  a rolagem no desktop para evitar a faixa branca inferior.
+- Lint, estilos, arquitetura e TypeScript/build aprovados; 27 testes de formulário,
+  consulta de e-mail, login e confirmação e 14 E2E existentes passaram. Revisão
+  em dez tamanhos de tela, com validação vazia, foco e navegação ao login por
+  teclado, sem overflow horizontal nem erros JavaScript. Capturas em
+  `test-results/signup-layout-review`. Nenhuma conta criada ou alteração no backend.
+- Frontend integrado ao fluxo de publicação por push para `main`.

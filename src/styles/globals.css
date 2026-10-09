@@ -781,6 +781,25 @@ body:has(.app-shell,.login-page,.companies-page) {
   .login-eyebrow,.login-story-content p,.login-preview-slot,.login-benefits,.login-story-footer { display: none; }
   .login-story::before,.login-story::after { width: 260px; height: 150px; top: 60px; left: 60%; }
 }
+/* Signup keeps the full form in view; additional feedback may grow the page. */
+.login-page[data-variant=signup] .login-story { position: sticky; top: 0; }
+.login-page[data-variant=signup] .login-panel { position: static; width: min(440px,calc(100% - 48px)); padding: var(--space-6) 0; }
+.login-page[data-variant=signup] .login-form-header { margin-bottom: var(--space-5); }
+.login-page[data-variant=signup] .login-form-header h2 { font-size: var(--font-size-title-lg); margin: var(--space-2) 0; }
+.login-page[data-variant=signup] .login-form-header p { font-size: var(--font-size-label); line-height: 1.6; max-width: none; }
+.login-page[data-variant=signup] .login-form { gap: var(--space-3); }
+.login-page[data-variant=signup] .login-form .ui-input,
+.login-page[data-variant=signup] .login-submit { min-height: 44px; }
+.login-page[data-variant=signup] .login-form .ui-input { padding-block: var(--space-2); }
+.login-page[data-variant=signup] .password-requirements { grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: var(--space-3); }
+.login-page[data-variant=signup] .password-requirements li:last-child { grid-column: 1 / -1; }
+@media (max-width: 600px) {
+  .login-page[data-variant=signup] .login-story { position: relative; min-height: 0; padding: var(--space-3) var(--space-5); }
+  .login-page[data-variant=signup] .login-story-main { display: none; }
+  .login-page[data-variant=signup] .login-panel { width: calc(100% - 40px); max-width: 440px; padding: var(--space-4) 0; margin-block: auto; }
+  .login-page[data-variant=signup] .login-form-header h2 { font-size: var(--font-size-title-md); }
+  .login-page[data-variant=signup] .password-requirements { grid-template-columns: minmax(0,1fr); }
+}
 /* Settings — personal profile and workspace access */
 .settings-page { padding-top: 4px; max-width: 1180px; }
 .settings-sections { box-shadow: none; }
