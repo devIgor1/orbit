@@ -2,6 +2,14 @@
 # Preencher hosted/.env antes de executar config diff/push (ver README.md).
 project_id = "orbit-resend"
 
+[auth]
+site_url = "https://orbit-ashen-six.vercel.app"
+additional_redirect_urls = [
+  "https://orbit-ashen-six.vercel.app/login**",
+  "http://127.0.0.1:5173/login**",
+  "http://localhost:5173/login**",
+]
+
 [auth.email.smtp]
 enabled = true
 host = "smtp.resend.com"

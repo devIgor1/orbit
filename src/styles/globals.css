@@ -10,6 +10,7 @@
 /* ORBIT DESIGN SYSTEM
    01 Theme & tokens · 02 Base · 03 Primitives · 04 Shell & shared patterns
    05 Dashboard · 06 Projects & tasks · 07 Team · 08 Auth & settings · 09 Landing
+   10 Email · 11 Responsive layout, accessibility & motion.
    Responsive rules stay with their sections. Motion/accessibility conclude it. */
 
 /* 01 — Theme & tokens */
@@ -1330,7 +1331,50 @@ body:has(.app-shell,.login-page,.companies-page) {
   .workflow-cable-flow { display: none; }
 }
 
-/* 10 — Responsive layout, accessibility & motion */
+/* 10 — Transactional email. Build adapter resolves tokens and inlines these rules.
+   Fluid tables, solid fallbacks and local fonts keep the message usable without
+   media queries, external stylesheets or downloaded images. */
+.email-body { margin: 0; padding: 0; background-color: var(--background); color: var(--foreground); font-family: var(--font-body); -webkit-text-size-adjust: 100%; }
+.email-preheader { display: none; visibility: hidden; opacity: 0; overflow: hidden; height: 0; max-height: 0; width: 0; max-width: 0; font-size: 1px; line-height: 1px; mso-hide: all; }
+.email-canvas { width: 100%; background-color: var(--background); border-collapse: collapse; }
+.email-canvas-cell { padding: var(--space-8) var(--space-3); }
+.email-card { width: 100%; max-width: 560px; margin: 0 auto; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.email-header { padding: 28px; background-color: var(--inverse); color: var(--on-inverse); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.email-brand { border-collapse: collapse; margin: 0 0 36px; }
+.email-brand-symbol { width: 44px; vertical-align: middle; }
+.email-logo { display: block; width: 32px; height: 32px; border: 0; }
+.email-wordmark { color: var(--on-inverse); font-family: var(--font-display); font-size: 30px; line-height: 36px; font-weight: 700; letter-spacing: -1.2px; vertical-align: middle; }
+.email-eyebrow { margin: 0 0 var(--space-2); color: var(--muted-foreground); font-family: var(--font-body); font-size: 10px; line-height: 16px; font-weight: 700; letter-spacing: 1.7px; }
+.email-eyebrow-inverse { color: var(--inverse-muted); margin: 0 0 var(--space-3); }
+.email-title { margin: 0; color: var(--on-inverse); font-family: var(--font-display); font-size: 32px; line-height: 38px; font-weight: 600; letter-spacing: -1px; }
+.email-header-note { margin: var(--space-4) 0 0; color: var(--inverse-muted); font-size: 13px; line-height: 21px; }
+.email-content { padding: 28px; background-color: var(--surface); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.email-intro { margin: 0 0 var(--space-6); font-size: 15px; line-height: 25px; color: var(--foreground); overflow-wrap: anywhere; word-wrap: break-word; }
+.email-team { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.email-team-cell { padding: var(--space-5); background-color: var(--background); border: 1px solid var(--border); border-radius: var(--radius); }
+.email-company { margin: 0 0 var(--space-2); color: var(--foreground); font-family: var(--font-display); font-size: 23px; line-height: 30px; font-weight: 600; letter-spacing: -.5px; overflow-wrap: anywhere; word-wrap: break-word; }
+.email-team-description { margin: 0; color: var(--muted-foreground); font-size: 13px; line-height: 21px; }
+.email-instructions { margin: var(--space-6) 0 var(--space-1); color: var(--muted-foreground); font-size: 14px; line-height: 22px; }
+.email-recipient { margin: 0 0 var(--space-6); color: var(--foreground); font-size: 14px; line-height: 22px; font-weight: 600; overflow-wrap: anywhere; word-break: break-all; }
+.email-action { width: 100%; border-collapse: separate; border-spacing: 0; }
+.email-action-cell { background-color: var(--primary); border-radius: var(--radius-sm); text-align: center; }
+.email-button { display: block; padding: var(--space-4) var(--space-5); border: 1px solid var(--button-primary-edge); border-radius: var(--radius-sm); background-color: var(--primary); background-image: var(--button-primary-fill); color: var(--primary-foreground); font-size: 15px; line-height: 22px; font-weight: 600; text-align: center; text-decoration: none; mso-padding-alt: 16px 20px; }
+.email-expiration { margin: var(--space-3) 0 var(--space-6); color: var(--muted-foreground); font-size: 11px; line-height: 18px; text-align: center; }
+.email-help { width: 100%; border-collapse: collapse; }
+.email-help-cell { border-top: 1px solid var(--border); padding: var(--space-6) 0 0; }
+.email-help-title { margin: 0 0 var(--space-2); color: var(--foreground); font-size: 13px; line-height: 20px; font-weight: 600; }
+.email-help-text { margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 20px; }
+.email-fallback-label { margin: var(--space-6) 0 var(--space-2); color: var(--muted-foreground); font-size: 11px; line-height: 18px; }
+.email-fallback { margin: 0; font-size: 11px; line-height: 18px; overflow-wrap: anywhere; word-break: break-all; }
+.email-link { color: var(--muted-foreground); text-decoration: underline; overflow-wrap: anywhere; word-break: break-all; }
+.email-card-footer { padding: var(--space-5) 28px; background-color: var(--surface-muted); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.email-footer-note { margin: 0; color: var(--muted-foreground); font-size: 11px; line-height: 18px; }
+.email-signature { width: 100%; max-width: 560px; margin: 0 auto; table-layout: fixed; border-collapse: collapse; }
+.email-signature-cell { padding: var(--space-6) var(--space-4) 0; text-align: center; }
+.email-tagline { margin: 0 0 var(--space-2); color: var(--foreground); font-size: 12px; line-height: 20px; font-weight: 600; }
+.email-disclaimer { margin: 0; color: var(--muted-foreground); font-size: 11px; line-height: 18px; }
+
+/* 11 — Responsive layout, accessibility & motion */
 .sidebar-note { flex-shrink: 0; }.section-heading p,
 .project-card-description,.project-deadline,.task-card-description,.task-date,
 .task-unassigned,.task-status-select,.member-title,.member-workload > span,

@@ -11,6 +11,7 @@ export const deliverySchema = z.object({
   sender_email: z.email(),
   invitation_url: z.url(),
   expires_at: z.iso.datetime({ offset: true }),
+  template_version: z.union([z.literal(1), z.literal(2)]).default(1),
 })
 export type InvitationDelivery = z.infer<typeof deliverySchema>
 

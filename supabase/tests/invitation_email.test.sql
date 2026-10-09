@@ -28,6 +28,8 @@ select is(public.finish_invitation_email((select job from email_ids)),(select in
 select is((select email_status from public.workspace_invitations where id=(select invitation from email_ids)),'failed','Provider failure is persisted');
 reset role;
 select is((select reply_to from private.invitation_email_jobs where id=(select job from email_ids)),'sender@email.test','Reply-To comes from Auth');
+select is((select template_version::integer from private.invitation_email_jobs where id=(select job from email_ids)),2,'New deliveries select the designed template');
+update private.invitation_email_jobs set template_version=1 where id=(select job from email_ids);
 update public.workspace_invitations set email_requested_at=now()-interval '2 minutes' where id=(select invitation from email_ids);
 update public.profiles set full_name='Nome alterado' where id='e0900000-0000-4000-8000-000000000001';
 set local role service_role;
@@ -35,6 +37,7 @@ select is((public.prepare_invitation_email((select invitation from email_ids),'e
 reset role;
 select is((select inviter_name from private.invitation_email_jobs where id=(select job from email_ids)),'Responsável','Retry preserves immutable message name');
 select ok((select invitation_url from private.invitation_email_jobs where id=(select job from email_ids)) like 'https://orbit.test/%','Retry preserves application link');
+select is((select template_version::integer from private.invitation_email_jobs where id=(select job from email_ids)),1,'Legacy retries preserve the original template version');
 set local role service_role;
 select throws_ok($$select public.finish_invitation_email((select job from email_ids),' ')$$,'22023',null,'Empty provider identifier cannot confirm success');
 select is(public.finish_invitation_email((select job from email_ids),'resend-message-1'),(select invitation from email_ids),'Success confirms invitation');

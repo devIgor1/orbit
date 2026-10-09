@@ -12,8 +12,8 @@ além de três variáveis configuradas em `supabase/hosted/.env`:
 
 - `RESEND_API_KEY`: chave com permissão de envio pelo domínio verificado.
 - `ORBIT_SMTP_SENDER_EMAIL`: `acesso@codedbyigor.com` neste ambiente.
-- `ORBIT_APP_URL`: `http://127.0.0.1:5173` para o desenvolvimento atual. Para
-  convidados em outros computadores, publicar o frontend e trocar por sua URL HTTPS.
+- `ORBIT_APP_URL`: `https://orbit-ashen-six.vercel.app` no ambiente hospedado.
+  Novos convites usam o frontend público; testes locais mantêm sua própria URL.
 
 Na raiz do repositório, após revisar/aplicar as migrations:
 
@@ -23,10 +23,50 @@ npx supabase functions deploy send-invitation --project-ref twsfyqkagyvibsilulle
 npx deno check --config supabase/functions/send-invitation/deno.json supabase/functions/send-invitation/index.ts
 ```
 
+Para trocar somente o domínio público, atualize `ORBIT_APP_URL` no arquivo local
+ignorado e execute `npx supabase secrets set ORBIT_APP_URL=https://SEU_DOMINIO
+--project-ref twsfyqkagyvibsilulle` em uma linha. A variável entra em vigor sem
+republicar a função. Ajuste também as URLs do Auth na configuração hospedada.
+E-mails já enviados preservam o link antigo; reenvios após sucesso criam uma nova
+mensagem com a URL atual. Tentativas falhas/incertas preservam seu snapshot por
+até 23 horas para manter a idempotência.
+
 As credenciais ficam no backend e nos arquivos locais ignorados pelo Git. Nunca
 adicione prefixo `VITE_` nem registre conteúdo das variáveis. O remetente exibido é
 `Nome da pessoa, via Orbit`; respostas usam o e-mail confirmado do administrador
 no Auth. A mensagem contém empresa, destinatário, validade e link de aceite.
+
+## Identidade visual do convite
+
+O template v2 usa a paleta grafite e branco suave do Orbit, o símbolo existente,
+nome da empresa, botão de aceite, validade e link alternativo. O PNG da marca é
+incorporado por CID; a ação e o texto permanecem legíveis mesmo sem a imagem.
+Tabelas fluidas e CSS inline gerado evitam depender de CSS externo, flex/grid ou
+media queries. Clientes sem as fontes da marca usam sua fonte sans-serif local.
+
+**Única fonte autoral de aparência:** seção de e-mails em `src/styles/globals.css`.
+O HTML de `send-invitation/templates/invitation-v2.html` contém estrutura e classes
+semânticas. O adaptador `scripts/build-invitation-email.mjs` resolve os tokens,
+incorpora as regras no HTML e rasteriza `public/orbit.svg` em PNG para e-mail.
+`invitation-v2.generated.ts` é um artefato de distribuição; não editar à mão.
+PostCSS, jsdom e sharp são ferramentas de desenvolvimento, fora do runtime da função.
+
+```powershell
+npm run emails:build
+npm run emails:preview
+npm run check:emails
+```
+
+As prévias em `test-results/invitation-design` usam fixtures exclusivas de teste e
+são ignoradas pelo Git. `check:styles` também verifica a atualização do artefato.
+Antes de publicar, executar esses checks, os testes de mensagem e o Deno check.
+
+Cada entrega persiste `template_version`: jobs antigos usam v1 e novos usam v2.
+Isso preserva o payload de tentativas antigas durante a janela de idempotência.
+Para implantar a migration `202610090004`, publicar primeiro a função que entende
+as duas versões, depois aplicar a migration. Futuras alterações no payload de uma
+versão já publicada precisam de nova versão; não regenerar/alterar um template
+usado por jobs que ainda possam ser repetidos.
 
 ## Permissões e falhas
 

@@ -51,6 +51,8 @@ inválidas são apresentadas explicitamente na interface.
 
 ### Publicação na Vercel
 
+Ambiente publicado: [Orbit](https://orbit-ashen-six.vercel.app/).
+
 Importe o repositório na Vercel e configure `VITE_SUPABASE_URL` e
 `VITE_SUPABASE_PUBLISHABLE_KEY` com os valores públicos do projeto hospedado.
 `vercel.json` define Vite, o comando `npm run build`, a saída `dist` e o fallback
@@ -102,8 +104,12 @@ O resultado do envio fica salvo no backend. Em falha, o convite permanece dispon
 para reenviar ou copiar o link, sem mostrar sucesso artificial. Reenvios respeitam
 um intervalo mínimo de um minuto; a empresa pode iniciar até 30 envios por hora.
 Consulte a [função de convites](supabase/functions/README.md) para configuração e testes.
-O endereço de retorno atual é local: convidados em outros computadores precisam
-que o frontend seja publicado e `ORBIT_APP_URL` seja atualizado no servidor.
+O e-mail de convite segue a identidade do Orbit, com marca incorporada, paleta
+grafite, empresa em destaque, ação de aceite e alternativa em texto. O HTML é
+gerado a partir do CSS central; `npm run emails:preview` cria prévias de teste.
+O endereço de retorno dos novos convites é `https://orbit-ashen-six.vercel.app`,
+configurado em `ORBIT_APP_URL` no servidor. E-mails enviados antes dessa alteração
+continuam com o link antigo; reenvie os convites que já haviam sido enviados.
 
 **E-mails de cadastro:** o Resend está configurado no Supabase hospedado com o
 remetente `Orbit <acesso@codedbyigor.com>`. A chave tem acesso somente de envio pelo
@@ -111,9 +117,9 @@ domínio verificado e fica fora do frontend/Git. Configuração remota conferida
 teste SMTP aceito, com entrega simulada registrada pelo Resend. Consulte a
 [configuração e as instruções de manutenção](supabase/hosted/README.md).
 A confirmação de e-mail continua obrigatória.
-Defina também o domínio público do frontend em Site URL e autorize
-`https://SEU_DOMINIO/login**` nos redirecionamentos. No desenvolvimento hospedado,
-estão configurados `http://127.0.0.1:5173` e os retornos `/login**` em localhost/127.0.0.1.
+O Site URL usa `https://orbit-ashen-six.vercel.app`, com `/login**` autorizado para
+preservar o destino após a confirmação. Os retornos locais `/login**` em
+localhost/127.0.0.1:5173 continuam autorizados para desenvolvimento.
 
 Para testar o fluxo completo sem enviar e-mails externos, inicie o Supabase local,
 aplique `npx supabase db push --local`, preencha `.env.docker.local` com as duas

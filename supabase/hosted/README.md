@@ -1,6 +1,6 @@
 # E-mails do Supabase Auth com Resend
 
-Configuração parcial do ambiente hospedado. Altera somente o SMTP; a stack local
+Configuração parcial do ambiente hospedado. Declara o SMTP e as URLs do Auth; a stack local
 continua usando Mailpit. A chave fica em `.env`, ignorado pelo Git, e não entra
 no frontend. Os comandos abaixo carregam explicitamente as duas variáveis no
 processo da CLI, pois `config diff/push` não as carregaram automaticamente do
@@ -19,6 +19,9 @@ arquivo neste ambiente.
   Esse endereço simula entrega; não comprova recebimento em uma caixa real nem
   testa o cadastro completo no Supabase hospedado. Nenhum usuário foi criado.
 - Evidência local: `test-results/resend-setup/smtp-delivered.jpg` (ignorada pelo Git).
+- Frontend publicado em `https://orbit-ashen-six.vercel.app`. Site URL atualizado
+  para esse domínio; retorno `/login**` autorizado, preservando os dois retornos
+  locais em 127.0.0.1/localhost:5173. A função de convites usa a mesma URL pública.
 
 ## Pré-requisitos
 
@@ -47,8 +50,10 @@ Remove-Item Env:RESEND_API_KEY, Env:ORBIT_SMTP_SENDER_EMAIL
 Remove-Variable smtpEnvironment
 ```
 
-Revise o diff antes de aplicar. A configuração só declara `[auth.email.smtp]`;
-não desativa confirmação de e-mail nem muda URLs, permissões ou provedores.
+Revise o diff antes de aplicar. A configuração declara `[auth.email.smtp]`,
+`auth.site_url` e `auth.additional_redirect_urls`; não desativa confirmação de
+e-mail nem altera permissões ou provedores. O padrão `/login**` permite o parâmetro
+`next` com o destino interno validado, inclusive durante o aceite de convites.
 Não execute o push com campos vazios, domínio pendente ou uma chave de exemplo.
 Nunca publique a saída de debug ou o conteúdo do arquivo `.env`.
 
@@ -58,8 +63,9 @@ Nunca publique a saída de debug ou o conteúdo do arquivo `.env`.
   host, porta, usuário e remetente corretos.
 - Fazer um cadastro de teste com um endereço próprio autorizado e conferir o
   envio nos logs do Resend, o recebimento e o retorno da confirmação ao Orbit.
-- Ao publicar o frontend, configurar Site URL e os retornos `/login**` para o
-  domínio público. Links apontando para localhost só funcionam na máquina local.
+- Ao trocar o domínio público, atualizar Site URL, o retorno `/login**` e
+  `ORBIT_APP_URL`. A variável da função é aplicada por `supabase secrets set`;
+  não precisa de novo deploy. Links já enviados continuam com a URL original.
 
 O SMTP atende os e-mails do Supabase Auth. O envio de convites usa a API do Resend
 na [função autenticada `send-invitation`](../functions/README.md), com os mesmos

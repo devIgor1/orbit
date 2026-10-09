@@ -15,10 +15,11 @@ conversa, como projeto de referência.
 
 **Raiz do projeto:** `orbit/`. O arquivo de instruções será `orbit/AGENTS.md`.
 
-**Estado em 08/10/2026:** interface implementada e conectada ao Supabase hospedado.
-A instalação local foi preservada. A publicação do frontend continua pendente;
-a seção 22 registra a configuração da nuvem e suas verificações. O roadmap
-permanece como referência de aceite.
+**Estado em 09/10/2026:** interface implementada e conectada ao Supabase hospedado,
+publicada pelo usuário em `https://orbit-ashen-six.vercel.app`. A instalação local
+foi preservada. A seção 32 registra a conexão do domínio público aos convites e
+ao Auth; a seção 22 documenta a configuração inicial da nuvem. O roadmap permanece
+como referência de aceite.
 
 ## 2. Requisitos obrigatórios
 
@@ -1038,3 +1039,60 @@ Registro da primeira versão. A composição atual está documentada na seção 
   registros desses testes ficaram no Supabase local. O Resend exibiu Delivered
   simulado, nome via Orbit, Reply-To correto e link esperado. Evidências em
   `test-results/invitation-email`; suites de envio externo exigem opt-in explícito.
+
+## 32. Domínio público conectado ao Auth e aos convites — 09/10/2026
+
+- Usuário informou a publicação na Vercel em `https://orbit-ashen-six.vercel.app`.
+  Atualizado o Site URL do Supabase e adicionado `/login**` à lista de retornos,
+  mantendo os dois retornos locais existentes. O diff/push aplicou somente essas
+  duas propriedades; SMTP e confirmação obrigatória foram preservados.
+- `ORBIT_APP_URL` atualizado no servidor para o domínio público e no arquivo local
+  ignorado. Valor remoto conferido pelo digest SHA-256. A função recebe a alteração
+  sem novo deploy; não houve mudança de código, schema ou dados de negócio.
+- Conferência posterior confirmou zero diferenças nos campos declarados do Auth.
+  Requisições de verificação com token deliberadamente inválido retornaram 303 ao
+  domínio público por padrão, ao `/login?next=...` público preservando o convite
+  e ao retorno local autorizado. Nenhuma conta ou e-mail de teste foi criado.
+- Landing, login, cadastro, empresas e equipe responderam HTTP 200 por URL direta.
+  Formulários públicos conferidos no navegador; bundle publicado aponta ao projeto
+  Supabase esperado e o preflight CORS da função aceita a origem pública.
+  Link direto de convite exige login e preserva `next` até o cadastro, sem erros
+  JavaScript observados. `git diff --check` aprovado para configuração/documentação.
+- Documentação e exemplo de ambiente atualizados. E-mails já enviados mantêm seus
+  links originais; reenvios após sucesso usam a URL nova. Snapshots de tentativas
+  falhas/incertas conservam a URL original durante sua janela de idempotência.
+- Validação desta entrega limitada à configuração, disponibilidade e redirecionamentos;
+  não houve novo envio real nem criação de registros de produção para testes.
+
+## 33. Identidade visual do e-mail de convite — 09/10/2026
+
+- Template de convite redesenhado com cabeçalho grafite, marca Orbit, fundo claro,
+  empresa em destaque, ação de aceite, destinatário, validade, instruções, link
+  alternativo e contato por resposta. Versão em texto acompanha o HTML. Conteúdo
+  variável permanece escapado; a mensagem continua identificando quem convidou.
+- Aparência autoral exclusivamente em `src/styles/globals.css`, seção de e-mails.
+  Template HTML contém classes semânticas; adaptador de build resolve tokens,
+  incorpora CSS inline e converte o símbolo existente para PNG incorporado por CID.
+  Sem CSS externo, scripts, flex/grid ou dependência de imagens remotas. Fontes
+  da marca têm fallback sans-serif local; arredondamentos/degradê são melhorias
+  progressivas sobre superfícies sólidas e tabelas fluidas.
+- PostCSS e sharp adicionados somente ao desenvolvimento, junto ao jsdom já
+  existente. Runtime da aplicação e da função não ganha dependências. Scripts
+  `emails:build`, `emails:preview` e `check:emails` documentados; `check:styles`
+  recusa artefato desatualizado. Fixtures e capturas ficam exclusivamente em testes.
+- Migration `202610090004` persiste a versão do template no snapshot privado:
+  existentes usam v1, novos usam v2. Retentativas preservam a versão e o payload
+  legado, verificado por hash em teste, para manter a idempotência no Resend.
+  Função com ambas as versões publicada antes da migration; ambas aplicadas no
+  Supabase hospedado. Função ACTIVE, JWT ativo e chamada anônima recusada com 401.
+  Tipos públicos regenerados para comparação e confirmados sem diferenças.
+- Lint, estilos, artefato gerado, arquitetura, TypeScript/build, Deno check e SQL
+  lint aprovados. Passaram 87 testes unitários/integração e 71 testes de banco,
+  incluindo escape, versão legada, versão desconhecida e preservação no reenvio.
+- E2E de convite passou no desktop com backend local: envio real ao simulador
+  `resend.dev`, persistência, limite de reenvio e aceite. Resend registrou Delivered
+  simulado e recebeu o novo HTML e PNG por CID. Nenhum dado de negócio de produção
+  foi criado ou alterado por esse teste; SMTP de confirmação mantém seu modelo.
+- Revisão visual em desktop e frames de teste de 390/320 px, com nomes/endereço
+  longos e sem overflow horizontal. Evidências em `test-results/invitation-design`.
+  Não foi feita auditoria de renderização em caixas reais do Gmail/Outlook.

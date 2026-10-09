@@ -11,6 +11,7 @@ const job = {
   company_name: 'Estúdio', sender_email: 'access@orbit.test',
   invitation_url: 'https://orbit.test/companies?invitation=e0900000-0000-4000-8000-000000000020',
   expires_at: '2026-10-20T12:00:00Z',
+  template_version: 1 as const,
 }
 const dependencies = {
   authenticate: vi.fn<InvitationEmailDependencies['authenticate']>(),

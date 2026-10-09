@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Seu convite para o Orbit</title>
+</head>
+<body class="email-body">
+  <div class="email-preheader">{{inviterName}} convidou você para {{companyName}}. Sua próxima criação começa em equipe.</div>
+  <table role="presentation" class="email-canvas" cellpadding="0" cellspacing="0">
+    <tr><td class="email-canvas-cell">
+      <table role="presentation" class="email-card" cellpadding="0" cellspacing="0">
+        <tr><td class="email-header">
+          <table role="presentation" cellpadding="0" cellspacing="0" class="email-brand">
+            <tr>
+              <td class="email-brand-symbol"><img src="cid:orbit-mark" alt="" class="email-logo"></td>
+              <td class="email-wordmark">orbit.</td>
+            </tr>
+          </table>
+          <p class="email-eyebrow email-eyebrow-inverse">UM CONVITE PARA CRIAR</p>
+          <h1 class="email-title">Você tem um lugar<br>nesta órbita.</h1>
+          <p class="email-header-note">Grandes ideias ficam melhores em equipe.</p>
+        </td></tr>
+        <tr><td class="email-content">
+          <p class="email-intro"><strong>{{inviterName}}</strong> convidou você para fazer parte de uma equipe no Orbit.</p>
+          <table role="presentation" class="email-team" cellpadding="0" cellspacing="0">
+            <tr><td class="email-team-cell">
+              <p class="email-eyebrow">SUA EQUIPE</p>
+              <h2 class="email-company">{{companyName}}</h2>
+              <p class="email-team-description">Projetos, ideias e próximos passos. Tudo no mesmo espaço.</p>
+            </td></tr>
+          </table>
+          <p class="email-instructions">Para participar, entre ou crie sua conta com este e-mail:</p>
+          <p class="email-recipient">{{recipient}}</p>
+          <table role="presentation" class="email-action" cellpadding="0" cellspacing="0">
+            <tr><td class="email-action-cell"><a href="{{invitationUrl}}" class="email-button">Aceitar convite <span aria-hidden="true">&nbsp;↗</span></a></td></tr>
+          </table>
+          <p class="email-expiration">Convite válido até <strong>{{expiration}}</strong>.</p>
+          <table role="presentation" class="email-help" cellpadding="0" cellspacing="0">
+            <tr><td class="email-help-cell">
+              <p class="email-help-title">Pronto para dar o próximo passo?</p>
+              <p class="email-help-text">Depois de confirmar seu e-mail e aceitar o convite, você já pode colaborar nos projetos e no Kanban da equipe.</p>
+            </td></tr>
+          </table>
+          <p class="email-fallback-label">Se o botão não abrir, copie este link para o navegador:</p>
+          <p class="email-fallback"><a href="{{invitationUrl}}" class="email-link">{{invitationUrl}}</a></p>
+        </td></tr>
+        <tr><td class="email-card-footer">
+          <p class="email-footer-note">Tem alguma dúvida? Responda a este e-mail para falar com quem convidou você.</p>
+        </td></tr>
+      </table>
+      <table role="presentation" class="email-signature" cellpadding="0" cellspacing="0">
+        <tr><td class="email-signature-cell">
+          <p class="email-tagline">Menos ruído. Mais criação.</p>
+          <p class="email-disclaimer">Se você não esperava este convite, pode ignorar esta mensagem.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
