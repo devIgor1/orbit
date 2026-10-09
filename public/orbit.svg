@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="14" fill="#16665c"/><g fill="none" stroke="#fff" stroke-width="2.5"><ellipse cx="24" cy="24" rx="17" ry="9" transform="rotate(-42 24 24)"/><circle cx="24" cy="24" r="8"/></g><circle cx="35" cy="12" r="3" fill="#e6bb6c"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Orbit</title>
+  <!-- Lucide Orbit, the same symbol used by Brand. Colors mirror the shared inverse tokens. -->
+  <rect width="32" height="32" rx="8" fill="#101113" />
+  <g transform="translate(4 4)" fill="none" stroke="#f4f4f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.341 6.484A10 10 0 0 1 10.266 21.85" />
+    <path d="M3.659 17.516A10 10 0 0 1 13.74 2.152" />
+    <circle cx="12" cy="12" r="3" />
+    <circle cx="19" cy="5" r="2" />
+    <circle cx="5" cy="19" r="2" />
+  </g>
+</svg>

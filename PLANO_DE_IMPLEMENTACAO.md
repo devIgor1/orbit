@@ -866,3 +866,16 @@ Registro da primeira versão. A composição atual está documentada na seção 
   escritas de negócio na nuvem. E2E de persistência e testes de banco local não
   foram reexecutados; submissões e falhas dos novos casos usam fixtures exclusivas
   de testes, fora do build de produção.
+
+## 27. Favicon alinhado à logo — 09/10/2026
+
+- `public/orbit.svg` usa os mesmos paths e círculos do ícone Lucide Orbit em
+  `Brand`, substituindo o desenho antigo. Símbolo claro em fundo grafite, com
+  cores correspondentes aos tokens `--on-inverse` e `--inverse` do workspace.
+- Referência em `index.html` versionada com `?v=2` para invalidar o ícone antigo;
+  `theme-color` acompanha o grafite da marca. Asset SVG estático, sem dependências
+  novas nem mudanças nos estilos ou no comportamento das páginas.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Verificação no navegador
+  confirmou SVG válido, resposta 200 e geometria idêntica à logo. Revisados 16,
+  32 e 64 px; o build preserva o asset e sua referência. Captura em
+  `test-results/favicon/preview.png`, ignorada pelo Git.
