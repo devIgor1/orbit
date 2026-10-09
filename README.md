@@ -78,7 +78,9 @@ Use outro projeto Supabase para testes que alteram dados.
 - **Empresas (`/companies`):** criar uma empresa, escolher a empresa ativa e aceitar convites.
 - **Colaboradores:** administradores criam e cancelam convites na página Equipe.
 - **Login:** autenticação real, restauração de sessão, logout e sessão expirada.
-- **Configurações:** estado da conexão e informações do workspace.
+- **Configurações:** perfil e e-mail de acesso, edição de nome/cargo, empresa ativa,
+  permissões, acesso às empresas/equipe, gestão de convites para administradores
+  e guia do Orbit.
 
 Use `Ctrl+K` / `⌘K` para buscar projetos. O Kanban permite arrastar no desktop;
 cada tarefa também tem um seletor de etapa operável por teclado e em celular.

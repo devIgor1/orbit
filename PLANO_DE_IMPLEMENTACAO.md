@@ -1096,3 +1096,101 @@ Registro da primeira versão. A composição atual está documentada na seção 
 - Revisão visual em desktop e frames de teste de 390/320 px, com nomes/endereço
   longos e sem overflow horizontal. Evidências em `test-results/invitation-design`.
   Não foi feita auditoria de renderização em caixas reais do Gmail/Outlook.
+
+## 34. Prévia do workspace acompanha a rolagem — 09/10/2026
+
+- Removida a animação automática com tempo fixo da prévia principal da landing.
+  Inclinação, aproximação e opacidade agora acompanham a posição do scroll, com
+  suavização curta e reversão ao subir. Sem rolagem, a prévia permanece parada.
+- Hook compartilhado observa o contêiner sem transformação e agrupa atualizações
+  em `requestAnimationFrame`, sem renderizações React por frame. Adaptador DOM
+  escreve somente o progresso calculado; aparência e transições seguem no CSS
+  central. Redimensionamento e mudanças de layout recalculam a posição.
+- Movimento reduzido mantém a imagem estática e totalmente visível, inclusive
+  quando a preferência muda durante a visita. Impressão também mantém a prévia
+  completa; listeners, observadores e frames são removidos no unmount.
+- Lint, estilos, arquitetura e TypeScript/build aprovados; 87 testes unitários/
+  integração passaram. Seis E2E novos verificam ausência de autoplay, avanço e
+  retorno por scroll, movimento reduzido e resize para tablet em desktop/celular.
+  Mais 28 E2E existentes da landing passaram; dois casos específicos de dispositivo
+  foram pulados conforme a configuração existente. Navegação por teclado e
+  âncoras preservadas, sem overflow horizontal nos tamanhos verificados.
+- Conferência visual local no navegador sem erros JavaScript; evidência em
+  `test-results/landing-preview-review/scroll-preview.png`. Alteração local,
+  sem novo commit, push ou publicação nesta entrega.
+
+## 35. Texto do seletor de empresa — 09/10/2026
+
+- Cartão da sidebar reorganizado em duas linhas: símbolo e nome da empresa no
+  cabeçalho, ação **Trocar ou cadastrar** abaixo ocupando a largura disponível,
+  com seta à direita. A frase deixa de competir por espaço com o símbolo e o nome.
+- Estilos no CSS central, mantendo os tokens existentes. Nome da empresa admite
+  quebra quando necessário; o link mantém descrição acessível completa e destino
+  `/companies`. O mesmo componente atende à sidebar e ao menu móvel.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Revisão no navegador
+  confirmou a ação em uma única linha, sem overflow, e navegação por Enter até
+  a página de empresas. Evidência em `test-results/workspace-switch-review/sidebar.png`.
+
+## 36. Prévia do login legível e ajustada ao espaço — 09/10/2026
+
+- Login e cadastro compartilham uma vitrine própria composta com `ProductPreview`.
+  A captura original mantém a proporção e aparece completa. Nas telas largas,
+  texto/benefícios e imagem ficam lado a lado; nas intermediárias, título e imagem
+  se empilham. O painel de acesso permanece disponível ao lado.
+- O espaço da imagem é uma região CSS com dimensões determinadas pelo grid e pela
+  altura da janela. Unidades de container limitam a captura pela largura e altura
+  realmente disponíveis, reservando espaço para toolbar e legenda. A imagem ocupa
+  o espaço útil sem depender de um teto pequeno e fixo nem alongar a página.
+  Celular mantém o cabeçalho compacto e prioridade para o formulário.
+- Ação **Ampliar prévia** usa o Dialog compartilhado com imagem maior e área
+  navegável por teclado. Escape fecha e devolve o foco ao botão; dados já digitados
+  no formulário permanecem. Conteúdo exibido é a captura existente de demonstração,
+  sem consultas ou alterações de negócio. Estilos autorais somente no CSS central.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Passaram 14 testes de
+  login, redirecionamento e cadastro, seis E2E da prévia e quatro regressões da
+  landing/login. Verificados 1280×720, 1440×900, 2560×1440, 2560×944, 820×1180 e
+  formulário móvel em 390×844. Os cinco tamanhos com imagem não apresentam scroll
+  de página nem corte da captura; ampliação, foco e preservação do formulário
+  verificados. Evidências em `test-results/login-preview-review`.
+
+## 37. Sidebar confortável em telas menores — 09/10/2026
+
+- Sidebar mantém largura de 256 px no desktop, sem o estreitamento anterior em
+  notebooks. Rodapé compartilhado agrupa guia, navegação auxiliar e perfil com
+  espaçamentos explícitos, incluindo distância mínima da navegação principal.
+- Nomes de empresa, usuário e cargo ficam em uma linha com reticências quando
+  necessário, preservando o valor completo no atributo `title`. Rótulos podem
+  quebrar somente entre palavras; removida a quebra arbitrária dos nomes.
+- Em janelas de até 800 px de altura, o guia usa uma versão compacta com ícone e
+  ação. Sidebar pode rolar em alturas menores; no menu móvel, somente o corpo do
+  Sheet controla a rolagem. Botão de sair mantém área própria de 40 × 40 px.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Revisão da tela real
+  em 1280×720, 1024×600, 820×1180, 390×844 e 320×568, sem overflow horizontal.
+  Tab alcança o botão de sair e rola o conteúdo até ele nas janelas mais baixas;
+  Escape fecha o menu móvel. Nenhuma alteração de dados de negócio foi necessária.
+  Evidência em `test-results/sidebar-review/sidebar.png`.
+
+## 38. Configurações úteis para quem usa o Orbit — 09/10/2026
+
+- Substituída a tela de diagnóstico técnico por seções de perfil e empresa. Saem
+  status do Supabase, banco, variáveis de ambiente e documentação de infraestrutura.
+  As instruções de instalação continuam na documentação do projeto.
+- Perfil mostra nome, cargo e e-mail de acesso reais; edição de nome e cargo usa
+  o formulário e a mutação existentes. Empresa mostra o espaço ativo, papel do
+  usuário e explicação das permissões, com atalhos para empresas e equipe.
+- Administradores podem abrir a gestão existente de convites diretamente desta
+  tela. Membros não recebem essa ação. Guia compartilhado abre no mesmo contexto;
+  diálogos usam seus botões como triggers para restaurar foco ao fechar.
+- Conteúdo dividido em componentes de feature com seção reutilizável, mantendo
+  estilos exclusivamente no CSS central e removendo regras antigas sem uso.
+  Carregamento e erro são explícitos; uma consulta malsucedida não exibe dados
+  antigos como atuais. Sem novos contratos, dados fictícios ou mudanças de banco.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Passaram 12 testes de
+  configurações, perfil, equipe e convites, incluindo permissão, consulta falha,
+  edição recusada, preservação do formulário e sucesso confirmado pelo servidor.
+- Conferência no navegador em 1280×720, 820×1180, 390×844 e 320×568 sem overflow
+  horizontal. Perfil, convites e guia abrem; Escape fecha e devolve foco. Formulário
+  cabe no celular de 320 px. Revisão utilizou apenas leitura dos dados reais, sem
+  editar perfil ou enviar convites. Evidência em `test-results/settings-review`.
+- Possíveis próximas entregas: recuperação/alteração de senha, preferências de
+  notificações e aparência. São propostas de produto, não controles fictícios na UI.

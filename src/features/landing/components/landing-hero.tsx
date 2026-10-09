@@ -1,10 +1,15 @@
 import { ArrowDown, ArrowRight, ArrowUpRight, Aperture, Boxes, Layers3, PenTool } from 'lucide-react'
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ProductPreview } from '@/components/shared/product-preview'
+import { useScrollEntry } from '@/lib/hooks/use-scroll-entry'
 import { LandingLandscape } from './landing-landscape'
 
 export function LandingHero() {
+  const previewRef = useRef<HTMLDivElement>(null)
+  useScrollEntry(previewRef)
+
   return (
     <section className="landing-hero" aria-labelledby="landing-title">
       <LandingLandscape />
@@ -40,7 +45,7 @@ export function LandingHero() {
           </div>
           <span className="landing-hero-note">Projetos, tarefas e equipe. Um espaço para tudo acontecer.</span>
         </div>
-        <div className="landing-hero-perspective">
+        <div ref={previewRef} className="landing-hero-perspective">
           <figure className="landing-hero-product">
             <ProductPreview
               src="/product/dashboard.png"

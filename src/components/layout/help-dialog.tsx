@@ -2,13 +2,23 @@ import { FolderPlus, ListTodo, Users } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
-export function HelpDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+import type { ReactNode } from 'react'
+export function HelpDialog({
+  open,
+  onOpenChange,
+  trigger,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  trigger?: ReactNode
+}) {
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
       title="Grandes ideias, na mesma órbita."
       description="Um espaço para organizar o trabalho e criar coisas que importam."
+      trigger={trigger}
     >
       <div className="onboarding-steps">
         <div>

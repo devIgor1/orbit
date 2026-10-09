@@ -1,25 +1,27 @@
 import { Orbit } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 interface ProductPreviewProps {
   src: string
   alt: string
   label: string
   priority?: boolean
+  actions?: ReactNode
 }
 
-export function ProductPreview({ src, alt, label, priority = false }: ProductPreviewProps) {
+export function ProductPreview({ src, alt, label, priority = false, actions }: ProductPreviewProps) {
   return (
     <div className="product-preview">
-      <div className="product-preview-toolbar" aria-hidden="true">
-        <span className="product-preview-dots">
+      <div className="product-preview-toolbar">
+        <span className="product-preview-dots" aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        <span className="product-preview-location">
+        <span className="product-preview-location" aria-hidden="true">
           <Orbit /> orbit <span>/</span> {label}
         </span>
-        <span className="product-preview-tag">WORKSPACE</span>
+        {actions ?? <span className="product-preview-tag" aria-hidden="true">WORKSPACE</span>}
       </div>
       <img
         src={src}

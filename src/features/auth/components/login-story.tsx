@@ -1,7 +1,7 @@
 import { ArrowUpRight, Sparkles } from 'lucide-react'
 import { Brand } from '@/components/layout/brand'
-import { ProductPreview } from '@/components/shared/product-preview'
 import { LoginBenefits } from './login-benefits'
+import { LoginProductShowcase } from './login-product-showcase'
 
 export function LoginStory() {
   return (
@@ -20,20 +20,11 @@ export function LoginStory() {
             Na mesma órbita.
           </h1>
           <p>Do primeiro esboço à última entrega. Seus projetos, suas tarefas e sua equipe em um só lugar.</p>
+          <LoginBenefits />
         </div>
-        <figure className="login-product-showcase">
-          <ProductPreview
-            src="/product/board.png"
-            alt="Quadro Kanban do Orbit com tarefas de demonstração organizadas por etapa, prioridade e responsável."
-            label="seu próximo projeto"
-            priority
-          />
-          <figcaption>
-            <span>Clareza para criar. Espaço para crescer.</span>
-            <span>Dados de demonstração</span>
-          </figcaption>
-        </figure>
-        <LoginBenefits />
+        <div className="login-preview-slot">
+          <LoginProductShowcase />
+        </div>
       </div>
       <div className="login-story-footer">
         <span>Feito para quem cria.</span>

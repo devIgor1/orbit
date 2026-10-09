@@ -39,19 +39,29 @@ export function Sidebar({
   onNavigate,
   onSignOut,
 }: SidebarProps) {
+  const companyLabel = workspaceName ?? 'Seu workspace'
+  const profileName = name ?? 'Bem-vindo ao Orbit'
+  const profileCaption = jobTitle ?? (authenticated ? 'Seu espaço criativo' : 'Vamos começar?')
+
   return (
     <div className="sidebar-content">
       <div className="sidebar-brand">
         <Brand />
         <span className="edition-label">Seu espaço de criação</span>
       </div>
-      <Link className="workspace-switch" to="/companies" onClick={onNavigate}>
-        <span className="workspace-emblem">{workspaceName?.slice(0, 1) ?? 'O'}</span>
-        <span>
-          <strong>{workspaceName ?? 'Seu workspace'}</strong>
-          <small>Trocar ou cadastrar empresa</small>
+      <Link
+        className="workspace-switch"
+        to="/companies"
+        onClick={onNavigate}
+        aria-label={`${companyLabel}: trocar ou cadastrar empresa`}
+      >
+        <span className="workspace-emblem" aria-hidden="true">
+          {workspaceName?.slice(0, 1) ?? 'O'}
         </span>
-        <ChevronRight />
+        <strong title={companyLabel}>{companyLabel}</strong>
+        <small className="workspace-switch-action">
+          Trocar ou cadastrar <ChevronRight aria-hidden="true" />
+        </small>
       </Link>
       <div className="navigation-section">
         <p className="navigation-label">Workspace</p>
@@ -64,54 +74,56 @@ export function Sidebar({
               className={({ isActive }) => `navigation-link${isActive ? ' navigation-link-active' : ''}`}
             >
               <Icon />
-              <span>{label}</span>
+              <span className="navigation-link-label">{label}</span>
               <span className="nav-active-dot" />
             </NavLink>
           ))}
         </nav>
       </div>
-      <div className="sidebar-note">
-        <span className="sidebar-note-symbol">
-          <CircleHelp />
-        </span>
-        <h3>Um bom começo.</h3>
-        <p>Encontre seu caminho entre projetos, tarefas e pessoas.</p>
-        <button className="text-link" onClick={onHelp}>
-          Guia do workspace <ArrowUpRight />
-        </button>
-      </div>
-      <nav className="sidebar-bottom-nav" aria-label="Workspace">
-        <NavLink
-          className={({ isActive }) => `navigation-link${isActive ? ' navigation-link-active' : ''}`}
-          to="/settings"
-          onClick={onNavigate}
-        >
-          <Settings2 />
-          <span>Configurações</span>
-        </NavLink>
-        <button className="navigation-link" onClick={onHelp}>
-          <CircleHelp />
-          <span>Ajuda e primeiros passos</span>
-          <ArrowUpRight />
-        </button>
-      </nav>
-      <div className="sidebar-profile">
-        <Avatar name={name ?? 'Orbit'} src={avatar} />
-        <span>
-          <strong>{name ?? 'Bem-vindo ao Orbit'}</strong>
-          <small>{jobTitle ?? (authenticated ? 'Seu espaço criativo' : 'Vamos começar?')}</small>
-        </span>
-        {authenticated ? (
-          <Button variant="ghost" size="icon" onClick={onSignOut} aria-label="Sair da conta">
-            <LogOut />
-          </Button>
-        ) : (
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/login" aria-label="Entrar na conta">
-              <LogIn />
-            </Link>
-          </Button>
-        )}
+      <div className="sidebar-footer">
+        <div className="sidebar-note">
+          <span className="sidebar-note-symbol">
+            <CircleHelp />
+          </span>
+          <h3>Um bom começo.</h3>
+          <p>Encontre seu caminho entre projetos, tarefas e pessoas.</p>
+          <button className="text-link" onClick={onHelp}>
+            Guia do workspace <ArrowUpRight />
+          </button>
+        </div>
+        <nav className="sidebar-bottom-nav" aria-label="Workspace">
+          <NavLink
+            className={({ isActive }) => `navigation-link${isActive ? ' navigation-link-active' : ''}`}
+            to="/settings"
+            onClick={onNavigate}
+          >
+            <Settings2 />
+            <span className="navigation-link-label">Configurações</span>
+          </NavLink>
+          <button className="navigation-link" onClick={onHelp}>
+            <CircleHelp />
+            <span className="navigation-link-label">Ajuda e primeiros passos</span>
+            <ArrowUpRight />
+          </button>
+        </nav>
+        <div className="sidebar-profile">
+          <Avatar name={profileName} src={avatar} />
+          <span>
+            <strong title={profileName}>{profileName}</strong>
+            <small title={profileCaption}>{profileCaption}</small>
+          </span>
+          {authenticated ? (
+            <Button variant="ghost" size="icon" onClick={onSignOut} aria-label="Sair da conta">
+              <LogOut />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/login" aria-label="Entrar na conta">
+                <LogIn />
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )
