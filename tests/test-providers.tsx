@@ -13,8 +13,8 @@ export function createTestClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
 }
 
-export function TestProviders({ children, client, auth = testAuth }: { children: ReactNode; client: QueryClient; auth?: AuthContextValue }) {
-  return <QueryClientProvider client={client}><AuthContext.Provider value={auth}><MemoryRouter>{children}</MemoryRouter></AuthContext.Provider></QueryClientProvider>
+export function TestProviders({ children, client, auth = testAuth, initialEntries }: { children: ReactNode; client: QueryClient; auth?: AuthContextValue; initialEntries?: string[] }) {
+  return <QueryClientProvider client={client}><AuthContext.Provider value={auth}><MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter></AuthContext.Provider></QueryClientProvider>
 }
 
 export const testProfile = {

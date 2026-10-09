@@ -1,12 +1,12 @@
 import { AppError, toAppError } from '@/lib/errors/app-error'
 import { getSupabase } from '@/lib/supabase/client'
 import type { SignupValues } from '../schemas/signup-schema'
-import { safeDestination } from '../redirect-path'
+import { signupDestination } from '../redirect-path'
 import { passwordPolicyMessage } from '../schemas/password-policy'
 
 export async function signUp(values: SignupValues, destination: string) {
-  const redirect = new URL('/login', window.location.origin)
-  redirect.searchParams.set('next', safeDestination(destination, '/companies'))
+  const redirect = new URL('/auth/confirm', window.location.origin)
+  redirect.searchParams.set('next', signupDestination(destination))
   const { data, error } = await getSupabase().auth.signUp({
     email: values.email,
     password: values.password,

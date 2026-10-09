@@ -51,7 +51,7 @@ inválidas são apresentadas explicitamente na interface.
 
 ### Publicação na Vercel
 
-Ambiente publicado: [Orbit](https://orbit-ashen-six.vercel.app/).
+Ambiente publicado: [Orbit](https://weorbit.com.br/).
 
 Importe o repositório na Vercel e configure `VITE_SUPABASE_URL` e
 `VITE_SUPABASE_PUBLISHABLE_KEY` com os valores públicos do projeto hospedado.
@@ -77,6 +77,8 @@ Use outro projeto Supabase para testes que alteram dados.
 - **Cadastro (`/signup`):** nome, e-mail e senha com pelo menos 8 caracteres, uma
   maiúscula, uma minúscula, um número e um símbolo. Requisitos exibidos durante a
   digitação e exigidos pelo Supabase Auth; confirmação de conta por e-mail.
+- **Primeiro acesso (`/onboarding`):** etapas para adicionar uma empresa e convidar
+  a equipe, com progresso baseado na empresa persistida no backend.
 - **Empresas (`/companies`):** criar uma empresa, escolher a empresa ativa e aceitar convites.
 - **Colaboradores:** administradores criam e cancelam convites na página Equipe.
 - **Login:** autenticação real, restauração de sessão, logout e sessão expirada.
@@ -92,13 +94,18 @@ Permissões são aplicadas pelo banco; apenas administradores gerenciam projetos
 ### Cadastro e empresas
 
 1. Acesse `/signup`, cadastre seu nome, e-mail e senha e confirme o e-mail recebido.
-2. Em `/companies`, cadastre o nome da empresa. Você se torna administrador desse
-   espaço e pode criar projetos. Usuários novos sem empresa chegam automaticamente a essa tela.
-3. Em **Equipe → Convidar colaborador**, informe o e-mail da pessoa e clique em
+2. O retorno `/auth/confirm` aguarda a sessão e encaminha ao `/onboarding`, sem
+   exibir o formulário de login. Na primeira etapa, cadastre a empresa; somente
+   após confirmação do backend é aberta a etapa de equipe. Recarregar o onboarding
+   retoma os convites da empresa já criada.
+3. Na etapa **Convidar equipe**, informe o e-mail da pessoa e clique em
    **Enviar convite**. O e-mail identifica você e a empresa; respostas chegam ao
    seu endereço. Também é possível **Gerar só o link**, copiar, reenviar ou cancelar.
+   **Ir para o workspace** conclui o fluxo; os convites podem ficar para depois,
+   em **Equipe → Convidar colaborador**.
 4. A pessoa entra ou cria sua conta com o mesmo e-mail, confirma o endereço e aceita
-   o convite. Ela pode criar/editar tarefas, usar o Kanban e comentar nos projetos da empresa.
+   o convite. Cadastros originados em convites preservam esse destino em `/companies`,
+   sem exigir uma empresa própria. Ela pode criar/editar tarefas, usar o Kanban e comentar nos projetos da empresa.
 
 Convites duram sete dias. Criar novamente um convite pendente para o mesmo endereço
 renova sua validade; convites cancelados ou vencidos não concedem acesso. Todos
@@ -121,9 +128,10 @@ domínio verificado e fica fora do frontend/Git. Configuração remota conferida
 teste SMTP aceito, com entrega simulada registrada pelo Resend. Consulte a
 [configuração e as instruções de manutenção](supabase/hosted/README.md).
 A confirmação de e-mail continua obrigatória.
-O Site URL usa `https://orbit-ashen-six.vercel.app`, com `/login**` autorizado para
-preservar o destino após a confirmação. Os retornos locais `/login**` em
-localhost/127.0.0.1:5173 continuam autorizados para desenvolvimento.
+O Site URL usa `https://weorbit.com.br`. `/auth/confirm**` e `/login**` estão
+autorizados nesse domínio, na URL anterior da Vercel e em localhost/127.0.0.1:5173.
+O primeiro recebe as novas confirmações; o segundo preserva links anteriores.
+O destino é validado no frontend e links expirados exibem opções de recuperação.
 
 Para testar o fluxo completo sem enviar e-mails externos, inicie o Supabase local,
 aplique `npx supabase db push --local`, preencha `.env.docker.local` com as duas

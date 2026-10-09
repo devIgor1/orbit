@@ -75,9 +75,11 @@ está em `.cloud-credentials.json`, ignorado pelo Git.
 
 Configure a URL e a chave pública em `.env.local` para desenvolvimento e nas
 variáveis da Vercel para publicação. O Site URL hospedado está configurado como
-`https://orbit-ashen-six.vercel.app`, com retorno `/login**` autorizado. Ao trocar
+`https://weorbit.com.br`, com retornos `/auth/confirm**` e `/login**` autorizados,
+mantendo também a URL anterior da Vercel e os retornos locais. Ao trocar
 o domínio, atualize as URLs do Auth e `ORBIT_APP_URL`. O retorno de confirmação
-usa `/login?next=...`, com destino interno validado. O SMTP Resend está ativo para
+usa `/auth/confirm?next=...`, aguarda a sessão do SDK e encaminha ao onboarding de
+empresa/equipe ou ao aceite de um convite, com destino interno validado. O SMTP Resend está ativo para
 confirmar contas externas, com remetente `Orbit <acesso@codedbyigor.com>` e chave
 limitada ao envio pelo domínio verificado. A configuração e sua validação estão em
 [`hosted/README.md`](hosted/README.md). O arquivo separado preserva o Mailpit local.

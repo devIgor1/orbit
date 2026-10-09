@@ -5,6 +5,8 @@ export const router = createBrowserRouter([
   { path: '/', lazy: async () => ({ Component: (await import('@/pages/landing-page')).LandingPage }) },
   { path: '/login', lazy: async () => ({ Component: (await import('@/pages/login-page')).LoginPage }) },
   { path: '/signup', lazy: async () => ({ Component: (await import('@/pages/signup-page')).SignupPage }) },
+  { path: '/auth/confirm', lazy: async () => ({ Component: (await import('@/pages/auth-confirmation-page')).AuthConfirmationPage }) },
+  { path: '/onboarding', lazy: async () => ({ Component: (await import('@/pages/onboarding-page')).OnboardingPage }) },
   { path: '/companies', lazy: async () => ({ Component: (await import('@/pages/companies-page')).CompaniesPage }) },
   {
     element: <AppShell />,

@@ -49,7 +49,22 @@ test('cadastro, confirmação, empresa, convite e Kanban persistem entre sessõe
   const collaboratorContext = await browser.newContext({ ...testInfo.project.use, baseURL: 'http://127.0.0.1:5174' })
   const colleague = await collaboratorContext.newPage()
   try {
-    await createLocalAccount(colleague, collaboratorEmail, invitation.pathname + invitation.search)
+    const invitationDestination = invitation.pathname + invitation.search
+    // Opening the email while signed into the inviter's account must offer a
+    // safe account switch, keeping the destination for the intended recipient.
+    await colleague.goto(invitationDestination)
+    await colleague.getByLabel('E-mail', { exact: true }).fill(`owner-${suffix}@example.test`)
+    await colleague.getByLabel('Senha', { exact: true }).fill('Orbit-test-password-2026!')
+    await colleague.getByRole('button', { name: 'Entrar no workspace' }).click()
+    await expect(colleague.getByRole('alert')).toHaveText(new RegExp(`owner-${suffix}@example.test`))
+    expect(await colleague.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await colleague.screenshot({ path: testInfo.outputPath('invitation-account-notice.png'), fullPage: true })
+    await colleague.getByRole('button', { name: 'Entrar com outra conta' }).click()
+    await expect(colleague).toHaveURL((url) => url.pathname === '/login' && url.searchParams.get('next') === invitationDestination)
+    await expect(colleague.getByRole('link', { name: 'Criar conta', exact: true })).toHaveAttribute(
+      'href', `/signup?next=${encodeURIComponent(invitationDestination)}`,
+    )
+    await createLocalAccount(colleague, collaboratorEmail, invitationDestination)
     await expect(colleague.getByRole('button', { name: `Aceitar convite de ${company}` })).toBeVisible()
     await colleague.screenshot({ path: testInfo.outputPath('incoming-invite.png'), fullPage: true })
     await colleague.getByRole('button', { name: `Aceitar convite de ${company}` }).click()
@@ -108,7 +123,45 @@ test('cadastro responsivo e convite cancelado não concedem acesso', async ({ pa
   await page.goto('/companies')
   await page.getByRole('button', { name: 'Sair', exact: true }).click()
   await createLocalAccount(page, email, invitation.pathname + invitation.search)
-  await expect(page.getByRole('alert')).toHaveText(/convite não está disponível/)
+  await expect(page.getByRole('alert')).toHaveText(/convite do link não está entre os convites pendentes/)
   await expect(page.getByRole('button', { name: /Aceitar convite de/ })).toHaveCount(0)
   await expect(page.getByText('Seu espaço começa aqui')).toBeVisible()
+})
+
+test('confirmação abre as etapas de empresa e equipe e preserva o progresso ao recarregar', async ({ page }, testInfo) => {
+  const suffix = randomUUID()
+  const company = `Estúdio de criação ${suffix.slice(0, 8)}`
+  const recipient = `setup-team-${suffix}@example.test`
+  await createLocalAccount(page, `setup-owner-${suffix}@example.test`)
+  await expect(page).toHaveURL(/\/onboarding$/)
+  await expect(page.getByRole('heading', { name: 'Adicione sua empresa.' })).toBeFocused()
+  await expect(page.locator('[aria-current="step"]')).toContainText('Adicionar uma empresa')
+  await page.screenshot({ path: testInfo.outputPath('onboarding-company.png'), fullPage: true })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.getByLabel('Nome da empresa').fill(company)
+  await page.getByRole('button', { name: 'Cadastrar empresa' }).click()
+  await expect(page.getByRole('heading', { name: 'Crie junto com sua equipe.' })).toBeFocused()
+  await expect(page.locator('[aria-current="step"]')).toContainText('Convidar equipe')
+  await page.reload()
+  await expect(page.getByText(company, { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Nome da empresa')).toHaveCount(0)
+  await page.getByLabel('E-mail do colaborador').fill(recipient)
+  await page.getByRole('button', { name: 'Gerar só o link' }).click()
+  await expect(page.getByRole('status')).toHaveText(/Convite criado/)
+  await expect(page.getByLabel('Link do convite')).toHaveValue(/\/companies\?invitation=/)
+  await page.reload()
+  await expect(page.getByText(recipient, { exact: true })).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('onboarding-team.png'), fullPage: true })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  if (testInfo.project.name === 'desktop') {
+    for (const [name, width, height] of [['tablet', 820, 1180], ['small-mobile', 320, 700]] as const) {
+      await page.setViewportSize({ width, height })
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+      await page.screenshot({ path: testInfo.outputPath(`onboarding-team-${name}.png`), fullPage: true })
+    }
+  }
+  await page.getByRole('button', { name: 'Ir para o workspace' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/dashboard$/)
+  await expect(page.getByRole('heading', { name: 'Visão geral', exact: true })).toBeVisible()
 })

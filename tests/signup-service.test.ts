@@ -27,7 +27,7 @@ describe('Supabase signup', () => {
       password: values.password,
       options: {
         data: { full_name: 'Pessoa' },
-        emailRedirectTo: `${window.location.origin}/login?next=%2Fcompanies%3Finvitation%3D123`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fcompanies%3Finvitation%3D123`,
       },
     })
   })
@@ -36,9 +36,16 @@ describe('Supabase signup', () => {
     await expect(signUp(values, '//example.com')).rejects.toThrow(/não confirmou/)
     expect(signup).toHaveBeenCalledWith(
       expect.objectContaining({
-        options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/login?next=%2Fcompanies` }),
+        options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fonboarding` }),
       }),
     )
+  })
+  it('encaminha o cadastro independente ao onboarding, mesmo se veio do login de um projeto', async () => {
+    signup.mockResolvedValue({ data: { user: { id: 'user' }, session: null }, error: null })
+    await signUp(values, '/projects/project-1')
+    expect(signup).toHaveBeenCalledWith(expect.objectContaining({
+      options: expect.objectContaining({ emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fonboarding` }),
+    }))
   })
   it('reporta configuração de envio indisponível sem confirmar cadastro', async () => {
     signup.mockResolvedValue({ data: {}, error: { code: 'email_address_not_authorized', status: 403 } })

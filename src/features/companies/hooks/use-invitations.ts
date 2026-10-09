@@ -16,6 +16,7 @@ export function useManageInvitations() {
   const scope = useQueryScope()
   const cache = useQueryClient()
   return useMutation({
+    mutationKey: ['manage-invitations', scope.userId, scope.workspaceId],
     mutationFn: async (input: { action: 'invite'; email: string; sendEmail: boolean } | { action: 'send' | 'revoke'; id: string }): Promise<{ id: string }> => {
       const { workspaceId } = scope.requireScope()
       if (input.action === 'invite') return input.sendEmail

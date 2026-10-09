@@ -5,10 +5,15 @@ project_id = "orbit-resend"
 [auth]
 minimum_password_length = 8
 password_requirements = "lower_upper_letters_digits_symbols"
-site_url = "https://orbit-ashen-six.vercel.app"
+site_url = "https://weorbit.com.br"
 additional_redirect_urls = [
+  "https://weorbit.com.br/auth/confirm**",
+  "https://weorbit.com.br/login**",
+  "https://orbit-ashen-six.vercel.app/auth/confirm**",
   "https://orbit-ashen-six.vercel.app/login**",
+  "http://127.0.0.1:5173/auth/confirm**",
   "http://127.0.0.1:5173/login**",
+  "http://localhost:5173/auth/confirm**",
   "http://localhost:5173/login**",
 ]
 

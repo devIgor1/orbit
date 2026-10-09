@@ -16,9 +16,9 @@ conversa, como projeto de referência.
 **Raiz do projeto:** `orbit/`. O arquivo de instruções será `orbit/AGENTS.md`.
 
 **Estado em 09/10/2026:** interface implementada e conectada ao Supabase hospedado,
-publicada pelo usuário em `https://orbit-ashen-six.vercel.app`. A instalação local
-foi preservada. A seção 32 registra a conexão do domínio público aos convites e
-ao Auth; a seção 22 documenta a configuração inicial da nuvem. O roadmap permanece
+publicada pelo usuário em `https://weorbit.com.br`. A instalação local
+foi preservada. As seções 32 e 43 registram os domínios dos convites e
+do Auth; a seção 22 documenta a configuração inicial da nuvem. O roadmap permanece
 como referência de aceite.
 
 ## 2. Requisitos obrigatórios
@@ -47,7 +47,7 @@ como referência de aceite.
 | Equipe | Membros reais do workspace, busca, tarefas atribuídas e edição do próprio perfil. |
 | Experiência compartilhada | Menu lateral, cabeçalhos, breadcrumbs, filtros, formulários e estados de consulta padronizados. |
 
-Rotas previstas: `/` (landing pública), `/login`, `/signup`, `/companies`, `/dashboard`, `/projects`, `/projects/:projectId` e
+Rotas previstas: `/` (landing pública), `/login`, `/signup`, `/auth/confirm`, `/onboarding`, `/companies`, `/dashboard`, `/projects`, `/projects/:projectId` e
 `/team`. O painel da tarefa pertence ao contexto de seu projeto.
 
 O Kanban permite mover tarefas entre etapas. A versão inicial usa ordenação estável
@@ -1232,3 +1232,67 @@ Registro da primeira versão. A composição atual está documentada na seção 
   e login e quatro E2E em desktop/celular passaram, incluindo Tab, Enter e Espaço,
   independência dos campos, preservação dos valores e ausência de envio ao alternar.
   Capturas em `test-results/password-visibility`.
+
+## 41. Confirmação de cadastro centralizada — 09/10/2026
+
+- Ícone, título, mensagens e ação de login centralizados no estado de confirmação
+  de e-mail. Ajuste restrito ao seletor existente no CSS central.
+- Lint, estilos, arquitetura, TypeScript/build e cinco testes de cadastro aprovados.
+  Revisão visual em desktop, tablet e celular confirmou alinhamento, ausência de
+  overflow horizontal e navegação ao login por teclado. Resposta simulada somente
+  na revisão isolada; nenhuma conta ou mensagem real criada. Capturas em
+  `test-results/auth-confirmation-review`.
+
+## 42. Convite aberto com outra conta — 09/10/2026
+
+- Diagnóstico por consulta somente de leitura confirmou que o link informado
+  pertencia a um destinatário diferente da conta conectada. O aviso vinha da
+  comparação com os convites pendentes, antes de qualquer tentativa de aceite.
+- Aviso identifica a conta atual e oferece **Entrar com outra conta**, preservando
+  o convite no retorno do login e cadastro. Convites de outras empresas disponíveis
+  para a sessão ficam identificados separadamente. Nenhum destinatário externo é
+  exposto; as verificações de e-mail e permissão continuam no backend.
+- Saída reutiliza o mesmo fluxo da página e mantém erros visíveis. Ações de empresa
+  ficam bloqueadas durante a saída. O aviso não aparece durante a transição após
+  um aceite confirmado, quando o convite já deixou a lista de pendentes.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Quinze testes de
+  serviços, onboarding e troca de conta passaram, incluindo saída recusada,
+  falha de consulta e preservação do destino. Quatro E2E com Supabase local passaram
+  em desktop/celular: troca de conta, cadastro, confirmação, aceite, persistência
+  no Kanban e bloqueio de convite cancelado. Revisão visual sem overflow horizontal;
+  capturas em `test-results/invitation-account-review`. Sem escritas em produção.
+
+## 43. Confirmação de e-mail e onboarding em etapas — 09/10/2026
+
+- Causa do login transitório: cadastro enviava `/login` como retorno de confirmação
+  e essa página exibia o formulário durante a restauração da sessão. Nova rota
+  `/auth/confirm` aguarda o SDK, trata link inválido/expirado e só então navega.
+  Login também aguarda a sessão e reconhece retornos antigos com `type=signup`.
+- Cadastro independente segue para `/onboarding`: **Adicionar uma empresa →
+  Convidar equipe**. Retornos de cadastro vindos de projetos/login não pulam essas
+  etapas. Por escolha do usuário, cadastros por convite continuam em `/companies`
+  com o identificador do convite, sem obrigar a criação de empresa própria.
+- Etapas compostas por componentes de feature, indicador compartilhado e os
+  formulários existentes com React Hook Form/Zod. Cabeçalho da conta e saída
+  extraídos para reutilização com a página de empresas; estilos no CSS central.
+- Empresa criada, papel de administrador e seleção ativa vêm da transação existente
+  no Supabase. Etapa de equipe só aparece após releitura do workspace confirmado.
+  Ao reabrir/recarregar o onboarding, a empresa persistida permite retomar a equipe.
+  Convites usam os serviços reais existentes; podem ser enviados agora ou depois.
+  Não houve mudança de schema nem armazenamento local de progresso de negócio.
+- Ausência confirmada de empresa abre a etapa inicial; erro de consulta mostra
+  erro/retry. Escritas recusadas preservam campos e não avançam. Ações de conclusão
+  e saída aguardam convites em andamento. Mudança de etapa foca o título para
+  leitura assistiva. Colaborador existente não recebe ações de administração.
+- Supabase hospedado ainda apontava à URL anterior da Vercel. Site URL alterado
+  para `https://weorbit.com.br`, com `/auth/confirm**` e `/login**` autorizados também
+  no domínio anterior e em localhost/127.0.0.1:5173. Push parcial alterou só essas
+  duas propriedades; leitura posterior confirmou zero diferenças. Nenhum segredo,
+  SMTP, política de senha ou confirmação obrigatória foi alterado.
+- Lint, tipos, estilos, arquitetura e build aprovados; 131 testes Vitest e seis E2E
+  com Supabase/Mailpit locais passaram. Cobrem confirmação sem renderizar login,
+  destino de convite, erros, criação de empresa, retomada, convites persistidos,
+  conclusão por teclado e Kanban. Conferidos desktop, tablet, 390 px e 320 px sem
+  overflow horizontal. Capturas em `test-results/onboarding-steps`.
+- Frontend permanece local até commit/push. URLs do Auth já estão preparadas para
+  a publicação. Referência: [redirecionamentos do Supabase](https://supabase.com/docs/guides/auth/redirect-urls).

@@ -19,9 +19,11 @@ arquivo neste ambiente.
   Esse endereço simula entrega; não comprova recebimento em uma caixa real nem
   testa o cadastro completo no Supabase hospedado. Nenhum usuário foi criado.
 - Evidência local: `test-results/resend-setup/smtp-delivered.jpg` (ignorada pelo Git).
-- Frontend publicado em `https://orbit-ashen-six.vercel.app`. Site URL atualizado
-  para esse domínio; retorno `/login**` autorizado, preservando os dois retornos
-  locais em 127.0.0.1/localhost:5173. A função de convites usa a mesma URL pública.
+- Site URL atualizado para `https://weorbit.com.br`; `/auth/confirm**` e `/login**`
+  autorizados no domínio atual, no domínio anterior da Vercel e em
+  127.0.0.1/localhost:5173. Aplicação por configuração parcial contendo somente
+  essas duas propriedades, com zero divergências declaradas após o push.
+  SMTP, confirmação obrigatória e política de senha foram preservados.
 
 ## Pré-requisitos
 
@@ -52,8 +54,9 @@ Remove-Variable smtpEnvironment
 
 Revise o diff antes de aplicar. A configuração declara `[auth.email.smtp]`,
 `auth.site_url` e `auth.additional_redirect_urls`; não desativa confirmação de
-e-mail nem altera permissões ou provedores. O padrão `/login**` permite o parâmetro
-`next` com o destino interno validado, inclusive durante o aceite de convites.
+e-mail nem altera permissões ou provedores. `/auth/confirm**` recebe as novas
+confirmações com `next` interno validado; `/login**` mantém a compatibilidade dos
+links anteriores. Cadastro independente segue ao onboarding; convite segue ao aceite.
 Não execute o push com campos vazios, domínio pendente ou uma chave de exemplo.
 Nunca publique a saída de debug ou o conteúdo do arquivo `.env`.
 
@@ -63,7 +66,7 @@ Nunca publique a saída de debug ou o conteúdo do arquivo `.env`.
   host, porta, usuário e remetente corretos.
 - Fazer um cadastro de teste com um endereço próprio autorizado e conferir o
   envio nos logs do Resend, o recebimento e o retorno da confirmação ao Orbit.
-- Ao trocar o domínio público, atualizar Site URL, o retorno `/login**` e
+- Ao trocar o domínio público, atualizar Site URL, os retornos `/auth/confirm**`, `/login**` e
   `ORBIT_APP_URL`. A variável da função é aplicada por `supabase secrets set`;
   não precisa de novo deploy. Links já enviados continuam com a URL original.
 
