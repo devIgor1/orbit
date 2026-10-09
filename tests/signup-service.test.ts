@@ -13,6 +13,12 @@ const values = {
   confirmPassword: 'Senha-forte-123',
 }
 describe('Supabase signup', () => {
+  it('explica os requisitos quando o servidor recusa uma senha fraca', async () => {
+    signup.mockResolvedValue({ data: {}, error: { code: 'weak_password', status: 422 } })
+    await expect(signUp(values, '/companies')).rejects.toThrow(
+      'Use pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial.',
+    )
+  })
   it('envia somente nome como metadado e mantém destino seguro da confirmação', async () => {
     signup.mockResolvedValue({ data: { user: { id: 'user' }, session: null }, error: null })
     await expect(signUp(values, '/companies?invitation=123')).resolves.toEqual({ confirmationRequired: true })

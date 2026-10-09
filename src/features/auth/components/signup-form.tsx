@@ -1,13 +1,15 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRight, MailCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { errorMessage } from '@/lib/errors/app-error'
 import { useAuth } from '../use-auth'
 import { useSignup } from '../hooks/use-signup'
 import { signupSchema, type SignupValues } from '../schemas/signup-schema'
+import { PasswordRequirements } from './password-requirements'
 
 export function SignupForm({ destination }: { destination: string }) {
   const { configured } = useAuth()
@@ -15,11 +17,13 @@ export function SignupForm({ destination }: { destination: string }) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
   })
+  const password = useWatch({ control, name: 'password' })
   const busy = isSubmitting || signup.isPending
   const loginUrl = `/login?next=${encodeURIComponent(destination)}`
   if (signup.isSuccess && signup.data.confirmationRequired)
@@ -84,24 +88,27 @@ export function SignupForm({ destination }: { destination: string }) {
       </div>
       <div className="form-field">
         <label htmlFor="signup-password">Senha</label>
-        <Input
+        <PasswordInput
           id="signup-password"
-          type="password"
           autoComplete="new-password"
+          minLength={8}
           disabled={busy}
           aria-invalid={!!errors.password}
-          aria-describedby="signup-password-help"
+          aria-describedby={`signup-password-help${errors.password ? ' signup-password-error' : ''}`}
           {...register('password')}
         />
-        <p id="signup-password-help" className={errors.password ? 'field-error' : 'field-help'}>
-          {errors.password?.message ?? 'Pelo menos 8 caracteres.'}
-        </p>
+        <PasswordRequirements id="signup-password-help" value={password} />
+        {errors.password && (
+          <p id="signup-password-error" className="field-error">
+            {errors.password.message}
+          </p>
+        )}
       </div>
       <div className="form-field">
         <label htmlFor="signup-confirm">Confirmar senha</label>
-        <Input
+        <PasswordInput
           id="signup-confirm"
-          type="password"
+          visibilityLabel="confirmação de senha"
           autoComplete="new-password"
           disabled={busy}
           aria-invalid={!!errors.confirmPassword}

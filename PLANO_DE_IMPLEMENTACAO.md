@@ -1194,3 +1194,41 @@ Registro da primeira versão. A composição atual está documentada na seção 
   editar perfil ou enviar convites. Evidência em `test-results/settings-review`.
 - Possíveis próximas entregas: recuperação/alteração de senha, preferências de
   notificações e aparência. São propostas de produto, não controles fictícios na UI.
+
+## 39. Requisitos de senha no cadastro — 09/10/2026
+
+- Cadastro exige pelo menos 8 caracteres, uma maiúscula, um número e um símbolo.
+  Adotado o preset nativo `lower_upper_letters_digits_symbols` do Supabase, que
+  também exige minúscula; os cinco critérios aparecem explicitamente no formulário.
+  O limite anterior de 72 caracteres permanece. Senhas não são aparadas/truncadas.
+- Política compartilhada entre schema Zod e checklist acessível, com marcação dos
+  requisitos atendidos durante a digitação. Falhas impedem o envio, mantêm os dados
+  e focam o campo inválido. Espaços, acentos e emojis não substituem um símbolo do
+  conjunto aceito pelo servidor. Mensagem de `weak_password` explica os requisitos.
+- Configurações local e hospedada versionadas. Política aplicada no projeto
+  `twsfyqkagyvibsilulle` por configuração parcial contendo somente comprimento e
+  requisitos de senha. O mínimo remoto já era 8; somente os requisitos mudaram.
+  Leitura posterior confirmou ausência de divergências nos campos declarados.
+  SMTP, confirmação de e-mail, URLs e demais propriedades remotas permaneceram.
+  A stack local passa a adotar a política ao reiniciar com o config atualizado.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Passaram 28 testes de
+  schema, cadastro, serviço e login, cobrindo limites, cada classe ausente, símbolos,
+  falha do servidor e envio duplicado; dois E2E em desktop/celular confirmaram foco,
+  checklist e bloqueio antes de qualquer chamada de cadastro. Nenhuma conta ou
+  e-mail real foi criado nos testes. Capturas em `test-results/signup-password`.
+- Interface revisada nas capturas, sem overflow horizontal. Alterações de frontend
+  permanecem locais até o próximo commit/push; política do servidor já está ativa.
+
+## 40. Mostrar e ocultar senha no cadastro — 09/10/2026
+
+- Campos de senha e confirmação recebem ícones de olho independentes. Começam
+  ocultos, alternam entre texto e senha sem modificar o valor e mantêm integração
+  com React Hook Form/Zod. Durante o envio, os controles do cadastro ficam inativos.
+- Extraído `PasswordInput` compartilhado em `components/ui`, também usado pelo
+  login. Botões têm nome acessível específico, estado `aria-pressed`, vínculo ao
+  campo e `type="button"`; não disparam o envio do formulário. Estilos reutilizados
+  do CSS central, com alinhamento preservado no estado pressionado.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Nove testes de cadastro
+  e login e quatro E2E em desktop/celular passaram, incluindo Tab, Enter e Espaço,
+  independência dos campos, preservação dos valores e ausência de envio ao alternar.
+  Capturas em `test-results/password-visibility`.

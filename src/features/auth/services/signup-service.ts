@@ -2,6 +2,7 @@ import { AppError, toAppError } from '@/lib/errors/app-error'
 import { getSupabase } from '@/lib/supabase/client'
 import type { SignupValues } from '../schemas/signup-schema'
 import { safeDestination } from '../redirect-path'
+import { passwordPolicyMessage } from '../schemas/password-policy'
 
 export async function signUp(values: SignupValues, destination: string) {
   const redirect = new URL('/login', window.location.origin)
@@ -19,8 +20,7 @@ export async function signUp(values: SignupValues, destination: string) {
       )
     if (error.code === 'user_already_exists')
       throw new AppError('contract', 'Já existe uma conta com este e-mail. Entre para continuar.')
-    if (error.code === 'weak_password')
-      throw new AppError('contract', 'Escolha uma senha mais forte, com letras, números e símbolos.')
+    if (error.code === 'weak_password') throw new AppError('contract', passwordPolicyMessage)
     if (error.status === 429)
       throw new AppError('network', 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.')
     throw toAppError(error)

@@ -28,6 +28,25 @@ async function fillForm() {
 }
 
 describe('Cadastro público', () => {
+  it('mostra os requisitos enquanto digita e impede o envio de senha incompleta', async () => {
+    renderForm()
+    const user = await fillForm()
+    const password = screen.getByLabelText('Senha', { exact: true })
+    const confirmation = screen.getByLabelText('Confirmar senha')
+    const checklist = screen.getByRole('list', { name: 'Requisitos da senha' })
+    expect(checklist.querySelectorAll('[data-met=true]')).toHaveLength(5)
+    await user.clear(password)
+    await user.clear(confirmation)
+    await user.type(password, 'Senhasemnumero!')
+    await user.type(confirmation, 'Senhasemnumero!')
+    expect(checklist.querySelectorAll('[data-met=true]')).toHaveLength(4)
+    await user.click(screen.getByRole('button', { name: 'Criar minha conta' }))
+    expect(await screen.findByText('Inclua pelo menos um número (0–9).')).toBeVisible()
+    expect(signUp).not.toHaveBeenCalled()
+    expect(password).toHaveAttribute('aria-invalid', 'true')
+    expect(password).toHaveValue('Senhasemnumero!')
+  })
+
   it('valida a confirmação de senha antes de enviar', async () => {
     renderForm()
     const user = await fillForm()

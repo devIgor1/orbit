@@ -3,6 +3,8 @@
 project_id = "orbit-resend"
 
 [auth]
+minimum_password_length = 8
+password_requirements = "lower_upper_letters_digits_symbols"
 site_url = "https://orbit-ashen-six.vercel.app"
 additional_redirect_urls = [
   "https://orbit-ashen-six.vercel.app/login**",

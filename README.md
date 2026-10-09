@@ -74,7 +74,9 @@ Use outro projeto Supabase para testes que alteram dados.
 - **Projeto:** edição e arquivamento, tarefas em Kanban/lista e alteração de status.
 - **Tarefa:** criação, responsável, prioridade, prazo, edição, comentários e histórico.
 - **Equipe:** busca de membros, carga de trabalho e edição do próprio perfil.
-- **Cadastro (`/signup`):** nome, e-mail, senha e confirmação por e-mail pelo Supabase Auth.
+- **Cadastro (`/signup`):** nome, e-mail e senha com pelo menos 8 caracteres, uma
+  maiúscula, uma minúscula, um número e um símbolo. Requisitos exibidos durante a
+  digitação e exigidos pelo Supabase Auth; confirmação de conta por e-mail.
 - **Empresas (`/companies`):** criar uma empresa, escolher a empresa ativa e aceitar convites.
 - **Colaboradores:** administradores criam e cancelam convites na página Equipe.
 - **Login:** autenticação real, restauração de sessão, logout e sessão expirada.
