@@ -5,7 +5,26 @@ Kanban, tarefas, comentários, equipe e indicadores conectados ao Supabase.
 
 ## Executar
 
-Requisitos: Node.js 24 LTS, npm e Docker em execução.
+Requisitos: Node.js 24 LTS e npm. Com Supabase hospedado, Docker não é necessário
+para executar o frontend.
+
+Copie `.env.example` para `.env.local` e preencha a URL e a chave pública do projeto
+Supabase. As migrations e o vínculo da conta com um workspace precisam existir no
+backend. Depois execute:
+
+```powershell
+npm ci
+npm run dev
+```
+
+Na configuração hospedada deste ambiente, a senha inicial do administrador fica
+em `.cloud-credentials.json`, ignorado pelo Git. Esse arquivo não acompanha clones
+do repositório. A conexão anterior do Docker foi preservada em `.env.docker.local`,
+também ignorado; esse arquivo não é carregado no modo de desenvolvimento padrão.
+
+### Desenvolvimento com banco local (opcional)
+
+Para executar uma instância Supabase local, também é necessário Docker em execução:
 
 ```powershell
 npm ci
@@ -29,6 +48,19 @@ provisione usuários e membros do workspace, copie `.env.example` para `.env.loc
 e preencha as duas variáveis públicas. O provisionador de demonstração aceita
 somente a instância local. Configuração ausente, falhas de rede e respostas
 inválidas são apresentadas explicitamente na interface.
+
+### Publicação na Vercel
+
+Importe o repositório na Vercel e configure `VITE_SUPABASE_URL` e
+`VITE_SUPABASE_PUBLISHABLE_KEY` com os valores públicos do projeto hospedado.
+`vercel.json` define Vite, o comando `npm run build`, a saída `dist` e o fallback
+das rotas para `index.html`. Mudanças nas variáveis exigem um novo build/deploy.
+Nunca use uma chave administrativa em variáveis `VITE_*`.
+
+Depois de obter a URL publicada, configure o Site URL e os redirecionamentos
+permitidos em Supabase Auth. Publicar o frontend não transfere dados nem aplica
+migrations automaticamente; veja [a preparação do backend](supabase/README.md#hospedagem).
+Use outro projeto Supabase para testes que alteram dados.
 
 ## Interface
 

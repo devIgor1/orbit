@@ -15,9 +15,10 @@ conversa, como projeto de referência.
 
 **Raiz do projeto:** `orbit/`. O arquivo de instruções será `orbit/AGENTS.md`.
 
-**Estado em 08/10/2026:** interface implementada e conectada ao Supabase local.
-Detalhes da entrega e verificações estão registrados na seção 13. A publicação
-pública continua pendente; o roadmap permanece como referência de aceite.
+**Estado em 08/10/2026:** interface implementada e conectada ao Supabase hospedado.
+A instalação local foi preservada. A publicação do frontend continua pendente;
+a seção 22 registra a configuração da nuvem e suas verificações. O roadmap
+permanece como referência de aceite.
 
 ## 2. Requisitos obrigatórios
 
@@ -724,3 +725,31 @@ Registro da primeira versão. A composição atual está documentada na seção 
   foram preservados com sufixos `.orbit-recovery-20261008` (e `-2`) antes de recriação.
   Supabase iniciou com os dados existentes; não houve reset ou escrita de negócio
   nesta entrega. Servidor Vite disponível em `http://127.0.0.1:5173`.
+
+## 22. Conexão com Supabase hospedado — 08/10/2026
+
+- `.env.local` configurado com a URL e a chave pública fornecidas pelo usuário;
+  conexão Docker anterior preservada em `.env.docker.local`, ambos ignorados pelo
+  Git. O frontend em desenvolvimento passa a consultar o backend hospedado.
+- Projeto `twsfyqkagyvibsilulle` vinculado pela CLI já autenticada. Aplicadas as
+  migrations `202610080001`, `202610080002` e `202610080003`, após dry run. O histórico
+  remoto confirma as três versões, sem seed, reset ou alteração do banco local.
+- Conta escolhida pelo usuário provisionada no Auth, perfil Igor Moraes Rocha e
+  workspace Orbit com vínculo de administrador. Senha gerada salva somente em
+  `.cloud-credentials.json`, ignorado pelo Git; nenhuma chave administrativa
+  persistida no frontend. Projetos e tarefas locais não foram transferidos.
+- Login pela API pública, vínculo de administrador, indicadores e diretório da
+  equipe confirmados. O backend retorna um membro, zero projetos e zero tarefas.
+  Acesso anônimo ao workspace recusado pelo banco. Tipos regenerados diretamente
+  do schema remoto, sem Docker.
+- `vercel.json` preparado para Vite, build, saída `dist` e fallback de rotas da SPA.
+  README e instruções do backend distinguem a execução hospedada do fluxo local.
+  Publicação na Vercel e configuração do domínio do Auth permanecem pendentes.
+- Lint, verificações de estilos e arquitetura, 32 testes unitários/integração e
+  TypeScript/build aprovados. Revisão autenticada no navegador confirmou login,
+  restauração de sessão após reload, dashboard, projetos, equipe, configurações,
+  menu mobile, logout e proteção de rotas. Todas as requisições de Auth/Data API
+  usaram o projeto hospedado, sem erros JavaScript ou escritas de negócio durante
+  a revisão. A primeira execução usou um título incorreto na asserção da página
+  de configurações; corrigida a asserção, a revisão completa passou.
+  Evidências locais em `test-results/cloud-connection`, ignoradas pelo Git.
