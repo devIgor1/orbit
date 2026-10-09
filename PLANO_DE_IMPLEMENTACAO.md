@@ -37,7 +37,8 @@ permanece como referência de aceite.
 
 | Área | Entrega |
 | --- | --- |
-| Autenticação | Login, logout, restauração de sessão e tratamento de sessão expirada. |
+| Autenticação | Cadastro com confirmação de e-mail, login, logout, restauração de sessão e tratamento de sessão expirada. |
+| Empresas | Cadastro, seleção da empresa ativa e convites de colaboradores vinculados ao e-mail. |
 | Visão geral | Projetos ativos, tarefas pendentes, atrasadas e concluídas; evolução semanal; atividades recentes. |
 | Projetos | Busca, filtros, paginação, criação, edição e arquivamento. |
 | Detalhes do projeto | Resumo, progresso, tarefas em lista e Kanban, responsáveis e prazos. |
@@ -45,7 +46,7 @@ permanece como referência de aceite.
 | Equipe | Membros reais do workspace, busca, tarefas atribuídas e edição do próprio perfil. |
 | Experiência compartilhada | Menu lateral, cabeçalhos, breadcrumbs, filtros, formulários e estados de consulta padronizados. |
 
-Rotas previstas: `/` (landing pública), `/login`, `/dashboard`, `/projects`, `/projects/:projectId` e
+Rotas previstas: `/` (landing pública), `/login`, `/signup`, `/companies`, `/dashboard`, `/projects`, `/projects/:projectId` e
 `/team`. O painel da tarefa pertence ao contexto de seu projeto.
 
 O Kanban permite mover tarefas entre etapas. A versão inicial usa ordenação estável
@@ -879,3 +880,161 @@ Registro da primeira versão. A composição atual está documentada na seção 
   confirmou SVG válido, resposta 200 e geometria idêntica à logo. Revisados 16,
   32 e 64 px; o build preserva o asset e sua referência. Captura em
   `test-results/favicon/preview.png`, ignorada pelo Git.
+
+## 28. Cadastro de usuários, empresas e colaboradores — 09/10/2026
+
+- Cadastro público em `/signup`, usando Supabase Auth, nome, e-mail, senha e
+  confirmação de senha. Estado específico para confirmação por e-mail, erros
+  explícitos, bloqueio de envio duplicado e preservação do formulário em falhas.
+  Login e cadastro compartilham `AuthLayout`; CTAs da landing levam ao cadastro.
+- `/companies` permite cadastrar a empresa pelo nome, abrir uma empresa existente
+  ou aceitar convites. Empresas reutilizam `workspaces` e o Kanban existente;
+  não há duplicação de projetos ou tarefas. Contas sem vínculo são encaminhadas
+  ao onboarding, sem apresentar falta de vínculo como indisponibilidade do backend.
+- `create_company` cria empresa, vínculo `admin` e preferência ativa na mesma
+  transação. `profiles.active_workspace_id` persiste a seleção; `select_company`
+  valida a associação. Usuários antigos continuam usando o primeiro vínculo até
+  escolherem outro. A sidebar e Configurações oferecem acesso às empresas.
+- Administradores encontram **Convidar colaborador** na página Equipe. O convite
+  normaliza o e-mail, vale sete dias e gera um link para compartilhamento manual.
+  Criá-lo novamente renova a validade do convite pendente; é possível cancelá-lo.
+  O destinatário usa uma conta com o mesmo e-mail confirmado. Convites não enviam
+  e-mails automaticamente; a interface explica o compartilhamento do link.
+- RLS protege a lista de convites. RPCs privilegiadas verificam administrador,
+  propriedade do e-mail em `auth.users`, validade e estado. Aceite bloqueia a linha,
+  cria somente papel `member` e seleciona a empresa atomicamente; repetição pela
+  mesma conta é idempotente. Nunca aceita papéis vindos de metadados editáveis.
+- Query keys incluem identidade e empresa; a troca cancela e descarta consultas
+  da empresa anterior. Os contratos de mutação exigem registro/identificador
+  confirmado. Erros de consulta, permissão e mutação não viram listas vazias.
+- Migrations `202610090001` e `202610090002` aplicadas no Supabase hospedado e
+  local, sem reset/seed. Tipos gerados novamente a partir do schema hospedado.
+  Configuração remota alterada somente para senha mínima de oito caracteres,
+  Site URL `http://127.0.0.1:5173` e retornos `/login**` em 127.0.0.1/localhost.
+  Confirmação por e-mail e demais configurações remotas foram preservadas.
+- A configuração local também exige confirmação e autoriza 5174 para a suíte
+  isolada `npm run test:onboarding`, que usa `.env.docker.local` e Mailpit local.
+  A suíte padrão exclui esse arquivo e a suíte nova recusa backend remoto.
+- Lint, TypeScript/build, estilos, arquitetura e lint SQL aprovados. Passaram
+  69 testes unitários/integração e 45 testes de banco (34 novos de onboarding).
+  O teste antigo de permissões agora compara a contagem real da empresa, em vez
+  de exigir exatamente os seis projetos do seed em um banco com testes persistidos.
+- Quatro E2E completos passaram em desktop/celular: cadastro e confirmação real,
+  empresa, convite, aceite, tarefas no Kanban, conclusão persistida e visível ao
+  administrador, troca/isolamento de empresas e convite revogado. A primeira
+  execução expôs uma espera ausente no teste ao capturar a URL do projeto;
+  corrigida a sincronização de navegação e reexecutados os cenários com sucesso.
+  Seis E2E de regressão do login e landing também passaram.
+- Revisão visual de cadastro, empresas e convites em 1440, 820, 390 e 320 px,
+  sem overflow horizontal ou erros JavaScript. Login e consultas no backend
+  hospedado confirmados, sem criar registros de negócio nele. Evidências em
+  `test-results/registration-review` e capturas dos E2E locais, ignoradas pelo Git.
+- Docker local recuperado preservando os diretórios de sockets com sufixos
+  `.orbit-recovery-20261009-*`; volumes e dados existentes foram mantidos.
+
+### Pendências externas
+
+- Publicação do frontend e configuração do domínio público continuam pendentes.
+  Ao publicar, ajustar Site URL e adicionar `https://SEU_DOMINIO/login**`.
+- Recuperação de senha e promoção/remoção de
+  colaboradores não integram esta entrega. A stack existente foi preservada.
+
+## 29. Paleta neutra alinhada à marca — 09/10/2026
+
+- Pesquisa nas referências de [composição](https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette)
+  e [papéis das escalas](https://www.radix-ui.com/colors/docs/palette-composition/understanding-the-scale)
+  do Radix Colors: base neutra, separação entre fundos, estados interativos,
+  bordas e textos; cores semânticas independentes. A direção escolhida para o
+  Orbit é grafite, branco suave e cinza quente, com cores próprias verificadas.
+- Tokens de `:root` substituem os antigos verdes/azuis e as declarações duplicadas
+  do workspace. Ações em `#292929`, fundo `#f7f7f5`, texto `#242321`, apoio
+  `#66635e`, sidebar `#101113` e destaque escuro `#dedbd5`. Botões preservam um
+  degradê discreto de carvão, com sombras neutras e estados de interação.
+- Logo herda a cor do contexto, ficando monocromática também em Empresas.
+  Campos, seletores, calendários, gráficos, avatares, login, cadastro, empresas
+  e navegação compartilham a paleta. A landing mantém sua composição e paisagem,
+  com destaques e foco em branco quente. Estados de sucesso, alerta e erro
+  preservam verde, âmbar e vermelho; baixa prioridade usa um neutro semântico.
+  Links de texto recebem sublinhado para não depender de cor como indicação.
+- Quatro imagens em `public/product` recapturadas do workspace local real, sem
+  editar pixels ou inserir registros. Essa prévia continua identificada como
+  demonstração. O servidor temporário usa modo Docker/porta 5175, mantendo a
+  aplicação principal e `.env.local` conectadas ao Supabase hospedado.
+- Medições pontuais conforme [WCAG 2.2 — texto](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
+  e [elementos não textuais](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html):
+  texto principal/fundo 14,64:1; secundário/branco 5,98:1; legenda/superfície suave
+  4,58:1; texto no ponto mais claro do botão 10,21:1; foco/branco 7,54:1;
+  borda do campo/branco 3,54:1. Rótulos de sucesso/erro/alerta superam 5:1 sobre
+  suas superfícies. Não constitui auditoria WCAG completa.
+- Revisão autenticada de empresas, dashboard, projetos e equipe em 1440, 820,
+  390 e 320 px, sem overflow nem erros JavaScript. Login/cadastro revisados em
+  desktop, tablet e celular; conferidos hover, foco e overlays de select/data.
+  Evidências e medições em `test-results/neutral-palette`, ignoradas pelo Git.
+- Lint, estilos, arquitetura, TypeScript/build e 69 testes unitários/integração
+  aprovados. Os 14 E2E de landing, login, selects e calendários passaram em
+  desktop/celular na execução final. Um caso de limpeza da data falhou na primeira
+  rodada e passou na repetição isolada e na suíte completa, sem mudança de código.
+  Nenhuma mudança nos contratos, dependências ou regras de negócio desta revisão;
+  não foram realizadas escritas de negócio nem reexecutadas migrations.
+
+## 30. SMTP Resend configurado — 09/10/2026
+
+- Configuração parcial em `supabase/hosted/supabase/config.toml`: host
+  `smtp.resend.com`, porta 465, usuário `resend` e nome do remetente `Orbit`.
+  API key e endereço remetente vêm de variáveis em `.env`, ignorado pelo Git.
+  O frontend não recebe credenciais SMTP; Mailpit continua sendo usado localmente.
+- Após acesso e autorização do usuário, identificado `codedbyigor.com` já
+  verificado. Criada a chave `Orbit Supabase Auth`, com permissão somente de envio
+  restrita a esse domínio. Remetente `Orbit <acesso@codedbyigor.com>`.
+- `config push` aplicou sete campos SMTP no projeto `twsfyqkagyvibsilulle`.
+  Confirmação por e-mail, URLs, permissões e demais propriedades preservadas.
+  `config diff` posterior confirmou zero diferenças nos campos declarados.
+  Documentado o carregamento explícito das variáveis para a CLI.
+- Teste real de conexão TLS e autenticação SMTP aprovado. Envio para o simulador
+  oficial `delivered+orbit-smtp-20261009@resend.dev` aceito e marcado **Delivered**
+  no Resend. Evidência em `test-results/resend-setup/smtp-delivered.jpg`.
+  O teste não verifica uma caixa real nem o cadastro completo no backend hospedado;
+  nenhum usuário/registro de negócio foi criado para essa validação.
+- Esta alteração de configuração não adiciona envio automático dos convites.
+  README e procedimento de manutenção atualizados; credenciais e cache da CLI
+  protegidos pelo `.gitignore`. Nenhuma mudança no frontend ou no schema.
+
+## 31. Envio de convites por e-mail — 09/10/2026
+
+- **Equipe → Convidar colaborador** agora oferece **Enviar convite**, com a opção
+  **Gerar só o link**. A lista permite reenviar, copiar, cancelar e consultar o
+  estado persistido. Formulário, lista e coordenação estão em componentes separados.
+  Os estilos novos seguem os tokens e o CSS central; interface mantém a paleta neutra.
+- Função Supabase `send-invitation` (Deno/TypeScript) chama a API do Resend no
+  backend para manter a chave fora do navegador. Gateway valida o JWT e a função
+  consulta `auth.getUser`. O corpo aceita somente o identificador do convite;
+  destinatário, identidade, remetente e URL vêm do banco/configuração do servidor.
+- Mensagem em português com nome da pessoa, empresa, validade e link de aceite.
+  Remetente `Nome, via Orbit <acesso@codedbyigor.com>` e Reply-To com o e-mail
+  confirmado de quem enviou. Nomes são escapados no HTML e normalizados nos headers.
+- Migration `202610090003` adiciona estado de envio ao convite e snapshots privados.
+  RPCs de reserva/conclusão exclusivas de `service_role` validam administrador e
+  confirmação de e-mail, recusam convites indisponíveis e serializam reservas.
+  Intervalo de um minuto por convite e limite de 30 novos envios/hora por empresa.
+- Falhas e respostas incertas mantêm a mensagem/chave de idempotência por até
+  23 horas. Reenvio após sucesso cria outra tentativa. A UI só mostra sucesso
+  após confirmação do Resend e do banco; falhas preservam o formulário e mostram
+  o convite já criado para copiar ou reenviar. `sent` significa aceito para envio,
+  sem promessa de leitura ou entrega em uma caixa real.
+- Migration aplicada localmente e no Supabase hospedado, tipos regenerados da
+  nuvem, três variáveis de servidor configuradas e função publicada com validação
+  JWT ativa. Verificação remota confirmou 401 sem sessão e 403 para convite
+  inexistente com sessão válida; nenhuma escrita de negócio ou envio na nuvem
+  foi feito para essa verificação.
+- O usuário confirmou que o frontend continua local. `ORBIT_APP_URL` permanece
+  `http://127.0.0.1:5173`; publicar e trocar a URL é necessário para abrir o link em
+  outros computadores. Não foi criada hospedagem nem assumido um domínio público.
+- Lint, estilos, arquitetura, TypeScript/build, Deno check e lint SQL aprovados.
+  Passaram 83 testes unitários/integração e 69 testes de banco, incluindo falhas de
+  envio, resposta sem identificador, permissão, limite, snapshot e idempotência.
+- Seis E2E passaram em desktop/celular, incluindo dois envios reais do backend
+  local ao simulador oficial do Resend, persistência, recusa de reenvio imediato,
+  aceite por conta confirmada e regressões de cadastro/empresa/Kanban. Todos os
+  registros desses testes ficaram no Supabase local. O Resend exibiu Delivered
+  simulado, nome via Orbit, Reply-To correto e link esperado. Evidências em
+  `test-results/invitation-email`; suites de envio externo exigem opt-in explícito.

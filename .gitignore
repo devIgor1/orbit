@@ -10,4 +10,5 @@ test-results/
 .demo-credentials.json
 .cloud-credentials.json
 supabase/.temp/
+supabase/hosted/supabase/.temp/
 supabase/.branches/

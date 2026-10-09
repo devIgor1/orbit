@@ -9,7 +9,7 @@ import { errorMessage } from '@/lib/errors/app-error'
 import { useAuth } from '../use-auth'
 import { loginSchema, type LoginValues } from '../schemas/login-schema'
 
-export function LoginForm() {
+export function LoginForm({ destination = '/companies' }: { destination?: string }) {
   const { configured, loading, signIn } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -41,6 +41,6 @@ export function LoginForm() {
     {submitError && <p role="alert" className="form-error">{submitError}</p>}
     {!configured && <p className="login-configuration">Conecte seu Supabase para entrar com uma conta real. <Link to="/settings">Configurar conexão</Link></p>}
     <Button type="submit" className="login-submit" disabled={busy || !configured}>{busy ? <><LoaderCircle className="loading-spinner" /> Entrando…</> : <>Entrar no workspace <ArrowRight /></>}</Button>
-    <p className="login-form-footer">Seu acesso é gerenciado pelo administrador do workspace.</p>
+    <p className="login-form-footer">Ainda não tem conta? <Link className="text-link" to={`/signup?next=${encodeURIComponent(destination)}`}>Criar conta</Link></p>
   </form>
 }

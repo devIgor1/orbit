@@ -1,40 +1,31 @@
 import { ArrowUpRight } from 'lucide-react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
 import { LoginForm } from '@/features/auth/components/login-form'
-import { LoginStory } from '@/features/auth/components/login-story'
+import { AuthLayout } from '@/features/auth/components/auth-layout'
 import { useAuth } from '@/features/auth/use-auth'
-import { loginRedirectPath } from '@/features/auth/redirect-path'
+import { loginRedirectPath, safeDestination } from '@/features/auth/redirect-path'
 
 export function LoginPage() {
   const { user, loading, error, configured } = useAuth()
   const location = useLocation()
-  if (user && !loading) return <Navigate to={loginRedirectPath(location.state)} replace />
+  const [params] = useSearchParams()
+  const destination = params.has('next') ? safeDestination(params.get('next')) : loginRedirectPath(location.state)
+  if (user && !loading) return <Navigate to={destination} replace />
 
   return (
-    <main className="login-page">
-      <LoginStory />
-      <section className="login-panel">
-        <div className="login-form-header">
-          <span className="eyebrow">BEM-VINDO AO ORBIT</span>
-          <h2>
-            Bom ter você
-            <br /> por aqui.
-          </h2>
-          <p>Entre na sua conta e coloque suas ideias em movimento.</p>
-        </div>
+    <AuthLayout eyebrow="BEM-VINDO AO ORBIT" title="Bom ter você por aqui." description="Entre na sua conta e coloque suas ideias em movimento.">
+        {location.hash.includes('error=') && <p role="alert" className="form-error">O link de confirmação expirou ou é inválido. Faça o cadastro novamente para solicitar outro link.</p>}
         {error && (
           <p role="alert" className="form-error">
             {error.message}
           </p>
         )}
-        <LoginForm />
+        <LoginForm destination={destination} />
         {!configured && (
           <Link className="login-back" to="/dashboard">
             Explorar o workspace <ArrowUpRight />
           </Link>
         )}
-        <span className="login-bottom-note">Menos ruído. Mais criação.</span>
-      </section>
-    </main>
+    </AuthLayout>
   )
 }

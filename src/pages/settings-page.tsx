@@ -72,6 +72,7 @@ export function SettingsPage() {
             </div>
           )}
           <div className="settings-panel-footer">
+            <Button variant="outline" asChild><Link to="/companies">Gerenciar empresas e convites</Link></Button>
             <Button asChild>
               <Link to={auth.user ? '/dashboard' : '/login'}>
                 {auth.user ? 'Voltar ao workspace' : 'Entrar no workspace'}

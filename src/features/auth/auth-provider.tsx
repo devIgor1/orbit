@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn(email: string, password: string) {
     const { data, error: signInError } = await getSupabase().auth.signInWithPassword({ email, password })
     if (signInError) {
+      if (signInError.code === 'email_not_confirmed') throw new AppError('authentication', 'Confirme seu e-mail pelo link recebido antes de entrar.')
       if (signInError.code === 'invalid_credentials') throw new AppError('authentication', 'E-mail ou senha incorretos. Confira seus dados e tente novamente.')
       throw toAppError(signInError)
     }

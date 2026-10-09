@@ -10,7 +10,7 @@ const questions = [
   {
     question: 'Como acesso meu workspace?',
     answer:
-      'Selecione “Acessar workspace” e entre com o e-mail e a senha da sua conta. O acesso exige uma conta já cadastrada e vinculada ao workspace da sua equipe; o cadastro público ainda não está disponível.',
+      'Selecione “Criar minha conta”, confirme seu e-mail e cadastre sua empresa. Se você recebeu um convite, use o mesmo e-mail informado pela empresa e aceite o convite. Quem já tem conta pode entrar pelo botão “Acessar workspace”.',
   },
   {
     question: 'Posso alternar entre lista e Kanban?',

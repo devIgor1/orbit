@@ -84,6 +84,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_workspace_id: string | null
           avatar_url: string | null
           created_at: string
           full_name: string
@@ -91,6 +92,7 @@ export type Database = {
           job_title: string | null
         }
         Insert: {
+          active_workspace_id?: string | null
           avatar_url?: string | null
           created_at?: string
           full_name: string
@@ -98,13 +100,22 @@ export type Database = {
           job_title?: string | null
         }
         Update: {
+          active_workspace_id?: string | null
           avatar_url?: string | null
           created_at?: string
           full_name?: string
           id?: string
           job_title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_workspace_id_fkey"
+            columns: ["active_workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -290,6 +301,76 @@ export type Database = {
           },
         ]
       }
+      workspace_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          email_job_id: string | null
+          email_requested_at: string | null
+          email_sent_at: string | null
+          email_status: string
+          expires_at: string
+          id: string
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          email_job_id?: string | null
+          email_requested_at?: string | null
+          email_sent_at?: string | null
+          email_status?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          email_job_id?: string | null
+          email_requested_at?: string | null
+          email_sent_at?: string | null
+          email_status?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invitations_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_invitations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_invitations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
@@ -349,10 +430,96 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: { Args: { invitation_id: string }; Returns: string }
+      create_company: {
+        Args: { company_name: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspaces"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       dashboard_summary: {
         Args: { period_days?: number; target_workspace: string }
         Returns: Json
       }
+      finish_invitation_email: {
+        Args: { delivery_id: string; message_id?: string }
+        Returns: string
+      }
+      invite_collaborator: {
+        Args: { invite_email: string; target_workspace: string }
+        Returns: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          email_job_id: string | null
+          email_requested_at: string | null
+          email_sent_at: string | null
+          email_status: string
+          expires_at: string
+          id: string
+          status: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspace_invitations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      my_invitations: {
+        Args: never
+        Returns: {
+          email: string
+          expires_at: string
+          id: string
+          workspace_name: string
+        }[]
+      }
+      prepare_invitation_email: {
+        Args: {
+          application_url: string
+          from_email: string
+          invitation_id: string
+          requester_id: string
+        }
+        Returns: Json
+      }
+      revoke_invitation: {
+        Args: { invitation_id: string }
+        Returns: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          email_job_id: string | null
+          email_requested_at: string | null
+          email_sent_at: string | null
+          email_status: string
+          expires_at: string
+          id: string
+          status: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspace_invitations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      select_company: { Args: { target_workspace: string }; Returns: string }
       team_directory: {
         Args: { search_term?: string; target_workspace: string }
         Returns: {

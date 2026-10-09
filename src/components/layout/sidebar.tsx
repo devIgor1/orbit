@@ -45,11 +45,11 @@ export function Sidebar({
         <Brand />
         <span className="edition-label">Seu espaço de criação</span>
       </div>
-      <Link className="workspace-switch" to="/settings" onClick={onNavigate}>
+      <Link className="workspace-switch" to="/companies" onClick={onNavigate}>
         <span className="workspace-emblem">{workspaceName?.slice(0, 1) ?? 'O'}</span>
         <span>
           <strong>{workspaceName ?? 'Seu workspace'}</strong>
-          <small>Espaço de criação</small>
+          <small>Trocar ou cadastrar empresa</small>
         </span>
         <ChevronRight />
       </Link>

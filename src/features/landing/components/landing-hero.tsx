@@ -28,8 +28,8 @@ export function LandingHero() {
           </p>
           <div className="landing-hero-actions">
             <Button asChild className="landing-action">
-              <Link to="/login">
-                Acessar workspace <ArrowUpRight />
+              <Link to="/signup">
+                Criar minha conta <ArrowUpRight />
               </Link>
             </Button>
             <Button asChild variant="outline" className="landing-action">

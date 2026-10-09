@@ -1,4 +1,4 @@
-export type ErrorKind = 'configuration' | 'authentication' | 'permission' | 'network' | 'contract' | 'unknown'
+export type ErrorKind = 'configuration' | 'authentication' | 'permission' | 'network' | 'contract' | 'unknown' | 'onboarding'
 
 export class AppError extends Error {
   readonly kind: ErrorKind

@@ -34,6 +34,8 @@ export function AppShell() {
   if (auth.loading) return <LoadingState label="Preparando seu espaço…" />
   if (auth.configured && !auth.user)
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+  if (auth.configured && workspace.isError && workspace.error instanceof Error && 'kind' in workspace.error && workspace.error.kind === 'onboarding')
+    return <Navigate to="/companies" replace />
   const sidebar = (
     <Sidebar
       workspaceName={workspace.data?.workspace.name}

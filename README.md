@@ -9,8 +9,8 @@ Requisitos: Node.js 24 LTS e npm. Com Supabase hospedado, Docker não é necess�
 para executar o frontend.
 
 Copie `.env.example` para `.env.local` e preencha a URL e a chave pública do projeto
-Supabase. As migrations e o vínculo da conta com um workspace precisam existir no
-backend. Depois execute:
+Supabase. Aplique as migrations no backend; a interface permite criar a conta e
+cadastrar a primeira empresa. Depois execute:
 
 ```powershell
 npm ci
@@ -44,7 +44,7 @@ O Supabase local utiliza portas 55521–55524 e não altera outros projetos Dock
 Veja [as instruções do backend](supabase/README.md) para migrations, RLS e métricas.
 
 Para usar um Supabase hospedado, aplique as migrations de `supabase/migrations`,
-provisione usuários e membros do workspace, copie `.env.example` para `.env.local`
+configure os e-mails de confirmação, copie `.env.example` para `.env.local`
 e preencha as duas variáveis públicas. O provisionador de demonstração aceita
 somente a instância local. Configuração ausente, falhas de rede e respostas
 inválidas são apresentadas explicitamente na interface.
@@ -72,6 +72,9 @@ Use outro projeto Supabase para testes que alteram dados.
 - **Projeto:** edição e arquivamento, tarefas em Kanban/lista e alteração de status.
 - **Tarefa:** criação, responsável, prioridade, prazo, edição, comentários e histórico.
 - **Equipe:** busca de membros, carga de trabalho e edição do próprio perfil.
+- **Cadastro (`/signup`):** nome, e-mail, senha e confirmação por e-mail pelo Supabase Auth.
+- **Empresas (`/companies`):** criar uma empresa, escolher a empresa ativa e aceitar convites.
+- **Colaboradores:** administradores criam e cancelam convites na página Equipe.
 - **Login:** autenticação real, restauração de sessão, logout e sessão expirada.
 - **Configurações:** estado da conexão e informações do workspace.
 
@@ -79,6 +82,46 @@ Use `Ctrl+K` / `⌘K` para buscar projetos. O Kanban permite arrastar no desktop
 cada tarefa também tem um seletor de etapa operável por teclado e em celular.
 Diálogos e painéis gerenciam foco, fechamento com Escape e bloqueio durante envio.
 Permissões são aplicadas pelo banco; apenas administradores gerenciam projetos.
+
+### Cadastro e empresas
+
+1. Acesse `/signup`, cadastre seu nome, e-mail e senha e confirme o e-mail recebido.
+2. Em `/companies`, cadastre o nome da empresa. Você se torna administrador desse
+   espaço e pode criar projetos. Usuários novos sem empresa chegam automaticamente a essa tela.
+3. Em **Equipe → Convidar colaborador**, informe o e-mail da pessoa e clique em
+   **Enviar convite**. O e-mail identifica você e a empresa; respostas chegam ao
+   seu endereço. Também é possível **Gerar só o link**, copiar, reenviar ou cancelar.
+4. A pessoa entra ou cria sua conta com o mesmo e-mail, confirma o endereço e aceita
+   o convite. Ela pode criar/editar tarefas, usar o Kanban e comentar nos projetos da empresa.
+
+Convites duram sete dias. Criar novamente um convite pendente para o mesmo endereço
+renova sua validade; convites cancelados ou vencidos não concedem acesso. Todos
+concedem o papel de colaborador (`member`), sem permissão de administrar projetos ou convites.
+O menu com o nome da empresa permite trocar de espaço; a escolha persiste no banco.
+O resultado do envio fica salvo no backend. Em falha, o convite permanece disponível
+para reenviar ou copiar o link, sem mostrar sucesso artificial. Reenvios respeitam
+um intervalo mínimo de um minuto; a empresa pode iniciar até 30 envios por hora.
+Consulte a [função de convites](supabase/functions/README.md) para configuração e testes.
+O endereço de retorno atual é local: convidados em outros computadores precisam
+que o frontend seja publicado e `ORBIT_APP_URL` seja atualizado no servidor.
+
+**E-mails de cadastro:** o Resend está configurado no Supabase hospedado com o
+remetente `Orbit <acesso@codedbyigor.com>`. A chave tem acesso somente de envio pelo
+domínio verificado e fica fora do frontend/Git. Configuração remota conferida e
+teste SMTP aceito, com entrega simulada registrada pelo Resend. Consulte a
+[configuração e as instruções de manutenção](supabase/hosted/README.md).
+A confirmação de e-mail continua obrigatória.
+Defina também o domínio público do frontend em Site URL e autorize
+`https://SEU_DOMINIO/login**` nos redirecionamentos. No desenvolvimento hospedado,
+estão configurados `http://127.0.0.1:5173` e os retornos `/login**` em localhost/127.0.0.1.
+
+Para testar o fluxo completo sem enviar e-mails externos, inicie o Supabase local,
+aplique `npx supabase db push --local`, preencha `.env.docker.local` com as duas
+variáveis públicas apontando à API `http://127.0.0.1:55521` e execute
+`npm run test:onboarding`. O teste abre o Vite em 5174, cria contas no banco local,
+lê os links de confirmação no Mailpit local (55524), valida convites e o Kanban em
+desktop/celular. Não executa contra o backend hospedado. A suíte padrão de E2E
+exclui esses cenários; ambos os ambientes conservam os dados após o teste.
 
 Todos os seletores de data usam `DatePicker` de `src/components/ui`, composto por
 [Calendar](https://ui.shadcn.com/docs/components/radix/calendar) e
@@ -109,13 +152,13 @@ adaptados. As versões exatas estão no `package-lock.json`.
 locais DM Sans/Plus Jakarta Sans, tokens, estados e responsividade.
 `components.json` aponta para o mesmo arquivo. TSX utiliza classes semânticas.
 
-Login e workspace compartilham superfícies neutras, grafite e ações azuis.
-O painel de apresentação do login usa os mesmos tokens escuros da sidebar, com
-texto claro e detalhes em azul. A landing usa uma variação escura própria,
-descrita abaixo.
+Login, cadastro, empresas e workspace compartilham grafite, branco suave e cinzas
+quentes. A logo é monocromática, clara sobre fundos escuros e escura sobre branco.
+O painel do login usa os mesmos tokens escuros da sidebar. A landing usa a variação
+escura da identidade, com detalhes em branco quente.
 
-Botões primários azuis usam um degradê diagonal com brilho interno e sombra suave.
-O acabamento é compartilhado pelo login, workspace e formulários em portal, com
+Botões primários usam um degradê discreto em carvão, brilho interno e sombra neutra.
+O acabamento é compartilhado por autenticação, empresas, workspace e formulários em portal, com
 estados de hover, pressionado, foco e desabilitado. As regras e os tokens
 `--button-primary-*` ficam exclusivamente em `globals.css`.
 
@@ -123,10 +166,11 @@ Os principais tokens compartilhados são:
 
 | Papel | Cor |
 | --- | --- |
-| Ações principais | Azul `#0868ce` |
-| Fundo do workspace | Neutro `#f6f6f3` |
-| Texto principal | `#242627` |
-| Destaques sobre grafite | Azul claro `#70baff` |
+| Ações principais | Carvão `#292929` |
+| Fundo do workspace | Branco suave `#f7f7f5` |
+| Texto principal | Grafite quente `#242321` |
+| Texto secundário | Cinza quente `#66635e` |
+| Destaques sobre grafite | Branco quente `#dedbd5` |
 | Painel do login e sidebar | Grafite `#101113` |
 
 São cores originais do Orbit. A organização semântica usa como referência a
@@ -154,6 +198,12 @@ negócio durante o QA.
 As medições de contraste cobrem os textos CSS verificados; não constituem uma
 auditoria WCAG completa. Esses resultados antecedem a reformulação da landing
 registrada na seção 18 do plano.
+
+A revisão atual, na seção 29, aplica a identidade monocromática ao sistema:
+carvão nas ações, branco suave nas superfícies e cinzas quentes nos apoios.
+O contraste medido é 10,21:1 no trecho mais claro do botão, 5,98:1 no texto
+secundário e 7,54:1 no foco sobre branco. Verde, âmbar e vermelho continuam
+comunicando estados. Links de texto têm sublinhado, sem depender de uma cor viva.
 
 A escala tipográfica compartilhada usa tokens `--font-size-*` em `rem`: legendas
 de 12 px, rótulos e textos secundários de 14 px, corpo e campos de 16 px e textos
@@ -232,7 +282,7 @@ demonstração antes de gravar as quatro imagens em `public/product`.
 
 ### Dashboard e navegação do workspace
 
-O painel combina navegação lateral escura, superfícies claras e ações em azul.
+O painel combina navegação lateral escura, superfícies claras e ações em carvão.
 A saudação usa a mesma paisagem da landing, seguida por uma faixa comparativa de
 indicadores. Projetos ativos aparecem em cartões com descrição e prazo; evolução,
 distribuição e atividade ocupam regiões separadas. Os valores continuam vindos
@@ -244,8 +294,8 @@ A listagem mostra até quatro projetos ativos, ordenados pela criação mais rec
 “Ver todos” abre a listagem filtrada. Atividade apresenta os últimos eventos
 consultados, sem afirmar transmissão em tempo real.
 
-Login e workspace compartilham tokens em `body:has(.app-shell,.login-page)` no CSS
-central, incluindo diálogos e painéis em portal. A navegação mobile usa o Sheet existente
+Login, cadastro, empresas e workspace herdam a paleta de `:root` no CSS central,
+incluindo diálogos e painéis em portal. A navegação mobile usa o Sheet existente
 abaixo de 900 px. Os componentes da visão geral ficam na feature de dashboard.
 Não há novas dependências, consultas, contratos ou migrations nesta alteração.
 
@@ -263,8 +313,8 @@ obtido pelo registry autenticado com autorização do usuário. O comando oficia
 uma pasta temporária; os componentes usados foram adaptados para Vite, os
 primitivos do Orbit e classes semânticas. O projeto continua com npm e ganhou
 somente `motion` como dependência de execução. Não há token no código/bundle.
-O tema preto, papel e azul do template é delimitado à landing e ao portal do
-menu mobile; login e workspace usam a paleta compartilhada descrita acima. Todos os estilos
+O tema preto e papel do template é delimitado à landing e ao portal do
+menu mobile; os destaques acompanham os neutros compartilhados descritos acima. Todos os estilos
 continuam na seção 09 de `globals.css`.
 
 Hero, recursos, canvas, chamada final e rodapé derivam dos arquivos oficiais.
@@ -318,7 +368,7 @@ Kanban e três benefícios do produto. Em telas largas, texto e benefícios fica
 lado da captura; em desktops menores, a composição é vertical. No celular, a
 apresentação é compacta para manter o formulário acessível.
 
-O fundo grafite, os textos claros e os detalhes em azul seguem a identidade do
+O fundo grafite, os textos claros e os detalhes em branco quente seguem a identidade do
 dashboard. O formulário usa as mesmas cores de ação, bordas e foco dos campos do
 workspace. Logo, ícones, moldura da captura e órbitas usam os tokens compartilhados.
 A substituição do verde/dourado está registrada na seção 24 do plano.

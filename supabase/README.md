@@ -36,9 +36,11 @@ somente esta instância: `npx supabase stop` executado nesta pasta de projeto.
 - Carga por membro: tarefas atribuídas não concluídas; o total concluído é separado.
 - Progresso sem tarefas: a UI deve apresentar explicitamente ausência de tarefas.
 
-A sessão seleciona o primeiro vínculo do usuário por `workspace_members.created_at`
-(com desempate por `workspace_id`). Esta versão não contém seletor de múltiplos
-workspaces. A escolha é resolvida por consulta real após a autenticação.
+A empresa é representada por `workspaces`. A sessão lê `profiles.active_workspace_id`,
+alterado exclusivamente pelas RPCs de criação, seleção e aceite de convite. Para
+contas anteriores sem preferência, usa o primeiro vínculo por criação/UUID.
+Sem vínculo, a aplicação direciona para `/companies`. A seleção continua sujeita
+à consulta do vínculo real e às políticas RLS.
 
 RLS restringe leituras ao workspace, criação/edição de projetos a administradores,
 edição de perfil ao próprio usuário e tarefas/comentários a membros. Chaves
@@ -54,8 +56,8 @@ migrations antes de aplicá-las:
 ```powershell
 npx supabase login
 npx supabase link --project-ref SEU_PROJECT_REF
-npx supabase db push --linked --dry-run --skip-vault
-npx supabase db push --linked --skip-vault
+npx supabase db push --linked --dry-run
+npx supabase db push --linked
 npx supabase migration list --linked
 ```
 
@@ -64,18 +66,42 @@ copiam os registros nem as contas do banco local. O seed exige os quatro e-mails
 descritos no provisionador e é exclusivo da demonstração local; não execute
 `npm run db:seed` para configurar a nuvem, pois ele também sobrescreve `.env.local`.
 
-Crie a conta pelo Supabase Auth Admin ou pelo painel Authentication. O trigger cria
-seu perfil. Crie o workspace e o vínculo em `workspace_members` com papel `admin`
-por uma operação administrativa; as políticas impedem que o navegador crie esses
-vínculos. Essa primeira configuração já foi concluída no projeto hospedado deste
-ambiente. A senha gerada foi gravada somente em `.cloud-credentials.json`, ignorado
-pelo Git; chaves administrativas foram usadas apenas em memória.
+Novas contas usam `/signup`; o trigger existente cria o perfil. Após confirmar o
+e-mail, `create_company` cria empresa, vínculo administrativo e preferência ativa
+em uma transação. `select_company` só aceita empresas com vínculo real. Escritas
+diretas em membros ou no campo de empresa ativa continuam proibidas ao frontend.
+O administrador original deste ambiente permanece disponível; sua senha inicial
+está em `.cloud-credentials.json`, ignorado pelo Git.
 
 Configure a URL e a chave pública em `.env.local` para desenvolvimento e nas
 variáveis da Vercel para publicação. Defina o Site URL e os redirecionamentos em
-Authentication depois de conhecer o domínio publicado. O login atual usa senha;
-fluxos de convite, confirmação e recuperação por e-mail exigem configuração e
-validação próprias antes de serem oferecidos na interface.
+Authentication depois de conhecer o domínio publicado. O retorno de confirmação
+usa `/login?next=...`, com destino interno validado. O SMTP Resend está ativo para
+confirmar contas externas, com remetente `Orbit <acesso@codedbyigor.com>` e chave
+limitada ao envio pelo domínio verificado. A configuração e sua validação estão em
+[`hosted/README.md`](hosted/README.md). O arquivo separado preserva o Mailpit local.
+Nunca desative a confirmação para contornar essa limitação: o aceite dos convites
+depende da propriedade do e-mail confirmada por `auth.users.email_confirmed_at`.
+
+### Convites e isolamento
+
+`workspace_invitations` guarda e-mail normalizado, empresa, validade, autor e estado.
+RLS permite leitura ao administrador da empresa e ao destinatário confirmado.
+`invite_collaborator` e `revoke_invitation` exigem administrador; `my_invitations`
+expõe somente convites próprios pendentes/válidos e o nome da empresa, sem abrir
+seus projetos. `accept_invitation` bloqueia a linha, verifica e-mail, estado e prazo,
+cria vínculo `member` e seleciona a empresa atomicamente. Repetir o aceite da mesma
+conta é idempotente. Papéis nunca vêm de metadados editáveis do usuário.
+As funções privilegiadas usam `search_path` vazio e permissões explícitas.
+
+Convites podem ser enviados por e-mail pela função autenticada `send-invitation`
+ou compartilhados por link. A mensagem identifica quem convidou e usa seu endereço
+confirmado como Reply-To. RPCs restritas ao servidor verificam permissões, reservam
+envios com limite e persistem seus resultados; snapshots privados permitem retries
+idempotentes. Consulte [`functions/README.md`](functions/README.md).
+Recuperação de senha e promoção/remoção de membros não foram incluídas neste fluxo.
+Os 34 cenários de `company_onboarding.test.sql` criam os
+próprios registros e os desfazem ao final; não dependem do seed.
 
 Para conferir os tipos do projeto vinculado sem depender do Docker, no PowerShell:
 

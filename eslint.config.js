@@ -20,4 +20,5 @@ export default tseslint.config(
   },
   { files: ['src/**/*.{ts,tsx}'], plugins: { 'react-refresh': reactRefresh }, rules: { 'react-refresh/only-export-components': ['warn', { allowConstantExport: true }] } },
   { files: ['**/*.{js,mjs}'], languageOptions: { globals: globals.node } },
+  { files: ['supabase/functions/**/*.ts'], languageOptions: { globals: { Deno: 'readonly' } } },
 )

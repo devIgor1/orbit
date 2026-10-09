@@ -1,0 +1,12 @@
+# Configuração parcial para o Supabase hospedado. Não iniciar uma stack local aqui.
+# Preencher hosted/.env antes de executar config diff/push (ver README.md).
+project_id = "orbit-resend"
+
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "env(ORBIT_SMTP_SENDER_EMAIL)"
+sender_name = "Orbit"

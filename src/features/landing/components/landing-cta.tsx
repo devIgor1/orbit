@@ -25,8 +25,8 @@ export function LandingCta() {
               <h2 id="landing-cta-title">Dê espaço à sua próxima grande ideia.</h2>
               <div className="landing-cta-actions">
                 <Button asChild className="landing-action">
-                  <Link to="/login">
-                    Acessar workspace <ArrowUpRight aria-hidden="true" />
+                  <Link to="/signup">
+                    Criar minha conta <ArrowUpRight aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="landing-action">

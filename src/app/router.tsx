@@ -4,6 +4,8 @@ import { NotFoundPage } from '@/pages/not-found-page'
 export const router = createBrowserRouter([
   { path: '/', lazy: async () => ({ Component: (await import('@/pages/landing-page')).LandingPage }) },
   { path: '/login', lazy: async () => ({ Component: (await import('@/pages/login-page')).LoginPage }) },
+  { path: '/signup', lazy: async () => ({ Component: (await import('@/pages/signup-page')).SignupPage }) },
+  { path: '/companies', lazy: async () => ({ Component: (await import('@/pages/companies-page')).CompaniesPage }) },
   {
     element: <AppShell />,
     children: [

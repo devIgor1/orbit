@@ -10,9 +10,10 @@ insert into public.workspace_members(workspace_id, user_id, role)
 values('f0b17000-0000-4000-8000-000000000002', 'f0b17000-0000-4000-8000-000000000001', 'admin');
 
 select set_config('request.jwt.claim.sub', (select id::text from auth.users where email = 'marina@orbit.local'), true);
+select set_config('test.expected_projects', (select count(*)::text from public.projects where workspace_id = 'a0b17000-0000-4000-8000-000000000001'), true);
 set local role authenticated;
 select is((select count(*) from public.workspaces), 1::bigint, 'Admin only sees own workspace');
-select is((select count(*) from public.projects), 6::bigint, 'Admin sees seeded projects');
+select is((select count(*) from public.projects), current_setting('test.expected_projects')::bigint, 'Admin sees all own projects and no outside projects');
 select is((select count(*) from public.profiles), 4::bigint, 'Directory only exposes colleagues');
 select throws_ok($$select public.dashboard_summary('f0b17000-0000-4000-8000-000000000002', 7)$$,
   '42501', null, 'Dashboard rejects another workspace');
