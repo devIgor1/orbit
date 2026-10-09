@@ -1,0 +1,8 @@
+Orbit — Fundo de montanhas
+Gerado em 08/10/2026 pela ferramenta integrada image_gen.
+Arquivo final: public/images/orbit-mountains.png
+Dimensão efetivamente retornada: 1672 x 941 px (PNG).
+Uso: fundo decorativo do hero e da chamada final; textos e interface permanecem em HTML/CSS.
+
+Prompt:
+Create an original photorealistic panoramic alpine landscape background for the Orbit landing page, 2048x1152, wide composition. Layered mountain ridges and a pine-covered valley at blue hour, distant peaks and low mist, muted petroleum green and charcoal shadows with a subtle warm honey light on the horizon. Cinematic editorial landscape photography, natural fine texture. Reserve the upper half and center for a large white website headline: calm dark sky, low detail, mountains rising mainly at the sides and lower half. The mountains must remain visibly recognizable, with depth and atmospheric separation. Understated, elegant, realistic, no people, no buildings, no text, no logos, no interface, no watermarks.
