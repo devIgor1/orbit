@@ -109,18 +109,20 @@ adaptados. As versões exatas estão no `package-lock.json`.
 locais DM Sans/Plus Jakarta Sans, tokens, estados e responsividade.
 `components.json` aponta para o mesmo arquivo. TSX utiliza classes semânticas.
 
-A paleta base, usada no login, combina verde petróleo e marfim, com mel nos
-destaques. O workspace usa superfícies neutras, sidebar grafite e ações azuis,
-conforme a seção "Dashboard e navegação do workspace". A landing usa uma
-variação escura própria, descrita abaixo. Os tokens da paleta base são:
+Login e workspace compartilham superfícies neutras, grafite e ações azuis.
+O painel de apresentação do login usa os mesmos tokens escuros da sidebar, com
+texto claro e detalhes em azul. A landing usa uma variação escura própria,
+descrita abaixo.
+
+Os principais tokens compartilhados são:
 
 | Papel | Cor |
 | --- | --- |
-| Marca e ações principais | Verde petróleo `#16665c` |
-| Fundo da aplicação | Marfim `#f7f8f4` |
-| Texto principal | `#233d37` |
-| Destaque complementar | Mel `#e6bb6c` |
-| Superfícies escuras do login | `#183f36` |
+| Ações principais | Azul `#0868ce` |
+| Fundo do workspace | Neutro `#f6f6f3` |
+| Texto principal | `#242627` |
+| Destaques sobre grafite | Azul claro `#70baff` |
+| Painel do login e sidebar | Grafite `#101113` |
 
 São cores originais do Orbit. A organização semântica usa como referência a
 [composição de paletas](https://www.radix-ui.com/colors/docs/palette-composition/composing-a-palette)
@@ -237,8 +239,8 @@ A listagem mostra até quatro projetos ativos, ordenados pela criação mais rec
 “Ver todos” abre a listagem filtrada. Atividade apresenta os últimos eventos
 consultados, sem afirmar transmissão em tempo real.
 
-Tokens do workspace ficam delimitados por `body:has(.app-shell)` no CSS central,
-incluindo diálogos e painéis em portal. A navegação mobile usa o Sheet existente
+Login e workspace compartilham tokens em `body:has(.app-shell,.login-page)` no CSS
+central, incluindo diálogos e painéis em portal. A navegação mobile usa o Sheet existente
 abaixo de 900 px. Os componentes da visão geral ficam na feature de dashboard.
 Não há novas dependências, consultas, contratos ou migrations nesta alteração.
 
@@ -257,7 +259,7 @@ uma pasta temporária; os componentes usados foram adaptados para Vite, os
 primitivos do Orbit e classes semânticas. O projeto continua com npm e ganhou
 somente `motion` como dependência de execução. Não há token no código/bundle.
 O tema preto, papel e azul do template é delimitado à landing e ao portal do
-menu mobile; login conserva sua paleta, e o workspace usa o tema descrito acima. Todos os estilos
+menu mobile; login e workspace usam a paleta compartilhada descrita acima. Todos os estilos
 continuam na seção 09 de `globals.css`.
 
 Hero, recursos, canvas, chamada final e rodapé derivam dos arquivos oficiais.
@@ -310,6 +312,11 @@ O painel esquerdo de `/login` combina a mensagem da marca, uma captura real do
 Kanban e três benefícios do produto. Em telas largas, texto e benefícios ficam ao
 lado da captura; em desktops menores, a composição é vertical. No celular, a
 apresentação é compacta para manter o formulário acessível.
+
+O fundo grafite, os textos claros e os detalhes em azul seguem a identidade do
+dashboard. O formulário usa as mesmas cores de ação, bordas e foco dos campos do
+workspace. Logo, ícones, moldura da captura e órbitas usam os tokens compartilhados.
+A substituição do verde/dourado está registrada na seção 24 do plano.
 
 `LoginStory` e `LoginBenefits` ficam em `src/features/auth/components`.
 `ProductPreview`, reutilizado pela landing e pelo login, fica em

@@ -790,6 +790,27 @@ Registro da primeira versão. A composição atual está documentada na seção 
   realizadas escritas de negócio na nuvem nem novas migrations; testes de banco
   não foram reexecutados nesta alteração de interface.
 
+## 24. Identidade do login alinhada ao dashboard — 08/10/2026
+
+- Login passou a compartilhar a paleta do workspace por meio do seletor
+  `body:has(.app-shell,.login-page)` no CSS central. Painel de apresentação em
+  grafite `#101113`, textos claros e detalhes em azul `#70baff`. Campos, estados
+  de foco e ação principal usam o azul `#0868ce` e os neutros do dashboard.
+- Tokens escuros agora são reutilizados pela sidebar e pelo painel do login.
+  A logo do login é inteiramente branca, acompanhando a landing e a sidebar;
+  o azul fica nos destaques e nas ações. Ícones dos benefícios, órbitas e moldura
+  da prévia acompanham a identidade.
+  Removidas declarações repetidas dos tokens do login nos breakpoints. Composição,
+  conteúdo, autenticação e comportamento permanecem os mesmos.
+- Revisão visual em 2560 × 960, 1440 × 1000, 820 × 1180 e 390 × 844, sem overflow
+  ou erros JavaScript. Contrastes medidos: título/grafite 17,14:1, texto secundário
+  9,22:1, legenda/moldura 7,57:1, texto secundário do formulário/branco 5,86:1 e
+  branco/azul do botão 5,41:1. Medições pontuais, sem afirmar auditoria completa.
+- Lint, estilos, arquitetura, TypeScript/build e 48 testes unitários/integração
+  aprovados. Dois E2E existentes de teclado e acessibilidade do login passaram
+  em desktop/celular. Capturas locais em `test-results/login-palette`, ignoradas
+  pelo Git. Nenhuma dependência, consulta, contrato ou migration foi alterada.
+
 ## 26. Select shadcn com Base UI em todo o sistema — 08/10/2026
 
 - Substituído o select nativo compartilhado pelo código do
