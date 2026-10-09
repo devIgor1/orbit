@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { passwordRequirements } from './password-policy'
 
+export const registrationEmailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email('Informe um e-mail válido.'))
+
 const passwordSchema = z
   .string()
   .max(72, 'Use até 72 caracteres.')
@@ -13,7 +15,7 @@ const passwordSchema = z
 export const signupSchema = z
   .object({
     fullName: z.string().trim().min(2, 'Informe seu nome completo.').max(100, 'Use até 100 caracteres.'),
-    email: z.email('Informe um e-mail válido.').trim().toLowerCase().max(254),
+    email: registrationEmailSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
   })

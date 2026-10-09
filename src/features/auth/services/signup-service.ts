@@ -18,7 +18,7 @@ export async function signUp(values: SignupValues, destination: string) {
         'configuration',
         'O envio de e-mails de confirmação ainda não está disponível para este endereço. Entre em contato com o administrador da plataforma.',
       )
-    if (error.code === 'user_already_exists')
+    if (error.code === 'user_already_exists' || error.code === 'email_exists')
       throw new AppError('contract', 'Já existe uma conta com este e-mail. Entre para continuar.')
     if (error.code === 'weak_password') throw new AppError('contract', passwordPolicyMessage)
     if (error.status === 429)
@@ -26,5 +26,10 @@ export async function signUp(values: SignupValues, destination: string) {
     throw toAppError(error)
   }
   if (!data.user) throw new AppError('contract', 'O servidor não confirmou o cadastro. Tente novamente.')
+  // Auth can conceal a repeated signup behind HTTP 200 and a user without identities.
+  if (!data.session && data.user.identities?.length === 0)
+    throw new AppError('contract', 'Já existe uma conta com este e-mail. Entre para continuar.')
+  if (!data.session && !data.user.identities)
+    throw new AppError('contract', 'O servidor não confirmou o cadastro. Tente novamente.')
   return { confirmationRequired: !data.session }
 }

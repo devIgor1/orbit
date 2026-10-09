@@ -1352,3 +1352,43 @@ Registro da primeira versão. A composição atual está documentada na seção 
 - Frontend integrado ao fluxo de publicação por push para `main`. Suspensão,
   novos cargos e permissões específicas por projeto ficam como evolução futura,
   fora desta entrega.
+
+## 46. Aviso antecipado de e-mail cadastrado — 09/10/2026
+
+- Consulta agregada no Supabase hospedado confirmou **zero grupos de e-mails
+  duplicados**. O problema relatado era a apresentação: o Auth pode responder a
+  um cadastro repetido com HTTP 200 e um usuário ofuscado, sem identidades. O
+  serviço agora recusa essa resposta e os códigos explícitos de conta existente,
+  preservando o formulário e sem abrir a confirmação como sucesso.
+- Conforme solicitado, o campo consulta o backend após 500 ms sem alterações em
+  um e-mail válido. Mostra **Este e-mail já está cadastrado**, com link para entrar
+  e o destino do convite preservado. Estados de consulta/conta existente bloqueiam
+  um novo envio. Ao trocar o endereço, cancela a consulta anterior e ignora respostas
+  atrasadas. Erros são visíveis, permitem nova tentativa e mantêm a validação final
+  do Auth como proteção contra cadastros concorrentes.
+- Cadastros pendentes de confirmação são diferenciados, com ação real para reenviar
+  o link via `auth.resend`, sem substituir a senha ou criar outro usuário. A URL de
+  confirmação preserva o onboarding ou convite. Reenvio possui estado de envio,
+  erro e confirmação da solicitação; limites existentes do Auth continuam ativos.
+- Migration `202610090009` aplicada localmente e no projeto hospedado. A nova RPC
+  pública retorna somente `available`, `registered` ou `confirmation_pending`;
+  não concede leitura de registros do Auth. Esse contrato permite intencionalmente
+  identificar se o e-mail informado já tem cadastro para atender ao aviso público.
+  Contadores privados limitam consultas por hash do IP encaminhado e globalmente,
+  sem armazenar os endereços consultados. Tipos regenerados do projeto hospedado;
+  lint dos schemas local e remoto aprovado. Documentação em `supabase/README.md`.
+- Componentes e hooks separados; formulários React Hook Form/Zod e estilos
+  compartilhados existentes, sem novo sistema visual. Normalização de e-mail é
+  compartilhada pelo formulário e pela consulta. Testes cobrem ausência de consulta
+  para endereço inválido, cancelamento/resposta fora de ordem, aviso anterior ao
+  envio, falha de rede, limites, reenvio e resposta ofuscada de cadastro repetido.
+- Vitest aprovado com 166 testes; lint, tipos/build, estilos e arquitetura
+  aprovados. Testes de banco passaram em 124 casos. E2E com Supabase/Mailpit
+  locais passaram nos seis fluxos de onboarding e nos quatro casos novos de
+  cadastro em desktop/celular, incluindo preservação da senha original e do vínculo
+  com a empresa. Os dois E2E de requisitos de senha também passaram. Capturas em
+  `test-results/registration-email-verified` e
+  `test-results/registration-email-mobile-final`.
+- Frontend integrado ao fluxo de publicação por push para `main`. Referências:
+  [cadastro no Supabase Auth](https://github.com/supabase/auth/blob/master/internal/api/signup.go)
+  e [controle de acesso e requisições](https://supabase.com/docs/guides/api/securing-your-api).

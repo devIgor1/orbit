@@ -122,6 +122,17 @@ fixtures no container `supabase_db_orbit`.
 
 ### Cadastro e empresas
 
+O cadastro verifica o e-mail após uma pausa de 500 ms na digitação. Contas existentes
+recebem um aviso junto ao campo, com acesso ao login; cadastros ainda não confirmados
+oferecem reenvio do link. Enquanto consulta ou identifica uma conta existente, o
+formulário bloqueia um novo cadastro. Erros de consulta são exibidos com nova tentativa;
+o envio final continua validado pelo Auth e não interpreta uma resposta ofuscada de
+cadastro repetido como sucesso. Trocar o endereço cancela a consulta anterior.
+
+A verificação usa `check_registration_email`, com retorno limitado a um status e
+limites de requisição no banco. Nome, identificadores e outros dados da conta não
+são retornados. A migration `202610090009` precisa estar aplicada antes do frontend.
+
 1. Acesse `/signup`, cadastre seu nome, e-mail e senha e confirme o e-mail recebido.
 2. O retorno `/auth/confirm` aguarda a sessão e encaminha ao `/onboarding`, sem
    exibir o formulário de login. Na primeira etapa, cadastre a empresa; somente

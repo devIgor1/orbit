@@ -10,6 +10,8 @@ import { useAuth } from '../use-auth'
 import { useSignup } from '../hooks/use-signup'
 import { signupSchema, type SignupValues } from '../schemas/signup-schema'
 import { PasswordRequirements } from './password-requirements'
+import { useRegistrationEmail } from '../hooks/use-registration-email'
+import { RegistrationEmailFeedback } from './registration-email-feedback'
 
 export function SignupForm({ destination }: { destination: string }) {
   const { configured } = useAuth()
@@ -24,6 +26,8 @@ export function SignupForm({ destination }: { destination: string }) {
     defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' },
   })
   const password = useWatch({ control, name: 'password' })
+  const email = useWatch({ control, name: 'email' })
+  const emailCheck = useRegistrationEmail(email)
   const busy = isSubmitting || signup.isPending
   const loginUrl = `/login?next=${encodeURIComponent(destination)}`
   if (signup.isSuccess && signup.data.confirmationRequired)
@@ -45,6 +49,7 @@ export function SignupForm({ destination }: { destination: string }) {
     <form
       className="login-form"
       onSubmit={handleSubmit(async (values) => {
+        if (emailCheck.blocked) return
         try {
           await signup.mutateAsync(values)
         } catch {
@@ -76,8 +81,8 @@ export function SignupForm({ destination }: { destination: string }) {
           type="email"
           autoComplete="email"
           disabled={busy}
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? 'signup-email-error' : undefined}
+          aria-invalid={!!errors.email || emailCheck.data === 'registered'}
+          aria-describedby={`signup-email-availability${errors.email ? ' signup-email-error' : ''}`}
           {...register('email')}
         />
         {errors.email && (
@@ -85,6 +90,7 @@ export function SignupForm({ destination }: { destination: string }) {
             {errors.email.message}
           </p>
         )}
+        <RegistrationEmailFeedback check={emailCheck} destination={destination} loginUrl={loginUrl} />
       </div>
       <div className="form-field">
         <label htmlFor="signup-password">Senha</label>
@@ -131,7 +137,7 @@ export function SignupForm({ destination }: { destination: string }) {
           Configure a conexão com o Supabase para criar sua conta.
         </p>
       )}
-      <Button type="submit" className="login-submit" disabled={busy || !configured}>
+      <Button type="submit" className="login-submit" disabled={busy || !configured || emailCheck.blocked}>
         {busy ? (
           'Criando conta…'
         ) : (

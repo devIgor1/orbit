@@ -1,14 +1,17 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SignupForm } from '@/features/auth/components/signup-form'
 import { signUp } from '@/features/auth/services/signup-service'
+import { checkRegistrationEmail } from '@/features/auth/services/registration-email-service'
 import { AppError } from '@/lib/errors/app-error'
 import { createTestClient, TestProviders, testAuth } from './test-providers'
 
 vi.mock('@/features/auth/services/signup-service', () => ({ signUp: vi.fn() }))
+vi.mock('@/features/auth/services/registration-email-service', () => ({ checkRegistrationEmail: vi.fn(), resendRegistrationConfirmation: vi.fn() }))
 beforeEach(() => {
   vi.mocked(signUp).mockReset()
+  vi.mocked(checkRegistrationEmail).mockReset().mockResolvedValue('available')
 })
 
 function renderForm() {
@@ -24,6 +27,7 @@ async function fillForm() {
   await user.type(screen.getByLabelText('E-mail'), 'nova@example.test')
   await user.type(screen.getByLabelText('Senha', { exact: true }), 'Senha-forte-2026')
   await user.type(screen.getByLabelText('Confirmar senha'), 'Senha-forte-2026')
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Criar minha conta' })).toBeEnabled())
   return user
 }
 

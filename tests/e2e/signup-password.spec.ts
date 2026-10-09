@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('cadastro mostra os requisitos e bloqueia senhas incompletas antes do envio', async ({ page }, testInfo) => {
   let signupRequests = 0
+  await page.route('**/rest/v1/rpc/check_registration_email', route => route.fulfill({ json: 'available' }))
   await page.route('**/auth/v1/signup**', async (route) => {
     signupRequests += 1
     await route.abort()

@@ -540,6 +540,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      check_registration_email: {
+        Args: { candidate_email: string }
+        Returns: Database["public"]["Enums"]["registration_email_status"]
+      }
       create_company: {
         Args: { company_name: string }
         Returns: {
@@ -691,6 +695,10 @@ export type Database = {
       activity_entity: "project" | "task" | "comment"
       member_role: "admin" | "member"
       project_status: "active" | "paused" | "completed" | "archived"
+      registration_email_status:
+        | "available"
+        | "registered"
+        | "confirmation_pending"
       task_priority: "low" | "medium" | "high"
       task_status: "todo" | "in_progress" | "review" | "done"
     }
@@ -823,6 +831,11 @@ export const Constants = {
       activity_entity: ["project", "task", "comment"],
       member_role: ["admin", "member"],
       project_status: ["active", "paused", "completed", "archived"],
+      registration_email_status: [
+        "available",
+        "registered",
+        "confirmation_pending",
+      ],
       task_priority: ["low", "medium", "high"],
       task_status: ["todo", "in_progress", "review", "done"],
     },

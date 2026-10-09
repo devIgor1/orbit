@@ -153,3 +153,26 @@ escritas diretas do frontend. Os tipos devem ser regenerados após as migrations
 obsoletas, transferência, preservação de autoria e comentários, isolamento,
 reabertura de tarefas e reinvitação. `npm run test:members:concurrency` verifica
 duas tentativas simultâneas de rebaixamento/remoção no banco Docker local.
+
+## Verificação antecipada do e-mail
+
+`202610090009_registration_email.sql` adiciona a RPC pública
+`check_registration_email(candidate_email)`. O retorno é somente um enum:
+`available`, `registered` ou `confirmation_pending`. A consulta normaliza espaços
+nas extremidades e maiúsculas, compara exatamente o endereço e ignora contas SSO
+separadas e registros apagados. Não retorna nomes, IDs, hashes de senha ou listas
+de usuários; acesso direto a `auth.users` continua fechado ao cliente.
+
+O endpoint permite identificar a existência do endereço para atender ao aviso do
+cadastro, inclusive antes de autenticar. A tabela privada `registration_email_limits`
+limita a 40 consultas por minuto por hash do IP encaminhado pelo gateway e 1200
+globais por minuto. A ausência do cabeçalho usa um bucket compartilhado; a cota
+global também se aplica a cabeçalhos variados. Contadores são atômicos, não guardam
+os e-mails pesquisados nem IPs em texto e são limpos após um dia de inatividade na
+próxima consulta. Erros usam `PT429` para limite e `22023` para entrada inválida.
+
+O reenvio usa `auth.resend` e os limites de envio já existentes do Auth, preservando
+o retorno `/auth/confirm` e o destino de convites. A prévia de disponibilidade não
+substitui a proteção do Auth: um cadastro concorrente continua recusado no envio.
+Testes SQL cobrem os três estados, normalização, isolamento e limites; E2E locais
+usam Mailpit para confirmar o reenvio sem enviar mensagens externas.

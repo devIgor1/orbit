@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: ['onboarding.spec.ts', 'invitation-email.spec.ts', 'member-management.spec.ts'],
+  testIgnore: ['onboarding.spec.ts', 'invitation-email.spec.ts', 'member-management.spec.ts', 'registration-email.spec.ts'],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
