@@ -1,0 +1,8 @@
+dist
+node_modules
+package-lock.json
+src/lib/supabase/database.generated.ts
+docs/screenshots
+test-results
+.env.local
+.demo-credentials.json

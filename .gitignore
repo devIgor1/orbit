@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+playwright-report/
+test-results/
+.supabase/
+.demo-credentials.json
+supabase/.temp/
+supabase/.branches/
