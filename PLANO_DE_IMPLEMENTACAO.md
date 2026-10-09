@@ -1309,3 +1309,46 @@ Registro da primeira versão. A composição atual está documentada na seção 
   de menu móvel foi ignorado no desktop. Revisados dez tamanhos entre 320 e 1440 px,
   sem overflow ou quebra do botão, incluindo a transição entre 600 e 601 px.
   Capturas em `test-results/mobile-header-review`. Sem alterações de backend.
+
+## 45. Gestão de acesso da equipe — 09/10/2026
+
+- Em **Equipe**, administradores podem alterar o acesso entre **Administrador** e
+  **Colaborador**, consultar as permissões de cada opção e remover pessoas da
+  empresa. Cargo profissional continua independente do nível de acesso. Formulários
+  usam React Hook Form/Zod, Select/Dialog compartilhados e estilos no CSS central.
+- A confirmação da remoção apresenta a pessoa, empresa e quantidade de tarefas
+  pendentes. O administrador escolhe outro membro ativo como responsável ou deixa
+  essas tarefas sem atribuição. Conta, outras empresas, projetos, autores,
+  comentários e tarefas concluídas são preservados. Responsáveis removidos continuam
+  identificados no histórico; ao reabrir uma tarefa concluída, a atribuição inativa
+  é removida. Novas atribuições exigem vínculo ativo no banco.
+- Migrations `202610090005` a `202610090008` adicionam remoção lógica do vínculo,
+  RPCs de prévia/alteração/remoção e histórico administrativo. A linha da empresa
+  serializa mudanças concorrentes; nenhuma operação pode remover ou rebaixar o
+  último administrador. Papel esperado e contagem de tarefas impedem confirmações
+  baseadas em dados obsoletos. Falhas preservam a seleção e oferecem atualização.
+- RLS e funções de convites/envio validam vínculos ativos. Remoção revoga convites
+  pendentes do destinatário e limpa a empresa ativa quando necessário. Um convite
+  novo permite retorno como Colaborador; um link antigo aceito não restaura acesso.
+  Autoria, data, papel anterior/novo e destino das tarefas ficam no **Histórico de
+  acessos**, com paginação e leitura exclusiva de administradores.
+- O backend aplica a mudança em cada operação. Sessões abertas verificam o acesso
+  a cada 15 segundos na aba ativa e ao recuperar foco; alterações descartam o cache
+  privado do contexto anterior e a lista de empresas/convites, fecham painéis e
+  retiram controles administrativos. A sessão global da conta permanece válida.
+- As quatro migrations foram aplicadas no Supabase local e hospedado. A listagem
+  confirmou versões sincronizadas e o lint do schema hospedado não encontrou erros.
+  Tipos regenerados diretamente do projeto hospedado. Nenhum dado de negócio de
+  produção foi usado como fixture ou removido para testar a funcionalidade.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. A suíte Vitest passou
+  com 151 testes; os 20 casos de gestão/cache foram reexecutados após o ajuste final.
+  O banco local passou em 108 testes e em duas disputas concorrentes de último
+  administrador (rebaixamento e remoção). Os seis E2E de onboarding existentes
+  também passaram. Os dois E2E de gestão passaram em desktop/celular, validando
+  promoção/rebaixamento percebidos em outra sessão, remoção, transferência,
+  comentário preservado, responsável histórico
+  e confirmação por teclado. Layout revisado em desktop, tablet, 390 px e 320 px;
+  capturas em `test-results/member-management-verified`.
+- Frontend integrado ao fluxo de publicação por push para `main`. Suspensão,
+  novos cargos e permissões específicas por projeto ficam como evolução futura,
+  fora desta entrega.

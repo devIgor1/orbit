@@ -12,6 +12,8 @@ import { useTeam } from '@/features/team/hooks/use-team'
 import { MemberCard } from '@/features/team/components/member-card'
 import { ProfileForm } from '@/features/team/components/profile-form'
 import { InvitationManager } from '@/features/companies/components/invitation-manager'
+import { MemberAccessDialog } from '@/features/team/components/member-access-dialog'
+import { MemberAccessHistory } from '@/features/team/components/member-access-history'
 
 export function TeamPage() {
   const [params, setParams] = useSearchParams()
@@ -23,13 +25,18 @@ export function TeamPage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [saved, setSaved] = useState(false)
   const [invitationsOpen, setInvitationsOpen] = useState(false)
+  const [accessNotice, setAccessNotice] = useState('')
+  const canManage = workspace.isSuccess && workspace.data.role === 'admin'
 
   return <div className="page-stack">
     <PageHeader eyebrow="CONEXÕES QUE CRIAM" title="Nossa equipe" description="Talentos diferentes. Um mesmo propósito." actions={<><Button variant="outline" disabled={!workspace.isSuccess} onClick={() => { setSaved(false); setProfileOpen(true) }}><UserRoundPen /> Editar meu perfil</Button>{workspace.isSuccess && workspace.data.role === 'admin' && <Button onClick={() => setInvitationsOpen(true)}><UserPlus /> Convidar colaborador</Button>}</>} />
     <section className="team-intro"><span className="team-intro-icon"><UsersRound /></span><div><h2>O melhor trabalho é feito junto.</h2><p>Conheça quem transforma as ideias do seu workspace em realidade.</p></div></section>
     {saved && <p role="status" className="success-notice">Seu perfil foi atualizado.</p>}
+    {accessNotice && <p role="status" className="success-notice">{accessNotice}</p>}
+    {canManage && <div className="team-access-toolbar"><p>Gerencie o acesso de cada pessoa pelo botão de ações no card.</p><MemberAccessHistory /></div>}
     <div className="filter-bar"><div className="search-field"><Search /><Input aria-label="Buscar pessoas" placeholder="Buscar por nome…" value={search} onChange={(event) => { const next = new URLSearchParams(params); if (event.target.value) next.set('search', event.target.value); else next.delete('search'); setParams(next, { replace: true }) }} /></div><span className="results-count">{team.isSuccess && `${team.data.length} ${team.data.length === 1 ? 'pessoa' : 'pessoas'}`}</span></div>
-    {!configured ? <ConnectionState /> : workspace.isError ? <ErrorState error={workspace.error} onRetry={() => void workspace.refetch()} /> : workspace.isPending || team.isPending ? <LoadingState label="Reunindo sua equipe…" /> : team.isError ? <ErrorState error={team.error} onRetry={() => void team.refetch()} /> : team.data.length === 0 ? <EmptyState title={search ? 'Nenhuma pessoa encontrada' : 'Sua equipe começa aqui'} description={search ? 'Tente buscar por outro nome.' : 'Os membros vinculados ao seu workspace aparecerão aqui.'} /> : <section className="team-grid" aria-label="Membros do workspace">{team.data.map((member) => <MemberCard key={member.id} member={member} isSelf={member.id === user?.id} />)}</section>}
+    {!configured ? <ConnectionState /> : workspace.isError ? <ErrorState error={workspace.error} onRetry={() => void workspace.refetch()} /> : workspace.isPending || team.isPending ? <LoadingState label="Reunindo sua equipe…" /> : team.isError ? <ErrorState error={team.error} onRetry={() => void team.refetch()} /> : team.data.length === 0 ? <EmptyState title={search ? 'Nenhuma pessoa encontrada' : 'Sua equipe começa aqui'} description={search ? 'Tente buscar por outro nome.' : 'Os membros vinculados ao seu workspace aparecerão aqui.'} /> : <section className="team-grid" aria-label="Membros do workspace">{team.data.map((member) => <MemberCard key={member.id} member={member} isSelf={member.id === user?.id}
+      actions={canManage && <MemberAccessDialog member={member} companyName={workspace.data.workspace.name} onChanged={setAccessNotice} />} />)}</section>}
     {workspace.isSuccess && <Dialog open={profileOpen} onOpenChange={setProfileOpen} title="Editar meu perfil" description="Deixe seu perfil com a sua cara."><ProfileForm key={workspace.data.profile.id + workspace.data.profile.full_name + workspace.data.profile.job_title} profile={workspace.data.profile} onSaved={() => { setProfileOpen(false); setSaved(true) }} /></Dialog>}
     {workspace.isSuccess && workspace.data.role === 'admin' && <Dialog open={invitationsOpen} onOpenChange={setInvitationsOpen} title="Adicionar colaboradores" description={`Convide sua equipe para ${workspace.data.workspace.name}.`}><InvitationManager /></Dialog>}
   </div>

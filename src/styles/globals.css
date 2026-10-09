@@ -308,6 +308,7 @@ body:has(.app-shell,.login-page,.companies-page) .ui-button-primary:is(:disabled
 .section-tabs button { font-size: var(--font-size-label); font-weight: 500; border: 0; padding: 8px 2px 15px; color: var(--muted-foreground); background: none; border-bottom: 2px solid transparent; }
 .section-tabs button[data-active=true] { border-bottom-color: var(--primary); color: var(--primary); }
 .section-tabs button:hover { color: var(--primary); }
+.section-tabs button:disabled { opacity: .6; cursor: wait; }
 .form-stack,.login-form,.profile-form { display: flex; flex-direction: column; gap: 20px; }
 .form-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .form-field label,.form-label { font-size: var(--font-size-label); font-weight: 500; color: var(--foreground); }
@@ -679,6 +680,20 @@ body:has(.app-shell,.login-page,.companies-page) {
 .member-workload > span { display: inline-flex; gap: 4px; align-items: center; font-size: var(--font-size-caption); color: var(--muted-foreground); }
 .member-workload svg { width: 12px; height: 12px; }
 .member-workload strong { color: var(--foreground); font-weight: 500; }
+.member-card-actions { display: flex; align-items: center; gap: var(--space-2); }
+.member-card-actions > .ui-button { flex-shrink: 0; }
+.team-access-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.team-access-toolbar > p { color: var(--muted-foreground); font-size: var(--font-size-label); }
+.team-access-toolbar > .ui-button { flex-shrink: 0; }
+.member-management,.member-management-error,.member-access-history { display: flex; flex-direction: column; gap: var(--space-5); }
+.member-management-error > .ui-button { align-self: flex-start; }
+.member-permission-preview,.member-removal-summary { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-muted); }
+.member-permission-preview > svg,.member-removal-summary > svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--muted-foreground); }
+.member-permission-preview h3,.member-removal-summary h3 { font-size: var(--font-size-body); margin-bottom: var(--space-2); overflow-wrap: normal; word-break: normal; }
+.member-permission-preview p,.member-removal-summary p { color: var(--muted-foreground); font-size: var(--font-size-label); }
+.member-access-notice { padding: var(--space-3) var(--space-4); background: var(--warning-soft); color: var(--warning); border: 1px solid var(--warning-border); border-radius: var(--radius-sm); font-size: var(--font-size-label); }
+.member-history-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--border); font-size: var(--font-size-caption); color: var(--muted-foreground); }
+@media (max-width: 600px) { .team-access-toolbar { align-items: flex-start; flex-direction: column; } .member-card-actions { gap: var(--space-1); } }
 .results-count { font-size: var(--font-size-label); color: var(--muted-foreground); }
 .profile-form-intro { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
 .profile-form-intro p { color: var(--muted-foreground); font-size: var(--font-size-label); }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/use-auth'
 import { useWorkspace } from '@/features/workspace/use-workspace'
 import { LoadingState, ErrorState } from '@/components/shared/query-state'
@@ -11,12 +11,20 @@ import { HelpDialog } from './help-dialog'
 
 export function AppShell() {
   const auth = useAuth()
-  const workspace = useWorkspace()
+  const workspace = useWorkspace(true)
   const location = useLocation()
+  const navigate = useNavigate()
+  const previousCompany = useRef<string | undefined>(undefined)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [signOutError, setSignOutError] = useState<unknown>(null)
+  useEffect(() => {
+    if (!workspace.isSuccess) return
+    const companyId = workspace.data.workspace.id
+    if (previousCompany.current && previousCompany.current !== companyId) navigate('/companies', { replace: true })
+    previousCompany.current = companyId
+  }, [workspace.isSuccess, workspace.data, navigate])
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
@@ -35,7 +43,7 @@ export function AppShell() {
   if (auth.configured && !auth.user)
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
   if (auth.configured && workspace.isError && workspace.error instanceof Error && 'kind' in workspace.error && workspace.error.kind === 'onboarding')
-    return <Navigate to="/onboarding" replace />
+    return <Navigate to={workspace.data ? '/companies' : '/onboarding'} replace />
   const sidebar = (
     <Sidebar
       workspaceName={workspace.data?.workspace.name}
@@ -72,7 +80,7 @@ export function AppShell() {
           ) : workspace.isError && auth.configured ? (
             <ErrorState error={workspace.error} onRetry={() => void workspace.refetch()} />
           ) : (
-            <Outlet />
+            <Outlet key={`${workspace.data?.workspace.id}-${workspace.data?.role}`} />
           )}
         </main>
         <footer className="app-footer">

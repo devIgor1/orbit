@@ -50,7 +50,7 @@ describe('Contratos RPC', () => {
   it('aceita diretório vazio e campos opcionais explicitamente nulos', async () => {
     backend.rpc.mockResolvedValueOnce({ data: [], error: null })
     await expect(fetchTeam('workspace-1')).resolves.toEqual([])
-    const member = { id: 'f4444444-4444-4444-8444-444444444444', full_name: 'Pessoa de teste', role: 'member', avatar_url: null, job_title: null, assigned_tasks: 0, completed_tasks: 0 }
+    const member = { id: 'f4444444-4444-4444-8444-444444444444', full_name: 'Pessoa de teste', role: 'member', avatar_url: null, job_title: null, assigned_tasks: 0, completed_tasks: 0, is_active: true }
     backend.rpc.mockResolvedValueOnce({ data: [member], error: null })
     await expect(fetchTeam('workspace-1')).resolves.toEqual([member])
   })

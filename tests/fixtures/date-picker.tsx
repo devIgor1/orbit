@@ -35,6 +35,7 @@ function DatePickerFixture() {
                 avatar_url: null,
                 job_title: null,
                 role: 'member',
+                is_active: true,
                 assigned_tasks: 0,
                 completed_tasks: 0,
               },

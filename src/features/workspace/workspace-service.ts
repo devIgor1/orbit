@@ -7,7 +7,7 @@ export async function fetchWorkspace(userId: string) {
   const profileResult = await client.from('profiles').select('*').eq('id', userId).single()
   if (profileResult.error) throw toAppError(profileResult.error)
   const profile = requireRecord(profileResult.data, userId)
-  let query = client.from('workspace_members').select('workspace_id,role').eq('user_id', userId)
+  let query = client.from('workspace_members').select('workspace_id,role').eq('user_id', userId).is('removed_at', null)
   if (profile.active_workspace_id) query = query.eq('workspace_id', profile.active_workspace_id)
   const { data: membership, error: memberError } = await query.order('created_at').order('workspace_id').limit(1).maybeSingle()
   if (memberError) throw toAppError(memberError)

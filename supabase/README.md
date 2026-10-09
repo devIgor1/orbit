@@ -102,7 +102,7 @@ ou compartilhados por link. A mensagem identifica quem convidou e usa seu endere
 confirmado como Reply-To. RPCs restritas ao servidor verificam permissões, reservam
 envios com limite e persistem seus resultados; snapshots privados permitem retries
 idempotentes. Consulte [`functions/README.md`](functions/README.md).
-Recuperação de senha e promoção/remoção de membros não foram incluídas neste fluxo.
+Recuperação de senha permanece fora deste fluxo. A gestão de membros está descrita abaixo.
 Os 34 cenários de `company_onboarding.test.sql` criam os
 próprios registros e os desfazem ao final; não dependem do seed.
 
@@ -125,3 +125,31 @@ alternativa explícita em UTF-8 é `npx supabase gen types typescript --local | 
 O RPC do diretório também é validado, incluindo nulidade de avatar e cargo. A API de
 introspecção do PostgreSQL não informa a nulidade de colunas retornadas por função;
 os aliases desses campos herdam o contrato da tabela `profiles` gerada.
+
+## Gestão de acesso de membros
+
+As migrations `202610090005` a `202610090008` adicionam `removed_at` ao vínculo,
+auditoria em `workspace_member_events` e RPCs administrativas. `member_management_details`
+retorna a prévia autoritativa; `change_member_role` e `remove_workspace_member`
+exigem administrador ativo, papel esperado e, na remoção, a contagem de tarefas
+pendentes confirmada pelo usuário. A linha da empresa serializa essas operações
+antes da releitura de permissões e da proteção do último administrador.
+
+Remover marca o vínculo como inativo, transfere/desassocia tarefas pendentes,
+limpa a preferência de empresa ativa quando aplicável e revoga convites pendentes
+para esse destinatário. Tudo ocorre na mesma transação do registro de auditoria.
+RLS e funções de envio consideram somente vínculos ativos. O aceite de um novo
+convite restaura o vínculo como `member`; links antigos aceitos não permitem reentrada.
+
+Chaves estrangeiras existentes preservam autores e responsáveis históricos.
+Triggers verificam e bloqueiam vínculos ativos para autores e novas atribuições;
+uma tarefa concluída mantém o responsável removido e fica sem responsável ao
+ser reaberta. `team_directory` exclui removidos por padrão e aceita `include_removed`
+para resolver nomes no histórico dos projetos, somente por membros ativos.
+O histórico de acesso tem leitura exclusiva de administradores e não aceita
+escritas diretas do frontend. Os tipos devem ser regenerados após as migrations.
+
+`member_management.test.sql` cobre autorização, último administrador, prévias
+obsoletas, transferência, preservação de autoria e comentários, isolamento,
+reabertura de tarefas e reinvitação. `npm run test:members:concurrency` verifica
+duas tentativas simultâneas de rebaixamento/remoção no banco Docker local.

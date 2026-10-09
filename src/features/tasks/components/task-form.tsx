@@ -137,7 +137,9 @@ export function TaskForm({
                 aria-invalid={!!errors.assignee_id}
                 items={[
                   { value: '', label: 'Sem responsável' },
-                  ...members.map((member) => ({ value: member.id, label: member.full_name })),
+                  ...members.filter((member) => member.is_active || member.id === task?.assignee_id).map((member) => ({
+                    value: member.id, label: member.is_active ? member.full_name : `${member.full_name} (fora da equipe)`, disabled: !member.is_active,
+                  })),
                 ]}
               />
             )}

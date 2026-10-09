@@ -73,7 +73,7 @@ Use outro projeto Supabase para testes que alteram dados.
 - **Projetos:** busca e filtros pela URL, cards/lista e paginação no backend.
 - **Projeto:** edição e arquivamento, tarefas em Kanban/lista e alteração de status.
 - **Tarefa:** criação, responsável, prioridade, prazo, edição, comentários e histórico.
-- **Equipe:** busca de membros, carga de trabalho e edição do próprio perfil.
+- **Equipe:** busca de membros, carga de trabalho, edição do próprio perfil e gestão de acessos por administradores.
 - **Cadastro (`/signup`):** nome, e-mail e senha com pelo menos 8 caracteres, uma
   maiúscula, uma minúscula, um número e um símbolo. Requisitos exibidos durante a
   digitação e exigidos pelo Supabase Auth; confirmação de conta por e-mail.
@@ -90,6 +90,35 @@ Use `Ctrl+K` / `⌘K` para buscar projetos. O Kanban permite arrastar no desktop
 cada tarefa também tem um seletor de etapa operável por teclado e em celular.
 Diálogos e painéis gerenciam foco, fechamento com Escape e bloqueio durante envio.
 Permissões são aplicadas pelo banco; apenas administradores gerenciam projetos.
+
+### Gestão de membros
+
+Em **Equipe**, administradores usam o botão de ações de cada pessoa para alterar
+seu acesso entre Administrador e Colaborador ou removê-la da empresa. A confirmação
+mostra empresa, pessoa e quantidade de tarefas pendentes; é possível transferi-las
+para outro membro ativo ou deixá-las sem responsável. O último administrador não
+pode ser removido ou rebaixado. Alterações concorrentes são serializadas no banco;
+se papel ou contagem de tarefas mudarem desde a abertura, é necessário atualizar
+os dados e confirmar novamente.
+
+A remoção encerra o vínculo ativo, preservando a conta, outras empresas, autoria,
+comentários e tarefas concluídas. A atribuição de tarefas concluídas continua
+visível como histórica; ao reabri-las, o responsável removido é desassociado.
+Novas atribuições aceitam apenas pessoas ativas. Um novo convite válido permite
+retornar como Colaborador, sem recuperar permissões administrativas anteriores.
+Convites já aceitos não restauram um acesso removido.
+
+**Histórico de acessos**, disponível para administradores, registra quem alterou
+ou removeu o acesso, quando, o papel anterior/novo e o destino das tarefas.
+O backend aplica as permissões em cada operação, inclusive com sessão já aberta.
+O workspace verifica alterações de acesso a cada 15 segundos enquanto a aba está
+ativa e ao recuperar o foco; mudanças descartam o cache privado anterior e fecham
+os painéis do contexto antigo. Nenhuma sessão global da conta é encerrada.
+
+Validação local: `npm run test:db`, `npm run test:members:concurrency` e
+`npm run test:onboarding -- tests/e2e/member-management.spec.ts`. Esses testes
+usam somente o Supabase local; a suíte de concorrência cria e remove suas próprias
+fixtures no container `supabase_db_orbit`.
 
 ### Cadastro e empresas
 

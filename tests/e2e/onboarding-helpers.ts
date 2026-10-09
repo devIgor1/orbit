@@ -6,9 +6,9 @@ const messagesSchema = z.object({
 })
 const messageSchema = z.object({ HTML: z.string() })
 
-export async function createLocalAccount(page: Page, email: string, destination = '/onboarding') {
+export async function createLocalAccount(page: Page, email: string, destination = '/onboarding', name = 'Pessoa de teste Orbit') {
   await page.goto(`/signup?next=${encodeURIComponent(destination)}`)
-  await page.getByLabel('Nome completo', { exact: true }).fill('Pessoa de teste Orbit')
+  await page.getByLabel('Nome completo', { exact: true }).fill(name)
   await page.getByLabel('E-mail', { exact: true }).fill(email)
   await page.getByLabel('Senha', { exact: true }).fill('Orbit-test-password-2026!')
   await page.getByLabel('Confirmar senha', { exact: true }).fill('Orbit-test-password-2026!')

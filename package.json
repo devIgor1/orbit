@@ -19,6 +19,7 @@
     "test:onboarding": "playwright test --config playwright.onboarding.config.ts",
     "db:types": "npx supabase gen types typescript --local > src/lib/supabase/database.generated.ts",
     "test:db": "npx supabase test db",
+    "test:members:concurrency": "node scripts/test-member-concurrency.mjs",
     "db:start": "npx supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor",
     "db:seed": "node supabase/provision-demo.mjs"
   },

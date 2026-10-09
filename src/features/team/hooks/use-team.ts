@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useQueryScope } from '@/features/workspace/use-query-scope'
 import * as service from '../services/team-service'
 
-export function useTeam(search = '') {
+export function useTeam(search = '', includeRemoved = false) {
   const scope = useQueryScope()
   return useQuery({
-    queryKey: ['team', scope.userId, scope.workspaceId, search],
-    queryFn: () => service.fetchTeam(scope.requireScope().workspaceId, search),
+    queryKey: ['team', scope.userId, scope.workspaceId, search, includeRemoved],
+    queryFn: () => service.fetchTeam(scope.requireScope().workspaceId, search, includeRemoved),
     enabled: scope.enabled,
   })
 }

@@ -30,7 +30,7 @@ export function ProjectPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const project = useProject(projectId)
   const tasks = useTasks(projectId)
-  const team = useTeam()
+  const team = useTeam('', true)
   const workspace = useWorkspace()
   const { updateTask } = useTaskMutations(projectId)
   const search = params.get('search') ?? ''

@@ -31,7 +31,7 @@ describe('Estados reais do diretório', () => {
   })
 
   it('não exibe dados antigos como atuais quando a atualização falha', async () => {
-    vi.mocked(fetchTeam).mockResolvedValueOnce([{ ...testWorkspace.profile, role: 'member', assigned_tasks: 3, completed_tasks: 1 }])
+    vi.mocked(fetchTeam).mockResolvedValueOnce([{ ...testWorkspace.profile, role: 'member', assigned_tasks: 3, completed_tasks: 1, is_active: true }])
     const client = createTestClient()
     render(<TestProviders client={client}><TeamPage /></TestProviders>)
     expect(await screen.findByRole('heading', { name: /Pessoa de teste/ })).toBeVisible()

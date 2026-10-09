@@ -371,21 +371,101 @@ export type Database = {
           },
         ]
       }
+      workspace_member_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string
+          affected_tasks: number
+          created_at: string
+          id: string
+          member_id: string | null
+          member_name: string
+          new_role: Database["public"]["Enums"]["member_role"] | null
+          previous_role: Database["public"]["Enums"]["member_role"]
+          reassigned_name: string | null
+          reassigned_to: string | null
+          workspace_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name: string
+          affected_tasks?: number
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          member_name: string
+          new_role?: Database["public"]["Enums"]["member_role"] | null
+          previous_role: Database["public"]["Enums"]["member_role"]
+          reassigned_name?: string | null
+          reassigned_to?: string | null
+          workspace_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string
+          affected_tasks?: number
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          member_name?: string
+          new_role?: Database["public"]["Enums"]["member_role"] | null
+          previous_role?: Database["public"]["Enums"]["member_role"]
+          reassigned_name?: string | null
+          reassigned_to?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_member_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_member_events_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_member_events_reassigned_to_fkey"
+            columns: ["reassigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_member_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
+          removed_at: string | null
           role: Database["public"]["Enums"]["member_role"]
           user_id: string
           workspace_id: string
         }
         Insert: {
           created_at?: string
+          removed_at?: string | null
           role?: Database["public"]["Enums"]["member_role"]
           user_id: string
           workspace_id: string
         }
         Update: {
           created_at?: string
+          removed_at?: string | null
           role?: Database["public"]["Enums"]["member_role"]
           user_id?: string
           workspace_id?: string
@@ -431,6 +511,35 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { invitation_id: string }; Returns: string }
+      change_member_role: {
+        Args: {
+          expected_role: Database["public"]["Enums"]["member_role"]
+          new_role: Database["public"]["Enums"]["member_role"]
+          target_user: string
+          target_workspace: string
+        }
+        Returns: {
+          action: string
+          actor_id: string | null
+          actor_name: string
+          affected_tasks: number
+          created_at: string
+          id: string
+          member_id: string | null
+          member_name: string
+          new_role: Database["public"]["Enums"]["member_role"] | null
+          previous_role: Database["public"]["Enums"]["member_role"]
+          reassigned_name: string | null
+          reassigned_to: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspace_member_events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_company: {
         Args: { company_name: string }
         Returns: {
@@ -477,6 +586,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      member_management_details: {
+        Args: { target_user: string; target_workspace: string }
+        Returns: {
+          full_name: string
+          is_last_admin: boolean
+          pending_tasks: number
+          role: Database["public"]["Enums"]["member_role"]
+          user_id: string
+        }[]
+      }
       my_invitations: {
         Args: never
         Returns: {
@@ -494,6 +613,36 @@ export type Database = {
           requester_id: string
         }
         Returns: Json
+      }
+      remove_workspace_member: {
+        Args: {
+          expected_pending_tasks: number
+          expected_role: Database["public"]["Enums"]["member_role"]
+          replacement_user?: string
+          target_user: string
+          target_workspace: string
+        }
+        Returns: {
+          action: string
+          actor_id: string | null
+          actor_name: string
+          affected_tasks: number
+          created_at: string
+          id: string
+          member_id: string | null
+          member_name: string
+          new_role: Database["public"]["Enums"]["member_role"] | null
+          previous_role: Database["public"]["Enums"]["member_role"]
+          reassigned_name: string | null
+          reassigned_to: string | null
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workspace_member_events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       revoke_invitation: {
         Args: { invitation_id: string }
@@ -521,13 +670,18 @@ export type Database = {
       }
       select_company: { Args: { target_workspace: string }; Returns: string }
       team_directory: {
-        Args: { search_term?: string; target_workspace: string }
+        Args: {
+          include_removed?: boolean
+          search_term?: string
+          target_workspace: string
+        }
         Returns: {
           assigned_tasks: number
           avatar_url: string
           completed_tasks: number
           full_name: string
           id: string
+          is_active: boolean
           job_title: string
           role: Database["public"]["Enums"]["member_role"]
         }[]
