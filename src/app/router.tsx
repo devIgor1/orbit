@@ -6,6 +6,8 @@ export const router = createBrowserRouter([
   { element: <AppShell />, children: [
       { path: '/settings', lazy: async () => ({ Component: (await import('@/pages/settings-page')).SettingsPage }) },
       { path: '/team', lazy: async () => ({ Component: (await import('@/pages/team-page')).TeamPage }) },
+      { path: '/projects', lazy: async () => ({ Component: (await import('@/pages/projects-page')).ProjectsPage }) },
+      { path: '/projects/:projectId', lazy: async () => ({ Component: (await import('@/pages/project-page')).ProjectPage }) },
       { path: '*', element: <NotFoundPage /> },
   ] },
 ])
