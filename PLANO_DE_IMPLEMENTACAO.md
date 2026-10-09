@@ -1296,3 +1296,16 @@ Registro da primeira versão. A composição atual está documentada na seção 
   overflow horizontal. Capturas em `test-results/onboarding-steps`.
 - Frontend permanece local até commit/push. URLs do Auth já estão preparadas para
   a publicação. Referência: [redirecionamentos do Supabase](https://supabase.com/docs/guides/auth/redirect-urls).
+
+## 44. Cabeçalho da landing no celular — 09/10/2026
+
+- A ação do cabeçalho exibe **Acessar** até 600 px, em uma linha com a seta.
+  O nome acessível permanece **Acessar workspace** e o destino continua `/login`.
+  Removidos os limites de largura que forçavam a quebra do texto.
+- Logo e ações não encolhem; botão e menu têm altura de 44 px, com área de toque
+  de 44 × 44 px no menu. Estilos permanecem exclusivamente no CSS central.
+- Lint, estilos, arquitetura e TypeScript/build aprovados. Sete E2E de acesso,
+  navegação por seções, retorno ao início e foco do menu passaram; o caso exclusivo
+  de menu móvel foi ignorado no desktop. Revisados dez tamanhos entre 320 e 1440 px,
+  sem overflow ou quebra do botão, incluindo a transição entre 600 e 601 px.
+  Capturas em `test-results/mobile-header-review`. Sem alterações de backend.

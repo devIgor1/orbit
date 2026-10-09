@@ -951,7 +951,7 @@ body:has(.app-shell,.login-page,.companies-page) {
 .landing-header { position: sticky; top: 0; z-index: 40; background: var(--landing-paper); border-bottom: 1px solid transparent; transition: background 240ms ease,box-shadow 240ms ease,border-color 240ms ease; }
 .landing-header[data-scrolled=true] { background: var(--landing-glass); backdrop-filter: blur(18px); border-color: var(--landing-line); box-shadow: 0 8px 30px #00000020; }
 .landing-header-inner { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.landing-header .brand { font-size: 26px; }
+.landing-header .brand { flex-shrink: 0; font-size: 26px; }
 .landing-header .brand-mark svg { width: 28px; height: 28px; }
 .landing-nav { display: flex; align-items: center; gap: 28px; }
 .landing-nav a,.landing-footer-nav a { font-size: var(--font-size-label); color: var(--muted-foreground); transition: color var(--duration); }
@@ -959,8 +959,8 @@ body:has(.app-shell,.login-page,.companies-page) {
 .landing-nav a::after { content: ''; position: absolute; bottom: 0; inset-inline: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 240ms ease; }
 .landing-nav a:hover::after,.landing-nav a[aria-current=location]::after { transform: scaleX(1); }
 .landing-nav a:hover,.landing-nav a[aria-current=location],.landing-footer-nav a:hover { color: var(--foreground); }
-.landing-header-actions { display: flex; align-items: center; gap: 10px; }
-.landing-header-login { min-height: 42px; font-size: var(--font-size-label); }
+.landing-header-actions { display: flex; flex-shrink: 0; align-items: center; gap: 10px; }
+.landing-header-login { min-height: 44px; font-size: var(--font-size-label); white-space: nowrap; }
 .landing-menu-trigger { display: none; }
 .landing-mobile-nav { display: flex; flex-direction: column; gap: 8px; }
 .landing-mobile-nav > a:not(.ui-button) { display: flex; align-items: center; justify-content: space-between; padding: 16px 12px; border-bottom: 1px solid var(--border); border-radius: var(--radius-sm); }
@@ -1098,7 +1098,7 @@ body:has(.app-shell,.login-page,.companies-page) {
 }
 @media (max-width: 900px) {
   .landing-nav { display: none; }
-  .landing-menu-trigger { display: inline-flex; }
+  .landing-menu-trigger { display: inline-flex; flex-shrink: 0; width: 44px; height: 44px; }
   .landing-hero h1 { font-size: clamp(44px,7.5vw,64px); letter-spacing: -2.6px; }
   .landing-tour-caption { grid-template-columns: 1fr; gap: 22px; }
   .landing-tour-caption ul { flex-direction: row; flex-wrap: wrap; gap: 12px 20px; }
@@ -1112,10 +1112,9 @@ body:has(.app-shell,.login-page,.companies-page) {
   .landing-header-inner { height: 76px; gap: 12px; }
   .landing-header .brand { font-size: 26px; gap: 6px; }
   .landing-header .brand-mark svg { width: 27px; height: 27px; }
-  .landing-header-login { max-width: 142px; white-space: normal; min-height: 44px; padding: 9px 12px; line-height: 1.4; }
-  .landing-header-login svg { display: none; }
-  .landing-header-actions { gap: 5px; }
-  .landing-menu-trigger { width: 36px; height: 44px; }
+  .landing-header-login { padding: 10px 14px; }
+  .landing-header-login-context { display: none; }
+  .landing-header-actions { gap: 8px; }
   .landing-hero { padding-top: 46px; }
   .landing-hero-backdrop { inset-block-start: -76px; }
   .landing-landscape-image img { object-position: 42% center; }
@@ -1170,7 +1169,7 @@ body:has(.app-shell,.login-page,.companies-page) {
   .landing-page .product-preview-location { font-size: var(--font-size-caption); gap: 5px; flex-wrap: wrap; }
   .landing-page .product-preview-tag { display: none; }
 }
-@media (max-width: 360px) { .landing-page { --landing-gutter: 17px; } .landing-header-login { max-width: 125px; } .landing-audience li { font-size: var(--font-size-label); } }
+@media (max-width: 360px) { .landing-page { --landing-gutter: 17px; } .landing-audience li { font-size: var(--font-size-label); } }
 
 /* Aceternity feature tabs */
 .landing-features-original {

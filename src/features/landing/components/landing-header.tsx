@@ -25,8 +25,9 @@ export function LandingHeader() {
         </nav>
         <div className="landing-header-actions">
           <Button asChild className="landing-header-login">
-            <Link to="/login">
-              Acessar workspace <ArrowUpRight />
+            <Link to="/login" aria-label="Acessar workspace">
+              <span>Acessar<span className="landing-header-login-context"> workspace</span></span>
+              <ArrowUpRight />
             </Link>
           </Button>
           <Sheet
