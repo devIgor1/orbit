@@ -80,10 +80,29 @@ cada tarefa também tem um seletor de etapa operável por teclado e em celular.
 Diálogos e painéis gerenciam foco, fechamento com Escape e bloqueio durante envio.
 Permissões são aplicadas pelo banco; apenas administradores gerenciam projetos.
 
+Todos os seletores de data usam `DatePicker` de `src/components/ui`, composto por
+[Calendar](https://ui.shadcn.com/docs/components/radix/calendar) e
+[Popover](https://ui.shadcn.com/docs/components/radix/popover) do shadcn. Criação e
+edição de projetos e tarefas oferecem calendário em português, seleção de mês/ano,
+Hoje e Limpar data. A interface exibe `DD/MM/AAAA`; os formulários mantêm `YYYY-MM-DD`
+sem conversão UTC e os serviços existentes convertem o campo vazio em `null`.
+Setas navegam pelos dias, Enter seleciona e Escape fecha o calendário e devolve
+o foco ao campo. O controle fica desabilitado durante o envio.
+
+Todos os selects usam o [Select shadcn com Base UI](https://ui.shadcn.com/docs/components/base/select),
+adaptado do registro `base-nova`. Isso inclui período do dashboard, filtros,
+formulários, etapa das tarefas no Kanban/lista e mês/ano do calendário.
+`OptionsSelect` recebe opções tipadas, `value` e `onValueChange`; formulários usam
+`Controller` e mantêm os contratos existentes. “Sem responsável” continua sendo
+o valor vazio, convertido pelo serviço. Setas, busca por digitação, Home/End,
+Enter e Escape são tratados pela biblioteca; rótulos e foco permanecem acessíveis.
+`TaskStatusSelect` reutiliza o padrão em cards e tabelas, mantendo o último status
+confirmado até o backend concluir a atualização.
+
 ## Sistema visual e arquitetura
 
 React 19, Vite 8, TypeScript estrito, React Router, TanStack Query, Supabase,
-React Hook Form, Zod, Recharts, Lucide, Tailwind v4 e primitivos shadcn/Radix
+React Hook Form, Zod, Recharts, Lucide, Tailwind v4 e primitivos shadcn/Base UI e Radix
 adaptados. As versões exatas estão no `package-lock.json`.
 
 `src/styles/globals.css` é a única fonte de estilos autorais, incluindo fontes
@@ -145,7 +164,15 @@ mantêm o cabeçalho visível enquanto o corpo rola.
 
 O adaptador `src/components/shared/chart-geometry.ts` lê dimensões do tema
 para APIs do Recharts; a biblioteca controla apenas coordenadas e posicionamento.
+`src/lib/dom/popover-geometry.ts` resolve os tokens CSS de afastamento e borda
+para o posicionamento e a prevenção de colisões do Radix e do Base UI. O calendário usa
+`react-day-picker` e `date-fns`, sem estilos próprios fora do CSS central.
 `Progress` utiliza o elemento HTML nativo. Nenhum componente define estilos inline.
+
+`SelectLayer` integra o portal Base UI à pilha de foco e fechamento dos Dialog,
+Sheet e Popover Radix existentes. Assim, Escape fecha primeiro o select e a escolha
+de uma opção mantém o formulário aberto. O calendário de um mês navega pelo
+`goToMonth` público do DayPicker, sem simular eventos de selects nativos.
 
 As tabelas desta entrega usam HTML semântico e a paginação/filtros dos serviços.
 O arraste usa Drag and Drop nativo, com seletor de status como alternativa acessível.
@@ -175,6 +202,16 @@ do CSS central. Testes unitários cobrem falhas, contratos, sessão e preservaç
 de formulários. Testes de banco verificam RLS e vínculos. E2E usa exclusivamente
 o backend local para escrita e verifica persistência depois do reload, teclado,
 desktop e celular. Screenshots ficam em `test-results`.
+
+O teste `npx playwright test tests/e2e/date-picker.spec.ts` usa uma entrada isolada
+em `tests/fixtures`, com os formulários reais em Dialog/Sheet. Verifica teclado,
+foco, seleção, remoção e formato enviado em desktop/celular, sem autenticação nem
+escritas no backend. Essa entrada não faz parte do build de produção. O check de
+arquitetura rejeita inputs de data e selects nativos para manter o padrão shadcn.
+`npx playwright test tests/e2e/date-picker.spec.ts tests/e2e/select.spec.ts` também
+verifica os valores dos selects, remoção do responsável, opções longas e
+preservação dos campos em erro. As fixtures e falhas simuladas são exclusivas
+dos testes; não substituem as consultas reais da aplicação.
 
 Para atualizar os contratos após alterar migrations: `npm run db:types`.
 Não altere manualmente `src/lib/supabase/database.generated.ts`.

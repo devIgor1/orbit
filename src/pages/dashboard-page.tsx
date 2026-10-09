@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/ui/select'
+import { OptionsSelect } from '@/components/shared/options-select'
 import { ErrorState, LoadingState } from '@/components/shared/query-state'
 import { useAuth } from '@/features/auth/use-auth'
 import { useWorkspace } from '@/features/workspace/use-workspace'
@@ -34,14 +34,15 @@ export function DashboardPage() {
           <>
             <span className="period-picker">
               <CalendarDays />
-              <Select
+              <OptionsSelect
                 aria-label="Período dos indicadores"
-                value={days}
-                onChange={(event) => setParams({ period: event.target.value })}
-              >
-                <option value="7">Últimos 7 dias</option>
-                <option value="30">Últimos 30 dias</option>
-              </Select>
+                value={String(days)}
+                onValueChange={(period) => setParams({ period })}
+                items={[
+                  { value: '7', label: 'Últimos 7 dias' },
+                  { value: '30', label: 'Últimos 30 dias' },
+                ]}
+              />
             </span>
             <Button
               onClick={create}

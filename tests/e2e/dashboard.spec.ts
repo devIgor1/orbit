@@ -10,7 +10,8 @@ test('período consulta indicadores reais e mantém os projetos acessíveis', as
       response.request().postDataJSON()?.period_days === 30 &&
       response.ok(),
   )
-  await page.getByRole('combobox', { name: 'Período dos indicadores' }).selectOption('30')
+  await page.getByRole('combobox', { name: 'Período dos indicadores' }).click()
+  await page.getByRole('option', { name: 'Últimos 30 dias', exact: true }).click()
   const summary = await (await responsePromise).json()
   await expect(page).toHaveURL(/period=30/)
   await expect(page.locator('.metric-value')).toHaveText(
@@ -40,7 +41,8 @@ test('falha nos indicadores mostra erro, preserva projetos e permite recuperaç�
       body: JSON.stringify({ message: 'Indisponibilidade simulada no teste.' }),
     }),
   )
-  await page.getByRole('combobox', { name: 'Período dos indicadores' }).selectOption('30')
+  await page.getByRole('combobox', { name: 'Período dos indicadores' }).click()
+  await page.getByRole('option', { name: 'Últimos 30 dias', exact: true }).click()
   await expect(page.getByRole('alert')).toBeVisible()
   await expect(page.locator('.metrics-grid')).toHaveCount(0)
   await expect(page.locator('.evolution-panel')).toHaveCount(0)

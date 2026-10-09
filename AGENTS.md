@@ -139,8 +139,15 @@ deve ser tratado com reutilização e organização interna, preservando a fonte
 
 ## 8. Identidade visual e padronização
 
-- Use os mesmos Button, Input, Select, Dialog, Sheet, DataTable e StatusBadge em
+- Use os mesmos Button, Input, Select, DatePicker, Dialog, Sheet, DataTable e StatusBadge em
   todo o sistema, com variantes documentadas.
+- Todo Select deve usar os primitivos shadcn Base UI de `src/components/ui/select.tsx`.
+  Para listas simples, reutilize `OptionsSelect`; formulários usam Controller e
+  `onValueChange`. Não adicione selects nativos, inclusive nos calendários.
+- Todo seletor de data deve usar o DatePicker compartilhado do shadcn (Calendar +
+  Popover em `src/components/ui`), inclusive em filtros e formulários novos.
+  Não use inputs nativos `date`, `datetime-local`, `month` ou `week`. Exiba datas
+  em português brasileiro e preserve o contrato de data sem horário do backend.
 - Padronize PageHeader, FilterBar, MetricCard, EmptyState, ErrorState e LoadingState.
 - Preserve escala tipográfica, espaçamentos, densidade, raios e hierarquia de ações.
 - Novas páginas devem combinar padrões existentes antes de criar novos padrões.

@@ -4,7 +4,10 @@ import { localCredentials, openWorkspace } from './local-session'
 test('projeto, responsável, status e comentário persistem no Supabase após reload', async ({ page }, testInfo) => {
   // This workflow confirms multiple server writes and full authenticated reloads.
   test.setTimeout(60_000)
-  test.skip(!await localCredentials(), 'Requer Supabase local e contas provisionadas; nunca escreve em backend remoto.')
+  test.skip(
+    !(await localCredentials()),
+    'Requer Supabase local e contas provisionadas; nunca escreve em backend remoto.',
+  )
   await openWorkspace(page, '/projects')
   const projectTitle = `Verificação ${testInfo.project.name} ${Date.now()}`
   const taskTitle = 'Validar entrega pelo teclado'
@@ -17,23 +20,28 @@ test('projeto, responsável, status e comentário persistem no Supabase após re
   await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/)
   await expect(page.getByRole('heading', { name: projectTitle, exact: true })).toBeVisible()
   const projectUrl = page.url()
-  await testInfo.attach('created-project-id', { body: new URL(projectUrl).pathname.split('/').at(-1), contentType: 'text/plain' })
+  await testInfo.attach('created-project-id', {
+    body: new URL(projectUrl).pathname.split('/').at(-1),
+    contentType: 'text/plain',
+  })
   await page.getByRole('button', { name: 'Nova tarefa', exact: true }).click()
   await page.getByLabel('Nome da tarefa').fill(taskTitle)
-  await page.getByLabel('Responsável', { exact: true }).selectOption({ index: 1 })
+  await page.getByRole('combobox', { name: 'Responsável', exact: true }).click()
+  await page.getByRole('option').nth(1).click()
   await page.getByRole('button', { name: 'Criar tarefa', exact: true }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
   const status = page.getByRole('combobox', { name: `Status de ${taskTitle}`, exact: true })
-  await expect(status).toHaveValue('todo')
+  await expect(status).toHaveText('A fazer')
   await status.focus()
+  await page.keyboard.press('Enter')
   await page.keyboard.press('End')
   await page.keyboard.press('Enter')
-  await expect(status).toHaveValue('done')
+  await expect(status).toHaveText('Concluído')
   await page.reload()
   await expect(page.getByRole('heading', { name: projectTitle, exact: true })).toBeVisible()
-  await expect(page.getByRole('combobox', { name: `Status de ${taskTitle}`, exact: true })).toHaveValue('done')
+  await expect(page.getByRole('combobox', { name: `Status de ${taskTitle}`, exact: true })).toHaveText('Concluído')
   await page.getByRole('button', { name: taskTitle, exact: true }).click()
-  await expect(page.getByLabel('Responsável', { exact: true })).not.toHaveValue('')
+  await expect(page.getByRole('combobox', { name: 'Responsável', exact: true })).not.toHaveText('Sem responsável')
   await page.getByRole('button', { name: 'Comentários', exact: true }).click()
   await page.getByLabel('Adicionar comentário', { exact: true }).fill('Revisão confirmada pelo teste local.')
   await page.getByRole('button', { name: 'Enviar comentário', exact: true }).click()
@@ -48,6 +56,6 @@ test('projeto, responsável, status e comentário persistem no Supabase após re
   await page.getByRole('dialog').getByRole('button', { name: 'Arquivar projeto', exact: true }).click()
   await expect(page).toHaveURL(/status=archived/)
   await page.goto(projectUrl)
-  await expect(page.getByRole('combobox', { name: `Status de ${taskTitle}`, exact: true })).toHaveValue('done')
+  await expect(page.getByRole('combobox', { name: `Status de ${taskTitle}`, exact: true })).toHaveText('Concluído')
   await expect(page.getByRole('button', { name: 'Arquivar projeto', exact: true })).toHaveCount(0)
 })

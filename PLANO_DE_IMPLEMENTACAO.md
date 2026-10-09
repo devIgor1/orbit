@@ -753,3 +753,77 @@ Registro da primeira versão. A composição atual está documentada na seção 
   a revisão. A primeira execução usou um título incorreto na asserção da página
   de configurações; corrigida a asserção, a revisão completa passou.
   Evidências locais em `test-results/cloud-connection`, ignoradas pelo Git.
+
+## 23. DatePicker shadcn em todo o sistema — 08/10/2026
+
+- Adicionados `Calendar`, `Popover` e `DatePicker` compartilhados em
+  `src/components/ui`, adaptados do código oficial shadcn/ui Radix/new-york-v4.
+  Dependências instaladas com npm: `@radix-ui/react-popover@1.2.0`,
+  `react-day-picker@10.0.2` e `date-fns@4.4.0`. Stack principal preservada.
+- Substituídos todos os inputs de data nativos: criação/edição de projetos e
+  criação/edição de tarefas, incluindo o painel lateral. Formulários usam
+  Controller do React Hook Form; nenhuma alteração em consultas, serviços ou banco.
+- Calendário em português brasileiro, exibição `DD/MM/AAAA`, seletores de mês e
+  ano, Hoje e Limpar data. Navegação vai de 1900 até vinte anos à frente, ampliada
+  automaticamente para acomodar datas existentes fora desse intervalo.
+  `src/lib/date-only.ts` mantém `YYYY-MM-DD` sem conversão UTC; campos vazios
+  continuam convertidos em `null` pelas operações existentes de projeto/tarefa.
+- Foco inicial no dia selecionado ou atual após ativação do portal Radix, setas
+  para navegar, Enter para escolher e Escape para fechar só o calendário. Retorno
+  de foco ao campo, rótulos acessíveis e bloqueio durante a mutação. A revisão no
+  navegador identificou e corrigiu a disputa de foco entre o Popover e Dialog/Sheet;
+  o teste de regressão cobre os dois contêineres em desktop e celular.
+- Classes semânticas, dimensões, estados e animação na seção de primitivos do
+  `globals.css`; movimento reduzido usa a regra global existente. O adaptador
+  `src/lib/dom/popover-geometry.ts` fornece ao Radix os valores dos tokens de
+  afastamento e colisão, sem definir espaçamentos de design em JavaScript.
+- AGENTS e README documentam a obrigatoriedade do DatePicker shadcn. O check de
+  arquitetura rejeita inputs nativos de data, mês, semana e data/hora no TSX.
+- Lint, estilos, arquitetura, TypeScript e build aprovados. Os 48 testes
+  unitários/integração passaram, incluindo datas em fusos distintos, ano bissexto,
+  edição, payload ISO, limpeza e preservação do valor após erro. Quatro E2E novos
+  passaram com os formulários reais em desktop/celular, em uma entrada exclusiva
+  de testes fora do build e sem chamadas ao backend.
+- Revisão visual de projetos e tarefas em desktop/celular; formulário de projeto
+  autenticado também verificado em 1440, 768, 390 e 320 px, sem overflow ou erros
+  JavaScript. Capturas dos E2E em `test-results`, ignoradas pelo Git. Não foram
+  realizadas escritas de negócio na nuvem nem novas migrations; testes de banco
+  não foram reexecutados nesta alteração de interface.
+
+## 26. Select shadcn com Base UI em todo o sistema — 08/10/2026
+
+- Substituído o select nativo compartilhado pelo código do
+  [shadcn Base Select](https://ui.shadcn.com/docs/components/base/select),
+  adaptado do registro `base-nova` para classes semânticas do Orbit. Instalado
+  `@base-ui/react@1.8.0` via npm. `components.json` preserva a configuração dos
+  demais primitivos; esta adaptação usa Base UI para todos os selects.
+- Migrados período do dashboard, filtro de projetos, prioridade das tarefas,
+  criação/edição de projetos e tarefas, responsável e etapa nos cards/tabelas.
+  Mês e ano do calendário também usam o novo Select; a navegação mensal utiliza
+  a API pública do DayPicker. Nenhum select nativo autoral permanece no TSX.
+- `OptionsSelect` concentra opções tipadas, rótulos, valor e callback;
+  `TaskStatusSelect` compartilha a alteração de etapa entre Kanban e lista.
+  Formulários usam Controller/onValueChange, preservando valores vazios,
+  validações, dados em erro e bloqueio durante envio. O status de uma tarefa
+  permanece no último valor confirmado enquanto a atualização está pendente.
+- `SelectLayer` integra o portal Base UI aos overlays Radix existentes. Adicionadas
+  dependências diretas de `@radix-ui/react-dismissable-layer@1.1.20` e
+  `@radix-ui/react-focus-scope@1.2.0`, já presentes transitivamente. A escolha e
+  Escape fecham somente o select, preservando o calendário ou formulário pai.
+- Cores, foco, seleção, estados desabilitados, dimensões e animação no CSS central.
+  Os menus acompanham o campo, evitam colisões com a viewport e permitem rolagem.
+  O adaptador de geometria existente lê tokens CSS para Radix e Base UI. AGENTS,
+  README e check de arquitetura passam a exigir o padrão e rejeitar selects nativos.
+- Lint, estilos, arquitetura, TypeScript/build e 51 testes unitários/integração
+  aprovados. Dez E2E de formulários reais passaram em desktop/celular, cobrindo
+  teclado, Escape em overlays aninhados, mês/ano, payloads, remoção do responsável,
+  opção com nome longo e preservação após erro. Testes aguardam foco/abertura antes
+  de enviar teclas; JSDOM usa ativação por teclado por não calcular geometria real.
+- Revisão autenticada em 1440, 820, 390 e 320 px confirmou chamadas reais do
+  dashboard e filtro de projetos, URL e seleção preservadas após reload, sem
+  overflow horizontal nem erros JavaScript. Capturas em `test-results/base-select`
+  e `test-results/select-live-review`, ignoradas pelo Git.
+- Nenhuma alteração em contratos, consultas ou migrations. Não foram feitas
+  escritas de negócio na nuvem. E2E de persistência e testes de banco local não
+  foram reexecutados; submissões e falhas dos novos casos usam fixtures exclusivas
+  de testes, fora do build de produção.

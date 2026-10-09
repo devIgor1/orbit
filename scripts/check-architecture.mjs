@@ -38,6 +38,19 @@ for (const file of files) {
     }
   }
   function visit(node) {
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      if (node.tagName.getText(ast) === 'select') {
+        violations.push(`${location(file, node)}: use o Select Base UI do shadcn compartilhado em vez de select nativo.`)
+      }
+      const inputType = node.attributes.properties.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(ast) === 'type')
+      if (inputType && ts.isJsxAttribute(inputType)) {
+        const initializer = inputType.initializer
+        const value = initializer && ts.isJsxExpression(initializer) ? initializer.expression : initializer
+        if (value && ts.isStringLiteral(value) && ['date', 'datetime-local', 'month', 'week'].includes(value.text)) {
+          violations.push(`${location(file, node)}: seletores de data devem usar o DatePicker shadcn compartilhado.`)
+        }
+      }
+    }
     if (ts.isPropertyAccessExpression(node) && node.expression.getText(ast) === 'localStorage') {
       violations.push(`${location(file, node)}: localStorage não pode substituir o backend.`)
     }
