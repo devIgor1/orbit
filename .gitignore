@@ -8,5 +8,6 @@ playwright-report/
 test-results/
 .supabase/
 .demo-credentials.json
+.cloud-credentials.json
 supabase/.temp/
 supabase/.branches/
