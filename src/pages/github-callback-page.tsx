@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { ErrorState, LoadingState } from '@/components/shared/query-state'
 import { useGithubCallback } from '@/features/github/hooks/use-github-callback'
+import { GithubInstallationChoice } from '@/features/github/components/github-installation-choice'
 
 export function GithubCallbackPage() {
   const connection = useGithubCallback()
@@ -14,6 +15,8 @@ export function GithubCallbackPage() {
           <ErrorState error={connection.error} />
         ) : connection.isPending || connection.data.status === 'redirect' ? (
           <LoadingState label="Confirmando autorização no GitHub…" />
+        ) : connection.data.status === 'choose' ? (
+          <GithubInstallationChoice state={connection.data.state} installations={connection.data.installations} />
         ) : (
           <div className="github-content">
             <p className="form-success" role="status">

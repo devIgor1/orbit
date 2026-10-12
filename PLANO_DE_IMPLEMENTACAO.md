@@ -1649,3 +1649,36 @@ entrega inclui a mensagem específica e a proteção contra reenvio de callbacks
   acesso do backend. Uma ação de retomada na interface permanece como melhoria
   para esse caso. Não houve alteração das permissões ou dos repositórios da
   instalação, e nenhum comentário em PR foi publicado.
+
+
+## 54. Retomada automática de instalações existentes — 12/10/2026
+
+**Estado:** implementação e verificações locais concluídas; migration aplicada e
+`github-api` ativa na versão 4. Publicação/validação real do frontend em andamento.
+
+- **Conectar GitHub** começa por OAuth e consulta as instalações acessíveis ao
+  usuário. O Orbit mostra as contas/organizações já instaladas para escolha;
+  a seleção segue diretamente para confirmação e importação, sem abrir as
+  configurações da instalação nem depender de alterações nos repositórios.
+- Sem instalações, o retorno inicia automaticamente a instalação no GitHub. A
+  escolha também oferece conectar outra conta/organização. Callbacks e ações
+  anteriores continuam disponíveis durante a atualização.
+- A migration `202610120003_github_installation_discovery.sql` guarda somente
+  hashes de estados e IDs confirmados, vinculados por dez minutos ao usuário
+  e à empresa. Escolha e consumo são atômicos, de uso único, com nova checagem
+  do papel administrativo. As RPCs são exclusivas do serviço. A seleção exige
+  um ID oferecido pelo GitHub; uma nova passagem OAuth revalida o acesso antes
+  da importação, sem armazenar tokens entre etapas.
+- A descoberta pagina até mil instalações e recusa respostas incompletas,
+  falhas ou dados de outro App. A importação existente continua verificando
+  instalação, suspensão, permissões e administração de cada repositório.
+- Interface reutiliza painéis, botões e linhas de empresas existentes, com
+  estilos em `globals.css`, navegação por teclado e bloqueio de envios duplicados.
+  Revisão visual feita em desktop, tablet e celular, incluindo nome longo.
+- Lint, estilos/e-mail, arquitetura, tipos/build e Deno check aprovados. Vitest:
+  239 testes passaram e um opt-in ficou pulado. PostgreSQL: 210 testes passaram.
+  Os 14 E2E de conexão passaram em desktop/celular: instalações existentes com
+  uma ou várias contas, primeira instalação, outra conta, cancelamento, aprovação
+  pendente, estados expirados e proteção contra reenvio.
+- Migration validada em transação revertida no Supabase hospedado, depois aplicada
+  com histórico atômico. Nenhuma credencial ou permissão nova é necessária.

@@ -33,6 +33,17 @@ export const requestSchema = z.discriminatedUnion('action', [
     state: z.enum(['open', 'closed', 'all']).default('open'),
   }),
   z.object({ action: z.literal('connect-account'), workspaceId: z.uuid() }),
+  z.object({ action: z.literal('discover-account'), workspaceId: z.uuid() }),
+  z.object({
+    action: z.literal('discovery-callback'),
+    state: z.string().min(32).max(128),
+    code: z.string().min(1).max(256),
+  }),
+  z.object({
+    action: z.literal('select-installation'),
+    state: z.string().min(32).max(128),
+    installationId: githubId.nullable(),
+  }),
   z.object({
     action: z.literal('installation-callback'),
     state: z.string().min(32).max(128),

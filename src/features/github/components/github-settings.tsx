@@ -34,8 +34,8 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
         ) : canManage ? (
           <>
             <p className="github-note">
-              Conecte sua conta e escolha no GitHub os repositórios que deseja disponibilizar nesta empresa. Eles
-              aparecerão aqui automaticamente após a autorização.
+              Autorize sua conta no GitHub e escolha a conta ou organização que deseja conectar. Se o App já estiver
+              instalado, os repositórios autorizados serão importados automaticamente.
             </p>
             <Button
               className="github-connect-button"

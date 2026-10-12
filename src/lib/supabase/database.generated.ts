@@ -714,6 +714,10 @@ export type Database = {
         Args: { repository_name: string; requester: string; state_hash: string; target_workspace: string }
         Returns: undefined
       }
+      begin_github_discovery: {
+        Args: { available_installations?: number[]; requester: string; state_hash: string; target_workspace: string }
+        Returns: undefined
+      }
       change_member_role: {
         Args: {
           expected_role: Database['public']['Enums']['member_role']
@@ -750,6 +754,7 @@ export type Database = {
       claim_github_jobs: { Args: Record<PropertyKey, never>; Returns: Json }
       consume_github_account_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       consume_github_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
+      consume_github_discovery: { Args: { requester: string; state_hash: string }; Returns: string }
       create_company: {
         Args: { company_name: string }
         Returns: {
@@ -899,6 +904,10 @@ export type Database = {
         }
       }
       select_company: { Args: { target_workspace: string }; Returns: string }
+      select_github_installation: {
+        Args: { next_hash: string; requester: string; state_hash: string; target_installation?: number }
+        Returns: undefined
+      }
       set_project_github_repository: {
         Args: { target_project: string; target_repository: string; target_workspace: string }
         Returns: string

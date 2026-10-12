@@ -6,6 +6,7 @@ import { beginConnection, completeConnection } from './connection.ts'
 import { linkTask } from './link.ts'
 import { beginAccountConnection, authorizeAccountConnection, completeAccountConnection } from './account-connection.ts'
 import { listTaskReferences } from './references.ts'
+import { beginInstallationDiscovery, discoverInstallations, selectInstallation } from './installation-discovery.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -40,6 +41,12 @@ export async function handleGithubApi(request: Request) {
       }
     }
     if (input.action === 'references') return respond(await listTaskReferences(db, userId, input))
+    if (input.action === 'discover-account')
+      return respond(await beginInstallationDiscovery(db, userId, input.workspaceId))
+    if (input.action === 'discovery-callback')
+      return respond(await discoverInstallations(db, userId, input.state, input.code))
+    if (input.action === 'select-installation')
+      return respond(await selectInstallation(db, userId, input.state, input.installationId))
     if (input.action === 'connect-account') return respond(await beginAccountConnection(db, userId, input.workspaceId))
     if (input.action === 'installation-callback')
       return respond(await authorizeAccountConnection(db, userId, input.state, input.installationId))

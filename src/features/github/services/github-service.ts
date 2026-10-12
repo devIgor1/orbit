@@ -16,8 +16,8 @@ const configSchema = z.discriminatedUnion('configured', [
 export const fetchGithubConfig = () => invoke({ action: 'config' }, configSchema)
 export const beginGithubConnection = (workspaceId: string) =>
   invoke(
-    { action: 'connect-account', workspaceId },
-    z.object({ url: z.url().regex(/^https:\/\/github\.com\/apps\/[a-z0-9-]+\/installations\/new\?state=/) }),
+    { action: 'discover-account', workspaceId },
+    z.object({ url: z.url().startsWith('https://github.com/login/oauth/authorize?') }),
   )
 export const authorizeGithubConnection = (state: string, installationId: number) =>
   invoke(

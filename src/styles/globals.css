@@ -827,7 +827,12 @@ body:has(.app-shell,.login-page,.companies-page) {
 .github-reference svg { width: var(--space-5); height: var(--space-5); flex-shrink: 0; }
 .github-sync-status { font-weight: 600; font-size: var(--font-size-label); }
 .github-callback { padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-5); align-items: flex-start; }
+.github-choice-title { font-size: var(--font-size-title-sm); font-weight: 600; }
+.github-installation-row > svg { width: var(--space-5); height: var(--space-5); flex-shrink: 0; }
 @media (max-width: 600px) {
+  .github-callback { padding: var(--space-5); }
+  .github-installation-row { flex-wrap: wrap; }
+  .github-installation-row > .ui-button { width: 100%; }
   .github-project-actions { width: 100%; align-items: stretch; flex-direction: column; }
   .github-connect-button { width: 100%; }
   .github-repositories li { flex-direction: column; align-items: flex-start; }

@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/use-auth'
 import { AppError } from '@/lib/errors/app-error'
 import { authorizeGithubConnection, completeGithubConnection } from '../services/github-service'
+import { discoverGithubInstallations } from '../services/github-discovery'
 
 export function useGithubCallback() {
   const { user } = useAuth()
@@ -49,6 +50,7 @@ export function useGithubCallback() {
           throw new AppError('contract', 'Inicie a conexão pelo botão Conectar GitHub nas configurações do Orbit.')
         return { status: 'redirect' as const, ...(await authorizeGithubConnection(state, installationId)) }
       }
+      if (state.startsWith('discover.')) return discoverGithubInstallations(state, code)
       const result = await completeGithubConnection(state, code)
       await cache.invalidateQueries({ queryKey: ['github', user?.id] })
       return { status: 'connected' as const, ...result }
