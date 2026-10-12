@@ -107,3 +107,37 @@ test('pedido aguardando aprovação e autorização cancelada mostram o próximo
   await expect(page.getByRole('alert')).toContainText('A autorização não foi concluída')
   expect(requests).toBe(0)
 })
+
+test('expiração explica como reiniciar sem reenviar a callback antiga', async ({ page }, testInfo) => {
+  const freshState = `account.${'c'.repeat(64)}`
+  const freshUrl = `https://github.com/apps/orbit-test/installations/new?state=${freshState}`
+  let expiredCallbacks = 0
+  await page.route('**/functions/v1/github-api', (route) => {
+    const body = route.request().postDataJSON()
+    if (body.action === 'config')
+      return route.fulfill({
+        json: {
+          configured: true,
+          installationUrl: freshUrl.split('?')[0],
+          callbackUrl: 'https://example.test/settings/github/callback',
+        },
+      })
+    if (body.action === 'connect-account') return route.fulfill({ json: { url: freshUrl } })
+    expect(body).toEqual({ action: 'installation-callback', state: initialState, installationId: 20 })
+    expiredCallbacks++
+    return route.fulfill({ status: 400, json: { code: 'GITHUB_STATE_INVALID' } })
+  })
+  await page.route(freshUrl, (route) =>
+    route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<main><h1>Autorizar nova conexão</h1></main>' }),
+  )
+  await openWorkspace(page, '/dashboard')
+  await page.goto(`/settings?installation_id=20&setup_action=update&state=${initialState}`)
+  await expect(page.getByRole('alert')).toContainText('Esta tentativa de conexão expirou ou já foi utilizada')
+  await expect(page.getByRole('alert')).toContainText('clique em Conectar GitHub')
+  await page.screenshot({ path: testInfo.outputPath('github-expired-connection.png') })
+  await page.getByRole('link', { name: 'Voltar às configurações' }).click()
+  await page.getByRole('button', { name: 'Conectar GitHub', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Autorizar nova conexão' })).toBeVisible()
+  await expect(page).toHaveURL(freshUrl)
+  expect(expiredCallbacks).toBe(1)
+})

@@ -21,6 +21,11 @@ export function useGithubCallback() {
     queryKey: ['github-callback', user?.id, state, code ? 'oauth' : 'installation'],
     enabled: Boolean(user),
     retry: false,
+    // Callbacks consume one-time state. Remounts, focus and reconnect must not
+    // retry a failed callback; the user starts a new connection in settings.
+    retryOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     staleTime: Infinity,
     gcTime: 10 * 60_000,
     queryFn: async () => {

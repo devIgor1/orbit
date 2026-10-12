@@ -12,6 +12,8 @@ const messages: Record<string, string> = {
   GITHUB_REPOSITORY_LIMIT:
     'Esta conta disponibiliza mais de 1.000 repositórios. Conecte novamente e selecione apenas os repositórios desta empresa no GitHub.',
   GITHUB_OAUTH_FAILED: 'A autorização do GitHub expirou ou foi recusada. Inicie a conexão novamente nas configurações.',
+  GITHUB_STATE_INVALID:
+    'Esta tentativa de conexão expirou ou já foi utilizada. Volte às configurações e clique em Conectar GitHub para começar novamente.',
   INVALID_REQUEST: 'A solicitação é inválida ou expirou. Revise os dados e inicie novamente.',
   ALREADY_LINKED: 'Esta tarefa já tem um vínculo. Atualize os dados antes de continuar.',
   GITHUB_BRANCH_REQUIRED: 'Selecione uma branch de trabalho diferente da branch padrão do repositório.',

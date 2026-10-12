@@ -9,6 +9,14 @@ import { authorizationUrl, exchangeCode } from './oauth.ts'
 
 const newState = () => `account.${crypto.randomUUID()}${crypto.randomUUID()}`
 
+function checkStateError(error: unknown) {
+  // Invalid/expired/replayed states share one safe recovery message. Do not
+  // turn permission, network or persistence errors into an expiration error.
+  if (typeof error === 'object' && error && 'code' in error && error.code === '22023')
+    throw new GithubError('GITHUB_STATE_INVALID', 400)
+  if (error) throw error
+}
+
 export async function beginAccountConnection(db: GithubDatabase, userId: string, workspaceId: string) {
   const { installationUrl } = githubConfiguration()
   const state = newState()
@@ -36,18 +44,17 @@ export async function authorizeAccountConnection(
     next_hash: await sha256(next),
     target_installation: installationId,
   })
-  if (error) throw error
+  checkStateError(error)
   return { url: authorizationUrl(next) }
 }
 
 export async function completeAccountConnection(db: GithubDatabase, userId: string, state: string, code: string) {
-  const pending = z
-    .object({ workspace_id: z.uuid(), installation_id: githubId })
-    .parse(
-      confirmed(
-        await db.rpc('consume_github_account_connection', { requester: userId, state_hash: await sha256(state) }),
-      ),
-    )
+  const result = await db.rpc('consume_github_account_connection', {
+    requester: userId,
+    state_hash: await sha256(state),
+  })
+  checkStateError(result.error)
+  const pending = z.object({ workspace_id: z.uuid(), installation_id: githubId }).parse(confirmed(result))
   const token = await exchangeCode(code)
   const { repositories, accountLogin, skippedCount } = await accountRepositories(token, pending.installation_id)
   const count = confirmed(

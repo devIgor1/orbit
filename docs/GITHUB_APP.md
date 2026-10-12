@@ -14,17 +14,21 @@
 
 A integração exige migrations/funções publicadas, credenciais, agendamento e instalação do App. Não há credenciais GitHub no frontend.
 
-## Estado do ambiente — 11/10/2026
+## Estado do ambiente — 12/10/2026
 
 O backend está configurado no projeto `twsfyqkagyvibsilulle`:
 
 - GitHub App `weorbit-integration` cadastrado, com chave e identificadores conferidos pela API do GitHub.
-- Cinco migrations `202610110001`–`202610110005` aplicadas e registradas; três Edge Functions ativas e oito variáveis da integração publicadas.
+- Cinco migrations `202610110001`–`202610110005`, `202610120001_github_account_connection` e `202610120002_github_connection_timeout` aplicadas e registradas; três Edge Functions ativas e oito variáveis da integração publicadas.
+- Frontend com conexão unificada e seleção de branches/PRs publicado. `github-api` ativa na versão 3, com erro específico para estado expirado ou usado. O primeiro erro 400 em **Conectar GitHub** era causado pelo frontend novo chamando a API antiga; a atualização do banco e da função corrigiu essa incompatibilidade.
+- **Redirect on update** ativado no GitHub App. A seleção da conta/repositórios dispõe de 30 minutos; a etapa OAuth seguinte mantém validade de dez minutos. Uma tentativa que já expirou precisa começar novamente pelo Orbit.
 - Vault e Cron configurados. Execução automática do worker confirmada com HTTP 200 e fila vazia.
 - Webhook real validado por reenvio do ping do GitHub: assinatura presente, HTTP 200 e recebimento confirmado. O segredo foi aplicado ao App para corresponder ao Supabase.
 - Chamadas sem autenticação à API, ao worker e ao webhook recusadas com HTTP 401.
 
-**Pendente:** publicar o frontend atualizado, instalar o App nos repositórios escolhidos e validar a conexão OAuth e um PR real. Não havia instalações, repositórios conectados ou tarefas vinculadas ao concluir esta configuração. Nenhum comentário em PR foi enviado.
+**Verificado:** a sessão real do Orbit iniciou a conexão, persistiu seu estado e foi redirecionada à seleção de conta/organização no GitHub. A tela já indica uma instalação na conta pessoal; a escolha da conta e dos repositórios permanece com o usuário.
+
+**Pendente:** concluir o consentimento/OAuth, confirmar a importação dos repositórios e validar branches, sincronização e comentário com um PR real. Nenhum comentário em PR foi enviado nesta verificação.
 
 As instruções abaixo também servem para configurar outro ambiente. Os passos de publicação do backend já foram executados no projeto indicado acima.
 
@@ -108,7 +112,7 @@ npx supabase link --project-ref twsfyqkagyvibsilulle
 npx supabase db push --linked --dry-run
 ```
 
-Confira as migrations pendentes. A integração usa `202610110001` a `202610110005`; o fluxo unificado acrescenta `202610120001_github_account_connection.sql`. Publique essa migration e a função `github-api` antes do frontend novo. Os endpoints antigos continuam disponíveis para callbacks iniciadas antes da atualização. Depois aplique e publique:
+Confira as migrations pendentes. A integração usa `202610110001` a `202610110005`; o fluxo unificado acrescenta `202610120001_github_account_connection.sql` e `202610120002_github_connection_timeout.sql`. Publique as migrations e a função `github-api` antes do frontend novo. Os endpoints antigos continuam disponíveis para callbacks iniciadas antes da atualização. Depois aplique e publique:
 
 ```sh
 npx supabase db push --linked
@@ -168,7 +172,7 @@ O ID recebido na Setup URL é apenas uma alegação: o servidor exige OAuth e co
 - **Branch reutilizada:** se houver múltiplos PRs candidatos, selecione o PR. O servidor vincula seu número e preserva a identidade do repositório de origem, inclusive em forks.
 - **Listagem de branches/PRs:** exige sessão ativa e vínculo tarefa/projeto/repositório na mesma empresa. O servidor usa token de instalação restrito ao repositório, com permissões de leitura. Busca não envia tokens ao navegador. Falhas de atualização/paginação ficam visíveis e bloqueiam o envio até a recuperação; trocar repositório, tipo ou status não reaproveita uma seleção incompatível. Esta listagem requer publicar `github-api` e o frontend atualizado, sem nova migration ou credencial além da etapa de conexão unificada.
 - **Resultados extensos:** a busca e a reconciliação percorrem até dez páginas de cem itens; ao exceder, há erro explícito, sem escolher silenciosamente um resultado ou publicar um comentário duplicado.
-- **OAuth expirado:** reinicie a conexão. Cada estado expira em dez minutos, é de uso único e está associado ao usuário/empresa no banco. O retorno da seleção de repositórios troca o estado antes de iniciar OAuth; a instalação só é confiável depois da verificação na API GitHub.
+- **Conexão expirada:** volte às configurações e clique em **Conectar GitHub** novamente. A etapa de escolha de conta/repositórios expira em 30 minutos; o retorno troca o estado e inicia OAuth com dez minutos de validade. Estados são de uso único, associados ao usuário/empresa e não são prorrogados retroativamente. Erros de callback não são reenviados automaticamente ao remontar a página, focar a janela ou reconectar a rede. A instalação só é confiável depois da verificação na API GitHub.
 - **Importação extensa ou incompleta:** até mil repositórios por conexão, com paginação e validação da quantidade. Falhas interrompem toda a importação. Para contas maiores, selecione somente os repositórios necessários nas permissões do GitHub.
 - **Rotação de credenciais:** atualize os segredos no Supabase. Se trocar o webhook secret, atualize também o GitHub; se trocar o worker secret, atualize também o Vault. Credenciais nunca são registradas nos logs.
 - **Troca do repositório do projeto:** remova os vínculos das tarefas antes de alterar. A integridade é protegida por chaves estrangeiras no banco.

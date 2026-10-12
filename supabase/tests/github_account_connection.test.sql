@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public,extensions;
-select plan(21);
+select plan(23);
 
 insert into auth.users(id,email,raw_user_meta_data) values
  ('ac000000-0000-4000-8000-000000000001','github-account-admin@example.test','{"full_name":"Admin"}'),
@@ -12,10 +12,12 @@ insert into public.workspace_members(workspace_id,user_id,role) values
  ('ac000000-0000-4000-8000-000000000010','ac000000-0000-4000-8000-000000000002','member');
 
 select lives_ok($$select public.begin_github_account_connection('ac000000-0000-4000-8000-000000000001','ac000000-0000-4000-8000-000000000010','initial')$$,'Admin may start account connection');
+select is((select expires_at from private.github_account_states where state_hash = 'initial'),now() + interval '30 minutes','Repository selection allows 30 minutes');
 select throws_ok($$select public.begin_github_account_connection('ac000000-0000-4000-8000-000000000002','ac000000-0000-4000-8000-000000000010','member')$$,'42501',null,'Member cannot start');
 select throws_ok($$select public.consume_github_account_connection('ac000000-0000-4000-8000-000000000001','initial')$$,'22023',null,'Cannot bypass setup stage');
 select throws_ok($$select public.advance_github_account_connection('ac000000-0000-4000-8000-000000000002','initial','next',20)$$,'22023',null,'Setup state belongs to initiating user');
 select lives_ok($$select public.advance_github_account_connection('ac000000-0000-4000-8000-000000000001','initial','next',20)$$,'Setup rotates state');
+select is((select expires_at from private.github_account_states where state_hash = 'next'),now() + interval '10 minutes','OAuth still expires in 10 minutes');
 select throws_ok($$select public.advance_github_account_connection('ac000000-0000-4000-8000-000000000001','initial','replayed',999)$$,'22023',null,'Setup replay refused');
 select throws_ok($$select public.consume_github_account_connection('ac000000-0000-4000-8000-000000000002','next')$$,'22023',null,'OAuth state belongs to initiating user');
 select is(public.consume_github_account_connection('ac000000-0000-4000-8000-000000000001','next'),

@@ -1589,3 +1589,53 @@ a migration da conexão de conta continua pendente no ambiente hospedado.
   branch removida e mudança da branch padrão entre listagem e vínculo. GitHub
   é simulado apenas nos testes; login, projetos e tarefas dos E2E usam o Supabase
   local. A validação com repositório e PR reais permanece pendente após publicação.
+
+## 52. Correção da publicação da conexão GitHub — 12/10/2026
+
+**Estado:** backend atualizado em produção; início da conexão validado na sessão
+real do Orbit. Esta etapa substitui as pendências de publicação das seções 50 e 51.
+
+- O frontend novo já estava publicado, mas `github-api` permanecia na versão 1
+  e a migration da conexão de conta não existia no Supabase hospedado. A API
+  rejeitava a ação `connect-account` com HTTP 400 antes de iniciar o fluxo.
+- `202610120001_github_account_connection.sql` foi validada em transação revertida
+  contra o projeto `twsfyqkagyvibsilulle`, aplicada e registrada em uma transação
+  única no histórico de migrations. O cache do PostgREST foi recarregado.
+- `github-api` publicada pela CLI com `--use-api` e confirmada ativa na versão 2.
+  Autenticação própria preservada; chamadas sem sessão retornam HTTP 401.
+  As quatro novas RPCs permitem execução somente ao serviço entre os papéis
+  da aplicação verificados: `authenticated` foi recusado e `service_role` aceito.
+- Na sessão autenticada do usuário, **Conectar GitHub** criou o estado de conexão
+  e redirecionou à seleção de conta/organização do GitHub. A seleção foi deixada
+  aberta para o usuário. Nenhuma permissão de repositório foi concedida pelo agente.
+- Não houve alteração de código ou credenciais nesta correção. Os testes da
+  implementação estão registrados nas seções anteriores. Concluir OAuth,
+  importar repositórios e validar sincronização/comentário em PR real continuam
+  pendentes; nenhuma task ou PR foi alterado nesta verificação.
+
+## 53. Recuperação da conexão GitHub expirada — 12/10/2026
+
+**Estado:** correção validada localmente e backend publicado. Frontend desta
+entrega inclui a mensagem específica e a proteção contra reenvio de callbacks.
+
+- O retorno real ocorreu às 00h20 (America/Sao_Paulo), após expiração do estado
+  às 00h13. O erro `INVALID_REQUEST` foi confirmado nos logs da API; nenhum
+  repositório havia sido importado. O usuário informou que escolheu `orbitwe`.
+- A nova migration `202610120002_github_connection_timeout.sql` permite 30 minutos
+  para escolher conta e repositórios. A etapa seguinte, OAuth, mantém dez minutos,
+  estado rotacionado, uso único e vínculo ao usuário/empresa. Estados antigos
+  expirados não são reativados. Permissões e assinaturas das RPCs foram preservadas.
+- Falhas de estado nos retornos recebem `GITHUB_STATE_INVALID` e orientam iniciar
+  novamente nas configurações. Falhas de permissão continuam distintas. Um teste
+  de navegador revelou reenvio após remontagem da callback com erro; desativados
+  reenvios por remontagem, foco e reconexão para essa operação de uso único.
+- **Redirect on update** ativado e salvo no GitHub App, para instalações existentes
+  voltarem ao Orbit. A API do GitHub confirmou a instalação ativa em `orbitwe`,
+  com leitura de conteúdo e escrita em PRs. Nenhuma permissão foi ampliada.
+- Migration validada em transação revertida e aplicada com histórico atômico no
+  Supabase hospedado. `github-api` confirmada ativa na versão 3.
+- Lint, estilos/e-mail, arquitetura, TypeScript/build e Deno check aprovados.
+  Suíte unitária: 224 testes passaram e um opt-in ficou pulado; o teste adicional
+  de remontagem/foco/reconexão passou separadamente. PostgreSQL: 185 testes passaram.
+  Seis E2E em desktop/celular passaram, cobrindo OAuth, cancelamento, aprovação
+  pendente, erro de expiração e reinício com estado novo sem repetir a callback.

@@ -114,7 +114,22 @@ describe('GitHub account connection', () => {
   it('rejects an expired or foreign state before using the OAuth code', async () => {
     const { db, rpc, fetcher } = setup()
     rpc.mockReset().mockResolvedValue({ data: null, error: { code: '22023' } })
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({ code: '22023' })
+    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+      code: 'GITHUB_STATE_INVALID',
+      status: 400,
+    })
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+  it('asks to restart an invalid setup state and preserves permission failures', async () => {
+    const { db, rpc, fetcher } = setup()
+    rpc.mockReset().mockResolvedValue({ data: null, error: { code: '22023' } })
+    await expect(authorizeAccountConnection(db, 'orbit-user', 'state', 20)).rejects.toMatchObject({
+      code: 'GITHUB_STATE_INVALID',
+      status: 400,
+    })
+    rpc.mockResolvedValue({ data: null, error: { code: '42501' } })
+    await expect(authorizeAccountConnection(db, 'orbit-user', 'state', 20)).rejects.toMatchObject({ code: '42501' })
+    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({ code: '42501' })
     expect(fetcher).not.toHaveBeenCalled()
   })
   it('refuses an installation that the GitHub user cannot access, even if the App can', async () => {
