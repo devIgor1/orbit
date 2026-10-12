@@ -5,6 +5,9 @@ const workspaceId = 'a0b17000-0000-4000-8000-000000000001'
 const initialState = `account.${'a'.repeat(64)}`
 const discoveryState = `discover.${'d'.repeat(64)}`
 const discoveryUrl = `https://github.com/login/oauth/authorize?client_id=fixture&state=${discoveryState}`
+const selectionState = `selection.${'s'.repeat(64)}`
+const finalState = `repositories.${'r'.repeat(64)}`
+const finalUrl = `https://github.com/login/oauth/authorize?client_id=fixture&state=${finalState}`
 const oauthState = `account.${'b'.repeat(64)}`
 const installationUrl = `https://github.com/apps/orbit-test/installations/new?state=${initialState}`
 const authorizationUrl = `https://github.com/login/oauth/authorize?client_id=fixture&state=${oauthState}`
@@ -55,7 +58,24 @@ test('conecta em um fluxo contínuo e importa os repositórios autorizados', asy
       expect(body).toEqual({ action: 'installation-callback', state: initialState, installationId: 20 })
       return route.fulfill({ json: { url: authorizationUrl } })
     }
-    expect(body).toEqual({ action: 'account-callback', state: oauthState, code: 'test-code' })
+    if (body.action === 'prepare-repositories')
+      return route.fulfill({
+        json: {
+          status: 'repositories',
+          state: selectionState,
+          accountLogin: 'orbit-test',
+          skippedCount: 0,
+          repositories: [
+            { id: 10, fullName: 'orbit-test/entregas', isPrivate: true, connected: false, inUse: false },
+            { id: 11, fullName: 'orbit-test/nao-selecionado', isPrivate: true, connected: false, inUse: false },
+          ],
+        },
+      })
+    if (body.action === 'select-repositories') {
+      expect(body).toEqual({ action: 'select-repositories', state: selectionState, repositoryIds: [10] })
+      return route.fulfill({ json: { url: finalUrl } })
+    }
+    expect(body).toEqual({ action: 'repositories-callback', state: finalState, code: 'test-code' })
     connected = true
     return route.fulfill({ json: { workspaceId, repositoryCount: 1, accountLogin: 'orbit-test', skippedCount: 0 } })
   })
@@ -84,12 +104,23 @@ test('conecta em um fluxo contínuo e importa os repositórios autorizados', asy
       },
     }),
   )
+  await page.route(finalUrl, (route) =>
+    route.fulfill({
+      status: 302,
+      headers: {
+        location: `${testInfo.project.use.baseURL}/settings/github/callback?code=test-code&state=${finalState}`,
+      },
+    }),
+  )
   await openWorkspace(page, '/settings')
   const section = page.getByRole('region', { name: 'GitHub', exact: true })
   await expect(section.getByRole('button', { name: 'Conectar GitHub' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await section.screenshot({ path: testInfo.outputPath('github-connect.png') })
   await section.getByRole('button', { name: 'Conectar GitHub' }).click()
+  await expect(page.getByRole('button', { name: 'Salvar seleção' })).toBeDisabled()
+  await page.getByRole('checkbox', { name: 'orbit-test/entregas', exact: true }).check()
+  await page.getByRole('button', { name: 'Salvar seleção' }).click()
   await expect(page.getByRole('status')).toContainText('GitHub conectado: orbit-test', { timeout: 20_000 })
   await expect(page.getByRole('status')).toContainText('1 repositório disponível')
   await expect(page).toHaveURL(/\/settings\/github\/callback$/)
@@ -97,7 +128,9 @@ test('conecta em um fluxo contínuo e importa os repositórios autorizados', asy
     'discover-account',
     'discovery-callback',
     'installation-callback',
-    'account-callback',
+    'prepare-repositories',
+    'select-repositories',
+    'repositories-callback',
   ])
   await page.getByRole('link', { name: 'Voltar às configurações' }).click()
   await expect(page.getByText('orbit-test/entregas', { exact: true })).toBeVisible()

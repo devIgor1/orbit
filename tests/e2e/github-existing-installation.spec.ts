@@ -5,6 +5,8 @@ const workspaceId = 'a0b17000-0000-4000-8000-000000000001'
 const discoveryState = `discover.${'d'.repeat(64)}`
 const choiceState = `choice.${'c'.repeat(64)}`
 const accountState = `account.${'a'.repeat(64)}`
+const selectionState = `selection.${'s'.repeat(64)}`
+const finalState = `repositories.${'r'.repeat(64)}`
 const oauth = (state: string) => `https://github.com/login/oauth/authorize?client_id=fixture&state=${state}`
 const installations = [
   { id: 20, accountLogin: 'devIgor1', accountType: 'User' },
@@ -52,8 +54,25 @@ for (const count of [1, 2]) {
         await choiceWait
         return route.fulfill({ json: { url: oauth(accountState) } })
       }
-      expect(body).toEqual({ action: 'account-callback', state: accountState, code: 'test-code' })
-      return route.fulfill({ json: { workspaceId, repositoryCount: 125, accountLogin: 'devIgor1', skippedCount: 0 } })
+      if (body.action === 'prepare-repositories')
+        return route.fulfill({
+          json: {
+            status: 'repositories',
+            state: selectionState,
+            accountLogin: 'devIgor1',
+            skippedCount: 0,
+            repositories: [
+              { id: 10, fullName: 'devIgor1/orbit', isPrivate: true, connected: false, inUse: false },
+              { id: 11, fullName: 'devIgor1/another', isPrivate: true, connected: false, inUse: false },
+            ],
+          },
+        })
+      if (body.action === 'select-repositories') {
+        expect(body.repositoryIds).toEqual([10])
+        return route.fulfill({ json: { url: oauth(finalState) } })
+      }
+      expect(body).toEqual({ action: 'repositories-callback', state: finalState, code: 'test-code' })
+      return route.fulfill({ json: { workspaceId, repositoryCount: 1, accountLogin: 'devIgor1', skippedCount: 0 } })
     })
     await openWorkspace(page, '/settings')
     await page.getByRole('button', { name: 'Conectar GitHub', exact: true }).click()
@@ -74,13 +93,19 @@ for (const count of [1, 2]) {
     await expect(connect).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Conectar outra conta ou organização' })).toBeDisabled()
     releaseChoice()
+    await expect(page.getByRole('button', { name: 'Salvar seleção' })).toBeDisabled()
+    await expect(page.getByRole('checkbox', { name: 'devIgor1/orbit', exact: true })).not.toBeChecked()
+    await page.getByRole('checkbox', { name: 'devIgor1/orbit', exact: true }).check()
+    await page.getByRole('button', { name: 'Salvar seleção' }).click()
     await expect(page.getByRole('status')).toContainText('GitHub conectado: devIgor1')
-    await expect(page.getByRole('status')).toContainText('125 repositórios disponíveis')
+    await expect(page.getByRole('status')).toContainText('1 repositório disponível')
     expect(actions.filter((action) => action !== 'config')).toEqual([
       'discover-account',
       'discovery-callback',
       'select-installation',
-      'account-callback',
+      'prepare-repositories',
+      'select-repositories',
+      'repositories-callback',
     ])
     await expect(page).toHaveURL(/\/settings\/github\/callback$/)
   })

@@ -1,7 +1,7 @@
 import { githubConfiguration } from '../_shared/github/config.ts'
 import { GithubError } from '../_shared/github/errors.ts'
 
-export const newConnectionState = (phase: 'account' | 'discover' | 'choice') =>
+export const newConnectionState = (phase: 'account' | 'discover' | 'choice' | 'selection' | 'repositories') =>
   `${phase}.${crypto.randomUUID()}${crypto.randomUUID()}`
 
 export function checkStateError(error: unknown) {

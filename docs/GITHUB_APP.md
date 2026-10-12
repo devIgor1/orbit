@@ -2,7 +2,7 @@
 
 ## O que está implementado
 
-- Administradores usam **Configurações → GitHub → Conectar GitHub**. Autorizam a identidade no GitHub; instalações existentes aparecem no Orbit para escolha da conta/organização. Sem instalação, o fluxo segue automaticamente para a seleção dos repositórios no GitHub. O Orbit importa os repositórios automaticamente, sem pedir URLs. A conexão exige acesso administrativo aos repositórios, comprovado por OAuth.
+- Administradores usam **Configurações → GitHub → Conectar GitHub**. Autorizam a identidade no GitHub; instalações existentes aparecem no Orbit para escolha da conta/organização. Sem instalação, o fluxo segue automaticamente para a seleção dos repositórios no GitHub. O Orbit lista os repositórios com acesso administrativo e conecta somente os marcados em **Salvar seleção**, sem pedir URLs. Repositórios novos começam desmarcados. A conexão exige acesso administrativo aos repositórios, comprovado por OAuth e revalidado ao salvar.
 - Cada projeto seleciona um repositório conectado. Na tarefa, a aba **Desenvolvimento** lista as branches e os PRs desse repositório para seleção direta. Cada tarefa aceita um vínculo; várias tarefas podem compartilhar um PR.
 - Branches de trabalho excluem a branch padrão atual. PRs mostram número, título, status, branch e origem, incluindo forks. A lista inicia em abertos/rascunhos e permite consultar fechados/integrados ou todos. A seleção de um PR já integrado avisa sobre conclusão e comentário antes de vincular.
 - Listas carregam 50 itens por página, com **Carregar mais opções**, **Atualizar opções** e filtro textual sobre as opções já carregadas. Não é necessário digitar nomes de branches ou números de PR. PRs cujo repositório de origem foi removido ficam indisponíveis para seleção.
@@ -19,14 +19,14 @@ A integração exige migrations/funções publicadas, credenciais, agendamento e
 O backend está configurado no projeto `twsfyqkagyvibsilulle`:
 
 - GitHub App `weorbit-integration` cadastrado, com chave e identificadores conferidos pela API do GitHub.
-- Cinco migrations `202610110001`–`202610110005`, `202610120001_github_account_connection`, `202610120002_github_connection_timeout` e `202610120003_github_installation_discovery` aplicadas e registradas; três Edge Functions ativas e oito variáveis da integração publicadas.
-- Frontend com conexão unificada e seleção de branches/PRs publicado. `github-api` ativa na versão 4, com descoberta das instalações autorizadas, seleção segura e erro específico para estado expirado ou usado. Frontend de descoberta publicado e validado pelo fluxo normal em produção (`3ce19ba`). O primeiro erro 400 em **Conectar GitHub** era causado pelo frontend novo chamando a API antiga; a atualização do banco e da função corrigiu essa incompatibilidade.
+- Cinco migrations `202610110001`–`202610110005`, `202610120001_github_account_connection`, `202610120002_github_connection_timeout`, `202610120003_github_installation_discovery` e `202610120004_github_repository_selection` aplicadas e registradas; três Edge Functions ativas e oito variáveis da integração publicadas.
+- Frontend com conexão unificada e seleção de branches/PRs publicado. `github-api` ativa na versão 5, com descoberta de instalações e seleção explícita de repositórios. A importação automática da versão anterior foi bloqueada. A interface de seleção está em publicação; o fluxo anterior de descoberta foi validado em produção (`3ce19ba`). O primeiro erro 400 em **Conectar GitHub** era causado pelo frontend novo chamando a API antiga; a atualização do banco e da função corrigiu essa incompatibilidade.
 - **Redirect on update** ativado no GitHub App. A seleção da conta/repositórios dispõe de 30 minutos; a etapa OAuth seguinte mantém validade de dez minutos. Uma tentativa que já expirou precisa começar novamente pelo Orbit.
 - Vault e Cron configurados. Execução automática do worker confirmada com HTTP 200 e fila vazia.
 - Webhook real validado por reenvio do ping do GitHub: assinatura presente, HTTP 200 e recebimento confirmado. O segredo foi aplicado ao App para corresponder ao Supabase.
 - Chamadas sem autenticação à API, ao worker e ao webhook recusadas com HTTP 401.
 
-**Verificado:** no fluxo publicado em `3ce19ba`, **Conectar GitHub** identificou automaticamente `devIgor1` e `orbitwe`. A escolha de `devIgor1` concluiu OAuth e reconectou 125 repositórios na empresa de origem, incluindo `devIgor1/orbit`, sem alterar a instalação nem montar URLs de retorno manualmente. A organização `orbitwe` tem instalação ativa, mas nenhum repositório. A publicação Vercel foi confirmada antes da validação real.
+**Verificado:** no fluxo publicado em `3ce19ba`, **Conectar GitHub** identificou automaticamente `devIgor1` e `orbitwe`. A escolha de `devIgor1` concluiu OAuth e reconectou 125 repositórios na empresa de origem, incluindo `devIgor1/orbit`. Esse comportamento anterior foi substituído pela seleção explícita; o usuário escolheu revisar os 125 pela interface. A organização `orbitwe` tem instalação ativa, mas nenhum repositório. A publicação Vercel foi confirmada antes da validação real.
 
 **Pendente:** validar branches, sincronização e comentário com um PR real. A descoberta de instalações descrita abaixo elimina a dependência do botão **Save** para retomar contas já instaladas. Nenhum comentário em PR foi enviado nesta verificação.
 
@@ -112,7 +112,7 @@ npx supabase link --project-ref twsfyqkagyvibsilulle
 npx supabase db push --linked --dry-run
 ```
 
-Confira as migrations pendentes. A integração usa `202610110001` a `202610110005`; o fluxo unificado acrescenta `202610120001_github_account_connection.sql`, `202610120002_github_connection_timeout.sql` e `202610120003_github_installation_discovery.sql`. Publique as migrations e a função `github-api` antes do frontend novo. Os endpoints antigos continuam disponíveis para callbacks iniciadas antes da atualização. Depois aplique e publique:
+Confira as migrations pendentes. A integração usa `202610110001` a `202610110005`; o fluxo unificado acrescenta `202610120001_github_account_connection.sql`, `202610120002_github_connection_timeout.sql` e `202610120003_github_installation_discovery.sql` e `202610120004_github_repository_selection.sql`. Publique as migrations e a função `github-api` antes do frontend novo. Callbacks anteriores de instalação continuam compatíveis. A antiga ação `account-callback`, que importava tudo, foi bloqueada: frontends antigos precisam ser atualizados antes de conectar. Depois aplique e publique:
 
 ```sh
 npx supabase db push --linked
@@ -148,8 +148,8 @@ Referência: [agendamento de Edge Functions com Cron e Vault](https://supabase.c
 ## 5. Conectar e validar de ponta a ponta
 
 1. Entre no Orbit como administrador da empresa e vá a **Configurações → GitHub**.
-2. Clique em **Conectar GitHub** e autorize sua identidade no GitHub. Se o App já estiver instalado, o Orbit lista as contas e organizações acessíveis. Clique em **Conectar** na conta desejada: a confirmação e importação continuam automaticamente, sem editar repositórios ou depender do botão **Save** do GitHub.
-3. Sem instalações acessíveis, o fluxo abre a instalação no GitHub. Para adicionar outra conta, use **Conectar outra conta ou organização**. Escolha a conta e autorize somente os repositórios desejados; nenhum programa é baixado. O retorno confirma o App, a identidade e o acesso administrativo e importa tudo em uma transação. Repositórios sem permissão administrativa são excluídos com aviso; se nenhum for elegível, há erro explícito. Em organizações que exigem aprovação, conclua a aprovação no GitHub e reinicie a conexão no Orbit.
+2. Clique em **Conectar GitHub** e autorize sua identidade no GitHub. Se o App já estiver instalado, o Orbit lista as contas e organizações acessíveis. Clique em **Conectar** na conta desejada: a confirmação continua automaticamente até a lista de repositórios no Orbit, sem editar a instalação ou depender do botão **Save** do GitHub. Marque os repositórios desejados e clique em **Salvar seleção**.
+3. Sem instalações acessíveis, o fluxo abre a instalação no GitHub. Para adicionar outra conta, use **Conectar outra conta ou organização**. Escolha a conta e autorize somente os repositórios desejados; nenhum programa é baixado. O retorno confirma o App, a identidade e o acesso administrativo e abre a seleção no Orbit. Somente os repositórios escolhidos são conectados em uma transação. Repositórios sem permissão administrativa são excluídos com aviso; se nenhum for elegível, há erro explícito. Em organizações que exigem aprovação, conclua a aprovação no GitHub e reinicie a conexão no Orbit.
 4. Abra um projeto e escolha o repositório em **Desenvolvimento → Vincular**.
 5. Abra uma tarefa, entre na aba **Desenvolvimento**, escolha **Branch** ou **Pull request** e selecione uma opção carregada do GitHub. Use o filtro textual, o status dos PRs e **Carregar mais opções** quando necessário. Clique em **Vincular à tarefa**. O backend confere novamente a referência antes de persistir; se ela foi removida ou perdeu acesso, o formulário mantém a seleção e mostra o erro.
 6. Use uma tarefa e um PR de teste: confirme **Em andamento** no rascunho, **Em revisão** após marcar pronto e **Concluído** após o merge.
@@ -159,11 +159,19 @@ Referência: [agendamento de Edge Functions com Cron e Vault](https://supabase.c
 
 O comentário é enviado pela identidade do GitHub App. Não há criação de branches, aprovação, merge ou alteração de código por esta integração.
 
-Para autorizar mais repositórios, ajuste a instalação nas configurações do GitHub e depois use **Conectar GitHub** no Orbit para importar a seleção atual. A reconexão de instalações existentes não exige mudanças no GitHub. **Redirect on update** continua ativado para retornos após mudanças durante uma nova instalação. A Setup URL existente `/settings` encaminha o retorno à callback; `/settings/github/callback` também pode ser usada como Setup URL. Não abra a instalação por um link externo esperando vinculá-la automaticamente: a conexão deve começar no Orbit para identificar a empresa e o usuário com segurança.
+Para autorizar mais repositórios, ajuste a instalação nas configurações do GitHub e depois use **Conectar GitHub** no Orbit para escolher quais repositórios disponíveis deseja conectar. A reconexão de instalações existentes não exige mudanças no GitHub. **Redirect on update** continua ativado para retornos após mudanças durante uma nova instalação. A Setup URL existente `/settings` encaminha o retorno à callback; `/settings/github/callback` também pode ser usada como Setup URL. Não abra a instalação por um link externo esperando vinculá-la automaticamente: a conexão deve começar no Orbit para identificar a empresa e o usuário com segurança.
 
 A descoberta consulta [`/user/installations`](https://docs.github.com/en/rest/apps/installations#list-app-installations-accessible-to-the-user-access-token) com o token OAuth do usuário; nunca expõe o diretório global de instalações do App. A escolha fica vinculada por dez minutos ao usuário/empresa e aos IDs confirmados pelo GitHub, com estado de uso único. Após a escolha, uma nova passagem OAuth revalida o acesso e permite descartar o primeiro token sem armazená-lo entre etapas. Uma autorização já concedida normalmente retorna sem nova tela de consentimento. Até mil instalações são paginadas com validação da contagem.
 
 O ID recebido na Setup URL é apenas uma alegação: o servidor exige OAuth e consulta tanto a instalação do próprio App quanto `/user/installations/{id}/repositories`, usando o token do usuário. Somente as permissões `admin` confirmadas pelo GitHub permitem a importação. Tokens de usuário são descartados após a chamada, sem armazenamento no navegador ou no banco. Referências: [estado na URL de instalação](https://docs.github.com/en/apps/sharing-github-apps/sharing-your-github-app), [validação da Setup URL](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/about-the-setup-url), [repositórios acessíveis ao usuário](https://docs.github.com/en/rest/apps/installations#list-repositories-accessible-to-the-user-access-token).
+
+### Revisar os repositórios já conectados
+
+Em **Configurações → GitHub**, use **Revisar repositórios conectados** e escolha a conta. A lista distingue os repositórios já conectados dos novos, que começam desmarcados. Use a busca, marque os desejados ou **Limpar seleção** para refazer a escolha. Filtrar não muda a seleção; **Selecionar resultados** marca apenas os resultados atuais.
+
+**Salvar seleção** mostra a quantidade selecionada e a quantidade que será desconectada. Repositórios em uso por projetos ficam marcados e bloqueados para preservar seus vínculos. Uma associação criada durante a escolha também é verificada no servidor e impede a remoção. Ao salvar, apenas conexões anteriores incluídas nessa revisão e desmarcadas são desativadas; outras instalações e conexões novas feitas em paralelo são preservadas. Nenhuma permissão de instalação é alterada no GitHub. Cancelar ou apenas abrir a lista não altera conexões.
+
+A escolha tem dez minutos de validade, armazena somente hashes e IDs no servidor e passa novamente por OAuth antes da escrita. A API valida todos os IDs selecionados com as permissões atuais; qualquer perda de acesso recusa a operação inteira. Não há persistência de tokens GitHub no navegador ou banco.
 
 ## Recuperação e limites
 
@@ -195,7 +203,7 @@ npm run test:db
 ORBIT_GITHUB_DB_TESTS=1 npm test -- tests/github-pipeline.test.ts
 deno check --config supabase/functions/github-api/deno.json supabase/functions/github-api/index.ts supabase/functions/github-webhook/index.ts supabase/functions/github-worker/index.ts
 npx playwright install chromium
-npm run test:e2e -- tests/e2e/github.spec.ts tests/e2e/github-account.spec.ts tests/e2e/github-existing-installation.spec.ts tests/e2e/github-reference-selection.spec.ts tests/e2e/project-flow.spec.ts tests/e2e/navigation.spec.ts
+npm run test:e2e -- tests/e2e/github.spec.ts tests/e2e/github-account.spec.ts tests/e2e/github-existing-installation.spec.ts tests/e2e/github-repository-choice.spec.ts tests/e2e/github-reference-selection.spec.ts tests/e2e/project-flow.spec.ts tests/e2e/navigation.spec.ts
 npm run build
 ```
 

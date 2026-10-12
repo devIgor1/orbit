@@ -102,6 +102,12 @@ body:has(.app-shell,.login-page,.companies-page) .ui-button-primary:is(:disabled
 .ui-button-destructive:hover { background: var(--danger-hover); }
 .ui-button:active:not(:disabled) { transform: translateY(1px); }
 .ui-button:disabled { opacity: .46; box-shadow: none; }
+.ui-checkbox { display: inline-flex; justify-content: center; align-items: center; width: var(--space-5); height: var(--space-5); flex-shrink: 0; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+.ui-checkbox[data-checked] { color: var(--primary-foreground); background: var(--primary); border-color: var(--primary); }
+.ui-checkbox[data-disabled] { opacity: .5; cursor: not-allowed; }
+.ui-checkbox:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.ui-checkbox-indicator { display: flex; }
+.ui-checkbox-indicator svg { width: var(--space-4); height: var(--space-4); }
 .ui-input,.ui-textarea,.ui-select,.ui-date-picker { width: 100%; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--surface); color: var(--foreground); padding: 12px 14px; font-size: var(--font-size-body); line-height: 1.5; min-height: 48px; transition: border-color var(--duration), box-shadow var(--duration); }
 .ui-input::placeholder,.ui-textarea::placeholder { color: var(--muted-foreground); }
 .ui-input:hover,.ui-select:hover,.ui-textarea:hover,.ui-date-picker:hover { border-color: var(--input-hover); }
@@ -804,6 +810,11 @@ body:has(.app-shell,.login-page,.companies-page) {
 .settings-page { padding-top: 4px; max-width: 1180px; }
 .settings-sections { box-shadow: none; }
 /* 12 — GitHub integration. Shared form, button and panel primitives remain authoritative. */
+.github-repository-options { border: 1px solid var(--border); border-radius: var(--radius); padding: 0; min-width: 0; max-height: 360px; overflow-y: auto; }
+.github-repository-option { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); cursor: pointer; }
+.github-repository-option + .github-repository-option { border-top: 1px solid var(--border); }
+.github-repository-option:hover { background: var(--surface-muted); }
+.github-repository-options > .github-note { padding: var(--space-4); }
 .github-content,.github-task,.github-link-form { display: flex; flex-direction: column; gap: var(--space-4); width: 100%; min-width: 0; }
 .github-note { font-size: var(--font-size-label); color: var(--muted-foreground); line-height: 1.65; overflow-wrap: anywhere; }
 .github-project-actions,.github-task-actions { display: flex; align-items: flex-end; gap: var(--space-3); flex-wrap: wrap; }

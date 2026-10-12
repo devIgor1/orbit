@@ -718,6 +718,16 @@ export type Database = {
         Args: { available_installations?: number[]; requester: string; state_hash: string; target_workspace: string }
         Returns: undefined
       }
+      begin_github_repository_selection: {
+        Args: {
+          available_repositories: number[]
+          requester: string
+          state_hash: string
+          target_installation: number
+          target_workspace: string
+        }
+        Returns: Json
+      }
       change_member_role: {
         Args: {
           expected_role: Database['public']['Enums']['member_role']
@@ -755,6 +765,7 @@ export type Database = {
       consume_github_account_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       consume_github_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       consume_github_discovery: { Args: { requester: string; state_hash: string }; Returns: string }
+      consume_github_repository_selection: { Args: { requester: string; state_hash: string }; Returns: Json }
       create_company: {
         Args: { company_name: string }
         Returns: {
@@ -903,9 +914,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_github_repository_selection: {
+        Args: {
+          previous_ids: number[]
+          repositories: Json
+          requester: string
+          target_installation: number
+          target_workspace: string
+        }
+        Returns: number
+      }
       select_company: { Args: { target_workspace: string }; Returns: string }
       select_github_installation: {
         Args: { next_hash: string; requester: string; state_hash: string; target_installation?: number }
+        Returns: undefined
+      }
+      select_github_repositories: {
+        Args: { next_hash: string; repository_ids: number[]; requester: string; state_hash: string }
         Returns: undefined
       }
       set_project_github_repository: {

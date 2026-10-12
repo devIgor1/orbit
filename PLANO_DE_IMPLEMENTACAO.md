@@ -1687,3 +1687,35 @@ ativa na versão 4 e frontend `3ce19ba` publicado pela Vercel.
   reconectou os 125 repositórios existentes na empresa `teste`. Foram usados
   somente os botões normais do produto, sem editar permissões, repositórios ou
   URLs de callback. Evidências visuais locais registram a escolha e o sucesso.
+
+
+## 55. Seleção explícita dos repositórios da empresa — 12/10/2026
+
+**Estado:** implementado, validado localmente, migration publicada e `github-api`
+ativa na versão 5. Interface em publicação. O usuário escolheu revisar os 125
+repositórios importados antes pela interface, sem remoção automática nesta entrega.
+
+- Após escolher a conta, o Orbit mostra os repositórios disponíveis. Novos
+  repositórios começam desmarcados; os já conectados aparecem marcados para revisão.
+  Busca preserva a seleção, e as ações permitem marcar os resultados ou limpar
+  a seleção. O botão **Salvar seleção** informa quantos serão mantidos e removidos.
+- Preparar a lista não conecta nem desconecta repositórios. A escolha fica em
+  estado privado, rotacionado, com uso único e validade de dez minutos. Uma nova
+  autorização revalida o App, usuário e permissões atuais antes da escrita.
+  Somente os IDs explicitamente escolhidos são persistidos. Tokens não são
+  armazenados no banco ou navegador. A ação antiga de importação total foi bloqueada.
+- **Revisar repositórios conectados** abre o mesmo fluxo para corrigir a seleção
+  anterior. Desmarcar conexões revisadas as desativa ao salvar. Repositórios em
+  uso por projetos são mantidos; o servidor também recusa uma remoção se um
+  vínculo surgiu durante a escolha. Outras instalações e conexões adicionadas
+  em paralelo permanecem fora da remoção. Toda a escrita é atômica.
+- Checkbox compartilhado com Base UI, nomes acessíveis, busca e ações por teclado.
+  Aparência em `globals.css`. Revisão visual em desktop e celular de 320 px.
+- Lint, estilos/e-mail, arquitetura, tipos/build e Deno check aprovados. Vitest:
+  251 testes passaram e um opt-in ficou pulado. PostgreSQL: 235 testes passaram.
+  Os 18 E2E de conexão/seleção passaram em desktop e celular, cobrindo escolha
+  parcial, ausência de pré-seleção para novos repos, revisão dos existentes,
+  proteção de projetos, busca, teclado e erro sem sucesso artificial.
+- Migration `202610120004_github_repository_selection.sql` validada em transação
+  revertida no Supabase hospedado, aplicada e registrada atomicamente. Nenhuma
+  credencial, URL ou permissão do GitHub App foi alterada.

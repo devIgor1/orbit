@@ -25,21 +25,11 @@ export const authorizeGithubConnection = (state: string, installationId: number)
     z.object({ url: z.url().startsWith('https://github.com/login/oauth/authorize?') }),
   )
 export async function completeGithubConnection(state: string, code: string) {
-  // Keep callbacks that started before this release working during deployment.
-  if (!state.startsWith('account.')) {
-    const result = await invoke({ action: 'callback', state, code }, idSchema.extend({ workspaceId: z.uuid() }))
-    return { workspaceId: result.workspaceId, repositoryCount: 1, skippedCount: 0, accountLogin: null }
-  }
-  return invoke(
-    { action: 'account-callback', state, code },
-    z.object({
-      workspaceId: z.uuid(),
-      repositoryCount: z.number().int().positive(),
-      accountLogin: z.string().min(1),
-      skippedCount: z.number().int().nonnegative(),
-    }),
-  )
+  // Legacy flow already required one explicit repository name.
+  const result = await invoke({ action: 'callback', state, code }, idSchema.extend({ workspaceId: z.uuid() }))
+  return { workspaceId: result.workspaceId, repositoryCount: 1, skippedCount: 0, accountLogin: null }
 }
+
 export async function fetchGithubRepositories(workspaceId: string) {
   const { data, error } = await getSupabase()
     .from('github_repositories')

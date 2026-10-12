@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/use-auth'
 import { AppError } from '@/lib/errors/app-error'
 import { authorizeGithubConnection, completeGithubConnection } from '../services/github-service'
 import { discoverGithubInstallations } from '../services/github-discovery'
+import { prepareGithubRepositories, completeGithubRepositories } from '../services/github-repository-selection'
 
 export function useGithubCallback() {
   const { user } = useAuth()
@@ -51,7 +52,10 @@ export function useGithubCallback() {
         return { status: 'redirect' as const, ...(await authorizeGithubConnection(state, installationId)) }
       }
       if (state.startsWith('discover.')) return discoverGithubInstallations(state, code)
-      const result = await completeGithubConnection(state, code)
+      if (state.startsWith('account.')) return prepareGithubRepositories(state, code)
+      const result = state.startsWith('repositories.')
+        ? await completeGithubRepositories(state, code)
+        : await completeGithubConnection(state, code)
       await cache.invalidateQueries({ queryKey: ['github', user?.id] })
       return { status: 'connected' as const, ...result }
     },

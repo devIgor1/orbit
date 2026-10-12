@@ -1,10 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  beginAccountConnection,
-  authorizeAccountConnection,
-  completeAccountConnection,
-} from '../supabase/functions/github-api/account-connection'
+import { beginAccountConnection, authorizeAccountConnection } from '../supabase/functions/github-api/account-connection'
+import { completeRepositorySelection } from '../supabase/functions/github-api/repository-selection'
 import type { GithubDatabase } from '../supabase/functions/_shared/github/database'
 import type * as GithubClient from '../supabase/functions/_shared/github/client'
 
@@ -24,7 +21,10 @@ const repo = (id = 10, admin = true) => ({
 function setup() {
   const rpc = vi
     .fn()
-    .mockResolvedValueOnce({ data: { workspace_id: workspaceId, installation_id: 20 }, error: null })
+    .mockResolvedValueOnce({
+      data: { workspace_id: workspaceId, installation_id: 20, selected_ids: [10], previous_ids: [] },
+      error: null,
+    })
     .mockResolvedValueOnce({ data: 1, error: null })
   // Only RPC is needed by this unit. SQL tests verify its actual authorization.
   const db = { rpc } as unknown as GithubDatabase
@@ -89,11 +89,11 @@ describe('GitHub account connection', () => {
   })
   it('imports only repositories administered by the OAuth user, into the original workspace', async () => {
     const { db, rpc, fetcher } = setup()
-    expect(await completeAccountConnection(db, 'orbit-user', 'account.state', 'code')).toEqual({
+    expect(await completeRepositorySelection(db, 'orbit-user', 'account.state', 'code')).toEqual({
       workspaceId,
       repositoryCount: 1,
       accountLogin: 'org',
-      skippedCount: 1,
+      skippedCount: 0,
     })
     expect(fetcher.mock.calls[1][1].headers.Authorization).toBe('Bearer fixture-app-token')
     expect(fetcher.mock.calls[2][0]).toBe(
@@ -101,10 +101,12 @@ describe('GitHub account connection', () => {
     )
     expect(fetcher.mock.calls[2][1].headers.Authorization).toBe('Bearer fixture-user-token')
     expect(rpc.mock.calls[1]).toEqual([
-      'finish_github_account_connection',
+      'save_github_repository_selection',
       {
         requester: 'orbit-user',
         target_workspace: workspaceId,
+        target_installation: 20,
+        previous_ids: [],
         repositories: [
           { id: 10, full_name: 'org/repo-10', default_branch: 'main', private: true, installation_id: 20 },
         ],
@@ -114,7 +116,7 @@ describe('GitHub account connection', () => {
   it('rejects an expired or foreign state before using the OAuth code', async () => {
     const { db, rpc, fetcher } = setup()
     rpc.mockReset().mockResolvedValue({ data: null, error: { code: '22023' } })
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
       code: 'GITHUB_STATE_INVALID',
       status: 400,
     })
@@ -129,7 +131,9 @@ describe('GitHub account connection', () => {
     })
     rpc.mockResolvedValue({ data: null, error: { code: '42501' } })
     await expect(authorizeAccountConnection(db, 'orbit-user', 'state', 20)).rejects.toMatchObject({ code: '42501' })
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({ code: '42501' })
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+      code: '42501',
+    })
     expect(fetcher).not.toHaveBeenCalled()
   })
   it('refuses an installation that the GitHub user cannot access, even if the App can', async () => {
@@ -139,7 +143,7 @@ describe('GitHub account connection', () => {
       .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
       .mockResolvedValueOnce(Response.json(installation))
       .mockResolvedValueOnce(new Response(null, { status: 404 }))
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
       code: 'GITHUB_UNAVAILABLE',
     })
     expect(rpc).toHaveBeenCalledTimes(1)
@@ -159,7 +163,7 @@ describe('GitHub account connection', () => {
               : { permissions: { contents: 'read', pull_requests: 'read' } }),
         }),
       )
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
       code: 'GITHUB_UNAVAILABLE',
     })
     expect(rpc).toHaveBeenCalledTimes(1)
@@ -176,9 +180,17 @@ describe('GitHub account connection', () => {
       .mockResolvedValueOnce(Response.json({ total_count: 101, repositories: [repo(101)] }))
     rpc
       .mockReset()
-      .mockResolvedValueOnce({ data: { workspace_id: workspaceId, installation_id: 20 }, error: null })
+      .mockResolvedValueOnce({
+        data: {
+          workspace_id: workspaceId,
+          installation_id: 20,
+          selected_ids: Array.from({ length: 101 }, (_, i) => i + 1),
+          previous_ids: [],
+        },
+        error: null,
+      })
       .mockResolvedValueOnce({ data: 101, error: null })
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).resolves.toMatchObject({
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).resolves.toMatchObject({
       repositoryCount: 101,
     })
     expect(fetcher.mock.calls[3][0]).toContain('page=2')
@@ -197,15 +209,20 @@ describe('GitHub account connection', () => {
       .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
       .mockResolvedValueOnce(Response.json(installation))
       .mockResolvedValueOnce(Response.json(data))
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toHaveProperty('code')
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toHaveProperty('code')
     expect(rpc).toHaveBeenCalledTimes(1)
   })
   it('does not turn a refused database write into a successful connection', async () => {
     const { db, rpc } = setup()
     rpc
       .mockReset()
-      .mockResolvedValueOnce({ data: { workspace_id: workspaceId, installation_id: 20 }, error: null })
+      .mockResolvedValueOnce({
+        data: { workspace_id: workspaceId, installation_id: 20, selected_ids: [10], previous_ids: [] },
+        error: null,
+      })
       .mockResolvedValueOnce({ data: null, error: { code: '42501' } })
-    await expect(completeAccountConnection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({ code: '42501' })
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+      code: '42501',
+    })
   })
 })

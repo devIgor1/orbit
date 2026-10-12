@@ -34,8 +34,8 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
         ) : canManage ? (
           <>
             <p className="github-note">
-              Autorize sua conta no GitHub e escolha a conta ou organização que deseja conectar. Se o App já estiver
-              instalado, os repositórios autorizados serão importados automaticamente.
+              Autorize sua conta no GitHub e escolha a conta ou organização. Depois, selecione quais repositórios deseja
+              conectar a esta empresa. Você também pode revisar os que já estão conectados.
             </p>
             <Button
               className="github-connect-button"
@@ -45,6 +45,16 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
               <GitFork />
               {connect.isPending ? 'Conectando…' : 'Conectar GitHub'}
             </Button>
+            {repositories.isSuccess && repositories.data.some((repo) => repo.active) && (
+              <Button
+                variant="outline"
+                className="github-connect-button"
+                disabled={connect.isPending}
+                onClick={() => void connectAccount()}
+              >
+                Revisar repositórios conectados
+              </Button>
+            )}
             <p className="github-note">Use uma conta com acesso de administrador aos repositórios escolhidos.</p>
             {connect.isError && <ErrorState error={connect.error} />}
           </>
@@ -56,34 +66,36 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
           <ErrorState error={repositories.error} onRetry={() => void repositories.refetch()} />
         ) : repositories.isPending ? (
           <LoadingState label="Buscando repositórios…" />
-        ) : repositories.data.length === 0 ? (
+        ) : repositories.data.filter((repo) => repo.active).length === 0 ? (
           <EmptyState
             title="Nenhum repositório conectado"
             description="Os repositórios conectados ficarão disponíveis nos projetos desta empresa."
           />
         ) : (
           <ul className="github-repositories">
-            {repositories.data.map((repo) => (
-              <li key={repo.id}>
-                <div>
-                  <strong>{repo.full_name}</strong>
-                  <p className="github-note">
-                    {repo.active ? 'Conectado' : 'Desconectado — conecte novamente para retomar'} ·{' '}
-                    {repo.is_private ? 'Privado' : 'Público'}
-                  </p>
-                </div>
-                {canManage && repo.active && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={disconnect.isPending}
-                    onClick={() => disconnect.mutate(repo.id)}
-                  >
-                    Desconectar
-                  </Button>
-                )}
-              </li>
-            ))}
+            {repositories.data
+              .filter((repo) => repo.active)
+              .map((repo) => (
+                <li key={repo.id}>
+                  <div>
+                    <strong>{repo.full_name}</strong>
+                    <p className="github-note">
+                      {repo.active ? 'Conectado' : 'Desconectado — conecte novamente para retomar'} ·{' '}
+                      {repo.is_private ? 'Privado' : 'Público'}
+                    </p>
+                  </div>
+                  {canManage && repo.active && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={disconnect.isPending}
+                      onClick={() => disconnect.mutate(repo.id)}
+                    >
+                      Desconectar
+                    </Button>
+                  )}
+                </li>
+              ))}
           </ul>
         )}
       </div>

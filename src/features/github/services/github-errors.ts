@@ -3,6 +3,11 @@ import { z } from 'zod'
 import { AppError, toAppError } from '@/lib/errors/app-error'
 
 const messages: Record<string, string> = {
+  GITHUB_SELECTION_REQUIRED: 'Atualize a página e conecte novamente para escolher os repositórios.',
+  GITHUB_SELECTION_CHANGED:
+    'O acesso a um dos repositórios selecionados mudou. Volte às configurações e revise a seleção novamente.',
+  GITHUB_REPOSITORY_IN_USE:
+    'Um dos repositórios que seria desconectado está em uso por um projeto. Volte às configurações e revise a seleção novamente.',
   GITHUB_NOT_CONFIGURED: 'A integração GitHub ainda precisa ser ativada pela administração do Orbit.',
   GITHUB_UNAVAILABLE:
     'O repositório, a branch ou o PR não está disponível. Confira o acesso do GitHub App e reconecte o repositório se necessário.',
