@@ -1639,3 +1639,13 @@ entrega inclui a mensagem específica e a proteção contra reenvio de callbacks
   de remontagem/foco/reconexão passou separadamente. PostgreSQL: 185 testes passaram.
   Seis E2E em desktop/celular passaram, cobrindo OAuth, cancelamento, aprovação
   pendente, erro de expiração e reinício com estado novo sem repetir a callback.
+- Correção enviada na `main` (`a9cb81f`) e publicação Vercel confirmada. Na
+  verificação real, `orbitwe` estava sem repositórios. O usuário escolheu conectar
+  `devIgor1`; OAuth concluído e importação confirmada de 125 repositórios já
+  autorizados no GitHub para uma única empresa, incluindo `devIgor1/orbit`.
+- Uma instalação já existente mantém Save desabilitado quando não há mudanças
+  de repositórios. Nesta validação foi retomada a URL de retorno com estado novo
+  e o ID observado da instalação escolhida, preservando OAuth e validações de
+  acesso do backend. Uma ação de retomada na interface permanece como melhoria
+  para esse caso. Não houve alteração das permissões ou dos repositórios da
+  instalação, e nenhum comentário em PR foi publicado.

@@ -26,9 +26,9 @@ O backend está configurado no projeto `twsfyqkagyvibsilulle`:
 - Webhook real validado por reenvio do ping do GitHub: assinatura presente, HTTP 200 e recebimento confirmado. O segredo foi aplicado ao App para corresponder ao Supabase.
 - Chamadas sem autenticação à API, ao worker e ao webhook recusadas com HTTP 401.
 
-**Verificado:** a sessão real do Orbit iniciou a conexão, persistiu seu estado e foi redirecionada à seleção de conta/organização no GitHub. A tela já indica uma instalação na conta pessoal; a escolha da conta e dos repositórios permanece com o usuário.
+**Verificado:** após o usuário escolher `devIgor1`, OAuth real concluído e 125 repositórios já autorizados na instalação importados na empresa que iniciou a conexão, incluindo `devIgor1/orbit`. A organização `orbitwe` tem instalação ativa, mas nenhum repositório. Frontend corrigido publicado pela Vercel no commit `a9cb81f`.
 
-**Pendente:** concluir o consentimento/OAuth, confirmar a importação dos repositórios e validar branches, sincronização e comentário com um PR real. Nenhum comentário em PR foi enviado nesta verificação.
+**Pendente:** validar branches, sincronização e comentário com um PR real. Para uma instalação existente sem alteração dos repositórios, o GitHub pode manter **Save** desabilitado; a retomada desse caso ainda precisa de uma ação na interface do Orbit. Nesta validação, o retorno da instalação foi retomado manualmente com estado válido, seguido de OAuth e de todas as verificações do backend. Nenhum comentário em PR foi enviado nesta verificação.
 
 As instruções abaixo também servem para configurar outro ambiente. Os passos de publicação do backend já foram executados no projeto indicado acima.
 
