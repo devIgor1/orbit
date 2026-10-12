@@ -62,7 +62,7 @@ export function useGithubMutations(projectId?: string, taskId?: string) {
   }
   return {
     connect: useMutation({
-      mutationFn: (repository: string) => service.beginGithubConnection(scope.requireScope().workspaceId, repository),
+      mutationFn: () => service.beginGithubConnection(scope.requireScope().workspaceId),
     }),
     disconnect: useMutation({
       mutationFn: (repositoryId: string) => service.disconnectGithub(scope.requireScope().workspaceId, repositoryId),

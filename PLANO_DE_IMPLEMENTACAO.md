@@ -1515,3 +1515,77 @@ ainda precisa ser publicado; instalação, conexão OAuth e PR real estão pende
   do App ou tarefa vinculada existia nesta verificação; nenhum comentário real
   foi enviado. Restam publicação do frontend, seleção de repositórios pelo usuário
   e validação completa de OAuth, sincronização de um PR e comentário após merge.
+
+## 50. Conexão GitHub em um único fluxo — 11/10/2026
+
+**Estado:** alteração implementada e validada localmente. Para publicação, aplicar
+`202610120001_github_account_connection.sql` e atualizar `github-api` antes do
+frontend. Nenhuma configuração ou dado de produção foi alterado nesta etapa.
+
+- Configurações passa a oferecer **Conectar GitHub**, sem formulário de URL nem
+  instalação em aba separada. A pessoa escolhe conta/organização e repositórios
+  no GitHub, confirma a autorização e retorna com os repositórios disponíveis.
+  A instalação exigida pelo GitHub é a concessão de acesso, sem baixar software.
+- A Setup URL já cadastrada (`/settings`) continua funcionando e encaminha o
+  retorno à callback. OAuth é iniciado automaticamente pelo Orbit. Permanecem
+  desmarcados OAuth durante a instalação e Device Flow; **Redirect on update**
+  precisa estar ativado para atualizar uma instalação existente. Não há novos
+  segredos. O guia de cadastro/publicação foi atualizado.
+- O backend valida a instalação do próprio App e consulta os repositórios usando
+  o token OAuth da pessoa. Importa somente os autorizados com permissão `admin`.
+  IDs de instalação recebidos pelo navegador não constituem prova de acesso.
+  Repositórios não elegíveis são informados, e nenhuma seleção elegível resulta
+  em erro explícito. O consentimento informa que os repositórios ficarão
+  disponíveis à empresa que iniciou a conexão.
+- Estados privados vinculam usuário/empresa, expiram em dez minutos e são trocados
+  entre seleção de repositórios e OAuth. A importação tem paginação, limite de mil
+  repositórios e gravação atômica com nova checagem de acesso à empresa. Tokens
+  GitHub não são persistidos. Callbacks antigas permanecem compatíveis durante
+  a atualização. Tipos regenerados do Supabase local.
+- Cancelamento, solicitação aguardando aprovação da organização, estado expirado,
+  instalação forjada, acesso insuficiente e falha de escrita recebem tratamento
+  explícito. A conexão pode ser reiniciada nas configurações.
+- Lint, estilos/e-mail, arquitetura, TypeScript/build e Deno check aprovados.
+  Vitest: 202 testes passaram, com um teste opt-in não executado nesta etapa.
+  PostgreSQL: 183 testes passaram, incluindo 21 novos de autorização, expiração,
+  replay, revogação de acesso e rollback da importação inteira.
+- Os dez E2E existentes de GitHub e quatro novos passaram em desktop/celular,
+  cobrindo o fluxo completo com respostas GitHub simuladas, retorno após login,
+  cancelamento e aprovação pendente. Navegação por teclado e layout sem overflow
+  conferidos em desktop, tablet e celular. Capturas em
+  `test-results/github-account-*`. A validação com consentimento GitHub e PR
+  reais permanece como aceite após publicação; nenhum comentário foi enviado.
+
+## 51. Seleção de branches e PRs na tarefa — 11/10/2026
+
+**Estado:** implementado e validado localmente. Publicar `github-api` e frontend
+junto com a conexão da seção 50. Esta seleção não exige migration adicional;
+a migration da conexão de conta continua pendente no ambiente hospedado.
+
+- A aba Desenvolvimento lista branches e pull requests do repositório associado
+  ao projeto. O vínculo usa seleção direta, com paginação de 50 opções, atualização
+  da lista e filtro textual das opções carregadas. PRs podem ser filtrados por
+  abertos/rascunhos, fechados/integrados ou todos.
+- Opções identificam número, título e status do PR. A seleção mostra branch de
+  origem, destino e repositório do fork. PRs com origem removida ficam indisponíveis;
+  selecionar um PR já integrado informa a conclusão e o comentário que a
+  sincronização produzirá após o vínculo.
+- O backend verifica usuário, empresa, tarefa, projeto e repositório ativo antes
+  de consultar o GitHub. Listagem e validação usam token de instalação com leitura,
+  limitado ao repositório. A identidade e a branch padrão atuais são consultadas
+  no GitHub; a branch padrão é excluída e o vínculo revalida a escolha antes da
+  escrita. As permissões também são verificadas pela RPC de persistência.
+- Consultas distinguem carregamento, ausência de opções e falhas, inclusive em
+  atualização e paginação. Uma falha bloqueia o vínculo até recuperação. Cache
+  inclui usuário, empresa, tarefa, repositório, tipo e filtro; mudanças de contexto
+  limpam a seleção. Os seletores compartilhados preservam navegação por teclado
+  e o CSS permanece centralizado em `globals.css`.
+- Lint, estilos/e-mail, arquitetura, TypeScript/build e Deno check aprovados.
+  Vitest: 223 testes passaram; um teste opt-in não foi executado nesta etapa.
+  Os dez E2E existentes de vínculo e seis novos de seleção passaram em desktop
+  e celular. Revisão visual incluiu tablet e celular de 320 px, conteúdo longo,
+  teclado, paginação, forks, mudança de filtro e recuperação de erros.
+- Testes de contrato cobrem autorização, paginação, dados inválidos, revogação,
+  branch removida e mudança da branch padrão entre listagem e vínculo. GitHub
+  é simulado apenas nos testes; login, projetos e tarefas dos E2E usam o Supabase
+  local. A validação com repositório e PR reais permanece pendente após publicação.

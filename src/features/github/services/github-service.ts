@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { getSupabase } from '@/lib/supabase/client'
 import { AppError, toAppError } from '@/lib/errors/app-error'
 import { requireCollection } from '@/lib/supabase/require-data'
-import { githubApiError } from './github-errors'
+import { invokeGithub as invoke } from './github-api'
 
 const idSchema = z.object({ id: z.uuid() })
 const configSchema = z.discriminatedUnion('configured', [
@@ -13,21 +13,33 @@ const configSchema = z.discriminatedUnion('configured', [
     callbackUrl: z.url(),
   }),
 ])
-async function invoke<T>(body: object, schema: z.ZodType<T>) {
-  const { data, error } = await getSupabase().functions.invoke('github-api', { body })
-  if (error) throw await githubApiError(error)
-  const result = schema.safeParse(data)
-  if (!result.success) throw new AppError('contract', 'O servidor não confirmou os dados da integração GitHub.')
-  return result.data
-}
 export const fetchGithubConfig = () => invoke({ action: 'config' }, configSchema)
-export const beginGithubConnection = (workspaceId: string, repository: string) =>
+export const beginGithubConnection = (workspaceId: string) =>
   invoke(
-    { action: 'connect', workspaceId, repository },
+    { action: 'connect-account', workspaceId },
+    z.object({ url: z.url().regex(/^https:\/\/github\.com\/apps\/[a-z0-9-]+\/installations\/new\?state=/) }),
+  )
+export const authorizeGithubConnection = (state: string, installationId: number) =>
+  invoke(
+    { action: 'installation-callback', state, installationId },
     z.object({ url: z.url().startsWith('https://github.com/login/oauth/authorize?') }),
   )
-export const completeGithubConnection = (state: string, code: string) =>
-  invoke({ action: 'callback', state, code }, idSchema.extend({ workspaceId: z.uuid() }))
+export async function completeGithubConnection(state: string, code: string) {
+  // Keep callbacks that started before this release working during deployment.
+  if (!state.startsWith('account.')) {
+    const result = await invoke({ action: 'callback', state, code }, idSchema.extend({ workspaceId: z.uuid() }))
+    return { workspaceId: result.workspaceId, repositoryCount: 1, skippedCount: 0, accountLogin: null }
+  }
+  return invoke(
+    { action: 'account-callback', state, code },
+    z.object({
+      workspaceId: z.uuid(),
+      repositoryCount: z.number().int().positive(),
+      accountLogin: z.string().min(1),
+      skippedCount: z.number().int().nonnegative(),
+    }),
+  )
+}
 export async function fetchGithubRepositories(workspaceId: string) {
   const { data, error } = await getSupabase()
     .from('github_repositories')

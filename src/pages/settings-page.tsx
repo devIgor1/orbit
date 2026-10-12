@@ -7,10 +7,16 @@ import { SettingsProfile } from '@/features/settings/components/settings-profile
 import { useWorkspace } from '@/features/workspace/use-workspace'
 import { AppError } from '@/lib/errors/app-error'
 import { GithubSettings } from '@/features/github/components/github-settings'
+import { Navigate, useLocation } from 'react-router-dom'
 
 export function SettingsPage() {
   const auth = useAuth()
   const workspace = useWorkspace()
+  const location = useLocation()
+  // Support the App's existing /settings Setup URL, including login redirects.
+  const parameters = new URLSearchParams(location.search)
+  if (parameters.has('setup_action') || parameters.has('installation_id'))
+    return <Navigate to={`/settings/github/callback${location.search}`} replace />
 
   return (
     <div className="page-content settings-page">

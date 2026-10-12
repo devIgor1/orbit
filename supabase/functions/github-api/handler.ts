@@ -4,6 +4,8 @@ import { adminClient, authenticate } from '../_shared/github/database.ts'
 import { githubFailure, GithubError } from '../_shared/github/errors.ts'
 import { beginConnection, completeConnection } from './connection.ts'
 import { linkTask } from './link.ts'
+import { beginAccountConnection, authorizeAccountConnection, completeAccountConnection } from './account-connection.ts'
+import { listTaskReferences } from './references.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +39,12 @@ export async function handleGithubApi(request: Request) {
         throw error
       }
     }
+    if (input.action === 'references') return respond(await listTaskReferences(db, userId, input))
+    if (input.action === 'connect-account') return respond(await beginAccountConnection(db, userId, input.workspaceId))
+    if (input.action === 'installation-callback')
+      return respond(await authorizeAccountConnection(db, userId, input.state, input.installationId))
+    if (input.action === 'account-callback')
+      return respond(await completeAccountConnection(db, userId, input.state, input.code))
     if (input.action === 'connect')
       return respond(await beginConnection(db, userId, input.workspaceId, input.repository))
     if (input.action === 'callback') return respond(await completeConnection(db, userId, input.state, input.code))

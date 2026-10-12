@@ -55,6 +55,10 @@ export function TaskGithub({ task }: { task: Task }) {
   if (!data)
     return (
       <GithubLinkForm
+        key={`${task.id}:${repository.id}`}
+        taskId={task.id}
+        repositoryId={repository.id}
+        repositoryName={repository.full_name}
         isPending={mutations.link.isPending}
         error={mutations.link.error}
         onSubmit={async (values) => {

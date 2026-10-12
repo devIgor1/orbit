@@ -806,8 +806,12 @@ body:has(.app-shell,.login-page,.companies-page) {
 /* 12 — GitHub integration. Shared form, button and panel primitives remain authoritative. */
 .github-content,.github-task,.github-link-form { display: flex; flex-direction: column; gap: var(--space-4); width: 100%; min-width: 0; }
 .github-note { font-size: var(--font-size-label); color: var(--muted-foreground); line-height: 1.65; overflow-wrap: anywhere; }
-.github-connect-form,.github-project-actions,.github-task-actions { display: flex; align-items: flex-end; gap: var(--space-3); flex-wrap: wrap; }
-.github-connect-form .form-field { flex: 1; }
+.github-project-actions,.github-task-actions { display: flex; align-items: flex-end; gap: var(--space-3); flex-wrap: wrap; }
+.github-connect-button { align-self: flex-start; }
+.github-reference-picker { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.github-reference-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.github-reference-detail { padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-muted); font-size: var(--font-size-label); line-height: 1.65; overflow-wrap: anywhere; }
+.github-reference-picker .query-state { min-height: 0; padding: var(--space-5); }
 .github-repositories { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 .github-repositories li { display: flex; gap: var(--space-4); align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: var(--space-4); }
 .github-repositories strong { font-weight: 600; overflow-wrap: anywhere; }
@@ -824,7 +828,8 @@ body:has(.app-shell,.login-page,.companies-page) {
 .github-sync-status { font-weight: 600; font-size: var(--font-size-label); }
 .github-callback { padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-5); align-items: flex-start; }
 @media (max-width: 600px) {
-  .github-connect-form,.github-project-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .github-project-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .github-connect-button { width: 100%; }
   .github-repositories li { flex-direction: column; align-items: flex-start; }
   .github-project { padding: var(--space-5); }
 }
@@ -932,7 +937,7 @@ body:has(.app-shell,.login-page,.companies-page) {
 
 /* First access — confirmed session, company and team setup. */
 .confirmation-page { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-8); padding: var(--space-6); }
-.confirmation-panel { width: min(100%,600px); padding: var(--space-6); }
+.confirmation-panel { width: min(100%,600px); display: grid; gap: var(--space-6); padding: var(--space-6); }
 .confirmation-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: var(--space-3); }
 .onboarding-page { min-height: 100dvh; }
 .onboarding-content { width: min(100%,1160px); margin-inline: auto; padding: 72px var(--space-10); }

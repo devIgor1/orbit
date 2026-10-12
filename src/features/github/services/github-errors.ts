@@ -7,14 +7,18 @@ const messages: Record<string, string> = {
   GITHUB_UNAVAILABLE:
     'O repositório, a branch ou o PR não está disponível. Confira o acesso do GitHub App e reconecte o repositório se necessário.',
   GITHUB_ADMIN_REQUIRED: 'Conecte com uma conta administradora deste repositório no GitHub.',
+  GITHUB_NO_ADMIN_REPOSITORIES:
+    'Nenhum repositório com acesso administrativo foi autorizado. Conecte novamente e selecione os repositórios no GitHub.',
+  GITHUB_REPOSITORY_LIMIT:
+    'Esta conta disponibiliza mais de 1.000 repositórios. Conecte novamente e selecione apenas os repositórios desta empresa no GitHub.',
   GITHUB_OAUTH_FAILED: 'A autorização do GitHub expirou ou foi recusada. Inicie a conexão novamente nas configurações.',
   INVALID_REQUEST: 'A solicitação é inválida ou expirou. Revise os dados e inicie novamente.',
   ALREADY_LINKED: 'Esta tarefa já tem um vínculo. Atualize os dados antes de continuar.',
-  GITHUB_BRANCH_REQUIRED: 'Informe uma branch de trabalho diferente da branch padrão do repositório.',
-  GITHUB_AMBIGUOUS_BRANCH: 'Esta branch tem vários PRs possíveis. Remova o vínculo e informe o número do PR desejado.',
-  GITHUB_RATE_LIMIT: 'O GitHub limitou as consultas. A sincronização tentará novamente automaticamente.',
+  GITHUB_BRANCH_REQUIRED: 'Selecione uma branch de trabalho diferente da branch padrão do repositório.',
+  GITHUB_AMBIGUOUS_BRANCH: 'Esta branch tem vários PRs possíveis. Remova o vínculo e selecione o PR desejado.',
+  GITHUB_RATE_LIMIT: 'O GitHub limitou as consultas. Aguarde um pouco e tente novamente.',
   GITHUB_TOO_MANY_RESULTS: 'O GitHub retornou resultados demais. Vincule diretamente o PR ou consulte a administração.',
-  GITHUB_CONTRACT: 'O GitHub não confirmou os dados esperados. A sincronização tentará novamente.',
+  GITHUB_CONTRACT: 'O GitHub não confirmou os dados esperados. Atualize as informações e tente novamente.',
   GITHUB_FAILED: 'Não foi possível confirmar a operação no GitHub. Tente novamente em instantes.',
 }
 export function githubError(code: string) {

@@ -37,12 +37,16 @@ export async function githubRequest<T>(
 export async function appToken() {
   return appJwt(required('GITHUB_APP_ID'), atob(required('GITHUB_PRIVATE_KEY_BASE64')))
 }
-export async function installationToken(installation: number, repository: number) {
+export async function installationToken(
+  installation: number,
+  repository: number,
+  pullAccess: 'read' | 'write' = 'write',
+) {
   const result = await githubRequest(
     await appToken(),
     `/app/installations/${installation}/access_tokens`,
     z.object({ token: z.string().min(1) }),
-    { repository_ids: [repository], permissions: { contents: 'read', pull_requests: 'write' } },
+    { repository_ids: [repository], permissions: { contents: 'read', pull_requests: pullAccess } },
   )
   return result.token
 }

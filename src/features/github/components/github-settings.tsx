@@ -1,7 +1,5 @@
-import { useState } from 'react'
-import { GitFork, ExternalLink } from 'lucide-react'
+import { GitFork } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/query-state'
 import { SettingsSection } from '@/features/settings/components/settings-section'
 import { useGithubConfig, useGithubMutations, useGithubRepositories } from '../hooks/use-github'
@@ -10,14 +8,12 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
   const config = useGithubConfig()
   const repositories = useGithubRepositories()
   const { connect, disconnect } = useGithubMutations()
-  const [name, setName] = useState('')
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
+  async function connectAccount() {
     try {
-      const result = await connect.mutateAsync(name.trim())
+      const result = await connect.mutateAsync()
       window.location.assign(result.url)
     } catch {
-      /* The mutation error remains visible and preserves the repository name. */
+      /* The mutation keeps the error visible and allows another attempt. */
     }
   }
   return (
@@ -38,34 +34,18 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
         ) : canManage ? (
           <>
             <p className="github-note">
-              Instale o App nos repositórios desejados. Depois, conecte cada repositório com uma conta administradora no
-              GitHub.
+              Conecte sua conta e escolha no GitHub os repositórios que deseja disponibilizar nesta empresa. Eles
+              aparecerão aqui automaticamente após a autorização.
             </p>
-            <Button asChild variant="outline">
-              <a href={config.data.installationUrl} target="_blank" rel="noreferrer">
-                <GitFork />
-                Instalar GitHub App
-                <ExternalLink />
-              </a>
+            <Button
+              className="github-connect-button"
+              disabled={connect.isPending}
+              onClick={() => void connectAccount()}
+            >
+              <GitFork />
+              {connect.isPending ? 'Conectando…' : 'Conectar GitHub'}
             </Button>
-            <form className="github-connect-form" onSubmit={submit}>
-              <div className="form-field">
-                <label htmlFor="github-repository">Repositório</label>
-                <Input
-                  id="github-repository"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="organizacao/repositorio"
-                  pattern="[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"
-                  maxLength={201}
-                  required
-                  disabled={connect.isPending}
-                />
-              </div>
-              <Button type="submit" disabled={connect.isPending}>
-                {connect.isPending ? 'Conectando…' : 'Conectar repositório'}
-              </Button>
-            </form>
+            <p className="github-note">Use uma conta com acesso de administrador aos repositórios escolhidos.</p>
             {connect.isError && <ErrorState error={connect.error} />}
           </>
         ) : (

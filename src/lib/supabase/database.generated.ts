@@ -701,7 +701,15 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { invitation_id: string }; Returns: string }
+      advance_github_account_connection: {
+        Args: { next_hash: string; previous_hash: string; requester: string; target_installation: number }
+        Returns: undefined
+      }
       apply_github_snapshot: { Args: { job_lease: string; snapshot: Json; target_link: string }; Returns: Json }
+      begin_github_account_connection: {
+        Args: { requester: string; state_hash: string; target_workspace: string }
+        Returns: undefined
+      }
       begin_github_connection: {
         Args: { repository_name: string; requester: string; state_hash: string; target_workspace: string }
         Returns: undefined
@@ -740,6 +748,7 @@ export type Database = {
         Returns: Database['public']['Enums']['registration_email_status']
       }
       claim_github_jobs: { Args: Record<PropertyKey, never>; Returns: Json }
+      consume_github_account_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       consume_github_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       create_company: {
         Args: { company_name: string }
@@ -757,6 +766,10 @@ export type Database = {
       }
       dashboard_summary: { Args: { period_days?: number; target_workspace: string }; Returns: Json }
       disconnect_github_repository: { Args: { target_repository: string; target_workspace: string }; Returns: string }
+      finish_github_account_connection: {
+        Args: { repositories: Json; requester: string; target_workspace: string }
+        Returns: number
+      }
       finish_github_connection: {
         Args: { repository: Json; requester: string; target_workspace: string }
         Returns: string
