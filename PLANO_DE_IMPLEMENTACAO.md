@@ -1691,8 +1691,9 @@ ativa na versão 4 e frontend `3ce19ba` publicado pela Vercel.
 
 ## 55. Seleção explícita dos repositórios da empresa — 12/10/2026
 
-**Estado:** implementado, validado localmente, migration publicada e `github-api`
-ativa na versão 5. Interface em publicação. O usuário escolheu revisar os 125
+**Estado:** publicado, validado localmente e conferido em produção. Migration
+aplicada, `github-api` ativa na versão 5 e frontend `9ddca0a` publicado pela Vercel.
+O usuário escolheu revisar os 125
 repositórios importados antes pela interface, sem remoção automática nesta entrega.
 
 - Após escolher a conta, o Orbit mostra os repositórios disponíveis. Novos
@@ -1719,3 +1720,8 @@ repositórios importados antes pela interface, sem remoção automática nesta e
 - Migration `202610120004_github_repository_selection.sql` validada em transação
   revertida no Supabase hospedado, aplicada e registrada atomicamente. Nenhuma
   credencial, URL ou permissão do GitHub App foi alterada.
+- Na validação real, **Revisar repositórios conectados** listou as contas e abriu
+  os 125 repositórios de `devIgor1`, preservando os existentes marcados e bloqueando
+  a remoção de `devIgor1/advanced-react`, em uso por um projeto. A seleção ficou
+  aberta para o usuário; nenhuma escolha foi salva em seu lugar. A escrita parcial
+  e as proteções foram verificadas nos testes locais, sem remover conexões reais.
