@@ -1653,8 +1653,8 @@ entrega inclui a mensagem específica e a proteção contra reenvio de callbacks
 
 ## 54. Retomada automática de instalações existentes — 12/10/2026
 
-**Estado:** implementação e verificações locais concluídas; migration aplicada e
-`github-api` ativa na versão 4. Publicação/validação real do frontend em andamento.
+**Estado:** publicado e validado em produção. Migration aplicada, `github-api`
+ativa na versão 4 e frontend `3ce19ba` publicado pela Vercel.
 
 - **Conectar GitHub** começa por OAuth e consulta as instalações acessíveis ao
   usuário. O Orbit mostra as contas/organizações já instaladas para escolha;
@@ -1682,3 +1682,8 @@ entrega inclui a mensagem específica e a proteção contra reenvio de callbacks
   pendente, estados expirados e proteção contra reenvio.
 - Migration validada em transação revertida no Supabase hospedado, depois aplicada
   com histórico atômico. Nenhuma credencial ou permissão nova é necessária.
+- Na validação real, **Conectar GitHub** listou `devIgor1` e `orbitwe` sem abrir
+  as configurações da instalação. Escolher `devIgor1` concluiu a autorização e
+  reconectou os 125 repositórios existentes na empresa `teste`. Foram usados
+  somente os botões normais do produto, sem editar permissões, repositórios ou
+  URLs de callback. Evidências visuais locais registram a escolha e o sucesso.

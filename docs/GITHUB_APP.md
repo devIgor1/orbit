@@ -19,14 +19,14 @@ A integração exige migrations/funções publicadas, credenciais, agendamento e
 O backend está configurado no projeto `twsfyqkagyvibsilulle`:
 
 - GitHub App `weorbit-integration` cadastrado, com chave e identificadores conferidos pela API do GitHub.
-- Cinco migrations `202610110001`–`202610110005`, `202610120001_github_account_connection` , `202610120002_github_connection_timeout` e `202610120003_github_installation_discovery` aplicadas e registradas; três Edge Functions ativas e oito variáveis da integração publicadas.
-- Frontend com conexão unificada e seleção de branches/PRs publicado. `github-api` ativa na versão 4, com descoberta das instalações autorizadas, seleção segura e erro específico para estado expirado ou usado. A publicação do frontend da descoberta está em validação. O primeiro erro 400 em **Conectar GitHub** era causado pelo frontend novo chamando a API antiga; a atualização do banco e da função corrigiu essa incompatibilidade.
+- Cinco migrations `202610110001`–`202610110005`, `202610120001_github_account_connection`, `202610120002_github_connection_timeout` e `202610120003_github_installation_discovery` aplicadas e registradas; três Edge Functions ativas e oito variáveis da integração publicadas.
+- Frontend com conexão unificada e seleção de branches/PRs publicado. `github-api` ativa na versão 4, com descoberta das instalações autorizadas, seleção segura e erro específico para estado expirado ou usado. Frontend de descoberta publicado e validado pelo fluxo normal em produção (`3ce19ba`). O primeiro erro 400 em **Conectar GitHub** era causado pelo frontend novo chamando a API antiga; a atualização do banco e da função corrigiu essa incompatibilidade.
 - **Redirect on update** ativado no GitHub App. A seleção da conta/repositórios dispõe de 30 minutos; a etapa OAuth seguinte mantém validade de dez minutos. Uma tentativa que já expirou precisa começar novamente pelo Orbit.
 - Vault e Cron configurados. Execução automática do worker confirmada com HTTP 200 e fila vazia.
 - Webhook real validado por reenvio do ping do GitHub: assinatura presente, HTTP 200 e recebimento confirmado. O segredo foi aplicado ao App para corresponder ao Supabase.
 - Chamadas sem autenticação à API, ao worker e ao webhook recusadas com HTTP 401.
 
-**Verificado:** após o usuário escolher `devIgor1`, OAuth real concluído e 125 repositórios já autorizados na instalação importados na empresa que iniciou a conexão, incluindo `devIgor1/orbit`. A organização `orbitwe` tem instalação ativa, mas nenhum repositório. Frontend corrigido publicado pela Vercel no commit `a9cb81f`.
+**Verificado:** no fluxo publicado em `3ce19ba`, **Conectar GitHub** identificou automaticamente `devIgor1` e `orbitwe`. A escolha de `devIgor1` concluiu OAuth e reconectou 125 repositórios na empresa de origem, incluindo `devIgor1/orbit`, sem alterar a instalação nem montar URLs de retorno manualmente. A organização `orbitwe` tem instalação ativa, mas nenhum repositório. A publicação Vercel foi confirmada antes da validação real.
 
 **Pendente:** validar branches, sincronização e comentário com um PR real. A descoberta de instalações descrita abaixo elimina a dependência do botão **Save** para retomar contas já instaladas. Nenhum comentário em PR foi enviado nesta verificação.
 
@@ -112,7 +112,7 @@ npx supabase link --project-ref twsfyqkagyvibsilulle
 npx supabase db push --linked --dry-run
 ```
 
-Confira as migrations pendentes. A integração usa `202610110001` a `202610110005`; o fluxo unificado acrescenta `202610120001_github_account_connection.sql` , `202610120002_github_connection_timeout.sql` e `202610120003_github_installation_discovery.sql`. Publique as migrations e a função `github-api` antes do frontend novo. Os endpoints antigos continuam disponíveis para callbacks iniciadas antes da atualização. Depois aplique e publique:
+Confira as migrations pendentes. A integração usa `202610110001` a `202610110005`; o fluxo unificado acrescenta `202610120001_github_account_connection.sql`, `202610120002_github_connection_timeout.sql` e `202610120003_github_installation_discovery.sql`. Publique as migrations e a função `github-api` antes do frontend novo. Os endpoints antigos continuam disponíveis para callbacks iniciadas antes da atualização. Depois aplique e publique:
 
 ```sh
 npx supabase db push --linked
