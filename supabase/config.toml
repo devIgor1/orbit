@@ -52,3 +52,11 @@ enabled = false
 
 [functions.send-invitation]
 verify_jwt = true
+
+# Each GitHub endpoint validates its own caller (Auth, HMAC, or worker secret).
+[functions.github-api]
+verify_jwt = false
+[functions.github-webhook]
+verify_jwt = false
+[functions.github-worker]
+verify_jwt = false

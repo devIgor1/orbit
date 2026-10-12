@@ -18,6 +18,7 @@ import { TaskList } from '@/features/tasks/components/task-list'
 import { TaskDialog } from '@/features/tasks/components/task-dialog'
 import { TaskSheet } from '@/features/tasks/components/task-sheet'
 import { TasksToolbar } from '@/features/tasks/components/tasks-toolbar'
+import { ProjectGithub } from '@/features/github/components/project-github'
 
 export function ProjectPage() {
   const { projectId = '' } = useParams()
@@ -27,7 +28,7 @@ export function ProjectPage() {
   const [archiving, setArchiving] = useState(false)
   const [creating, setCreating] = useState(false)
   const [initialStatus, setInitialStatus] = useState<Task['status']>('todo')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(() => params.get('task'))
   const project = useProject(projectId)
   const tasks = useTasks(projectId)
   const team = useTeam('', true)
@@ -59,6 +60,7 @@ export function ProjectPage() {
       <Button disabled={!ready} onClick={() => create()}><Plus aria-hidden="true" />Nova tarefa</Button>
     </div>} />
     {project.isSuccess && !project.isError && tasks.isSuccess && !tasks.isError && <ProjectSummary project={project.data} tasks={tasks.data} />}
+    {ready && <ProjectGithub key={projectId} projectId={projectId} canManage={canManage} />}
     <div className="board-header"><h2>Tarefas do projeto</h2><p>Um passo de cada vez, todos na mesma direção.</p></div>
     <TasksToolbar search={search} priority={priority} view={view} onSearchChange={value => setFilter('search', value)} onPriorityChange={value => setFilter('priority', value)} onViewChange={setView} />
     {!isSupabaseConfigured ? <ConnectionState /> : workspace.isError ? <ErrorState error={workspace.error} onRetry={() => void workspace.refetch()} /> : project.isError ? <ErrorState error={project.error} onRetry={() => void project.refetch()} /> : tasks.isError ? <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} /> : team.isError ? <ErrorState error={team.error} onRetry={() => void team.refetch()} /> : !ready || !filteredTasks || !team.data ? <LoadingState label="Preparando seu quadro…" /> : <>

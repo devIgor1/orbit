@@ -7,7 +7,7 @@ const status = JSON.parse(execSync('npx --yes supabase status -o json', { encodi
 if (!status.API_URL?.startsWith('http://127.0.0.1:55521')) throw new Error('Expected isolated local Orbit Supabase on port 55521.')
 const credentialsPath = '.demo-credentials.json'
 const existing = existsSync(credentialsPath) ? JSON.parse(readFileSync(credentialsPath, 'utf8')) : null
-const password = existing?.password ?? randomBytes(24).toString('base64url')
+const password = existing?.password ?? `Aa1!${randomBytes(24).toString('base64url')}`
 const accounts = [
   { email: 'marina@orbit.local', full_name: 'Marina Costa' },
   { email: 'rafael@orbit.local', full_name: 'Rafael Oliveira' },

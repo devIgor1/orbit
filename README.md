@@ -1,5 +1,7 @@
 # Orbit
 
+Integração de desenvolvimento: [cadastro do GitHub App, credenciais, publicação e validação](docs/GITHUB_APP.md).
+
 Um workspace para equipes criativas, com interface em português, projetos,
 Kanban, tarefas, comentários, equipe e indicadores conectados ao Supabase.
 

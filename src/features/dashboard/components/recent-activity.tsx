@@ -12,6 +12,9 @@ const actionNames: Record<string, string> = {
   create: 'Criado',
   update: 'Atualizado',
   status_changed: 'Etapa atualizada',
+  github_linked: 'Vinculada ao GitHub',
+  github_unlinked: 'Vínculo GitHub removido',
+  github_status_changed: 'Etapa sincronizada pelo GitHub',
 }
 export function RecentActivity() {
   const { configured } = useAuth()

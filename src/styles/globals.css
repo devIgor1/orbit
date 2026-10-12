@@ -10,7 +10,7 @@
 /* ORBIT DESIGN SYSTEM
    01 Theme & tokens · 02 Base · 03 Primitives · 04 Shell & shared patterns
    05 Dashboard · 06 Projects & tasks · 07 Team · 08 Auth & settings · 09 Landing
-   10 Email · 11 Responsive layout, accessibility & motion.
+   10 Email · 11 Responsive layout, accessibility & motion · 12 GitHub integration.
    Responsive rules stay with their sections. Motion/accessibility conclude it. */
 
 /* 01 — Theme & tokens */
@@ -803,6 +803,31 @@ body:has(.app-shell,.login-page,.companies-page) {
 /* Settings — personal profile and workspace access */
 .settings-page { padding-top: 4px; max-width: 1180px; }
 .settings-sections { box-shadow: none; }
+/* 12 — GitHub integration. Shared form, button and panel primitives remain authoritative. */
+.github-content,.github-task,.github-link-form { display: flex; flex-direction: column; gap: var(--space-4); width: 100%; min-width: 0; }
+.github-note { font-size: var(--font-size-label); color: var(--muted-foreground); line-height: 1.65; overflow-wrap: anywhere; }
+.github-connect-form,.github-project-actions,.github-task-actions { display: flex; align-items: flex-end; gap: var(--space-3); flex-wrap: wrap; }
+.github-connect-form .form-field { flex: 1; }
+.github-repositories { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.github-repositories li { display: flex; gap: var(--space-4); align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: var(--space-4); }
+.github-repositories strong { font-weight: 600; overflow-wrap: anywhere; }
+.github-project { padding: var(--space-5) var(--space-6); display: flex; gap: var(--space-4); flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.github-project-heading { display: flex; gap: var(--space-3); align-items: center; min-width: 0; }
+.github-project-heading > svg { width: var(--space-6); height: var(--space-6); flex-shrink: 0; }
+.github-project-heading h2 { font-size: var(--font-size-body); font-weight: 600; }
+.github-project-actions { min-width: 0; }
+.github-project-actions .ui-select-wrap { min-width: 0; flex: 1; }
+.github-project > .github-note { flex-basis: 100%; }
+.github-reference { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.github-reference span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.github-reference svg { width: var(--space-5); height: var(--space-5); flex-shrink: 0; }
+.github-sync-status { font-weight: 600; font-size: var(--font-size-label); }
+.github-callback { padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-5); align-items: flex-start; }
+@media (max-width: 600px) {
+  .github-connect-form,.github-project-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .github-repositories li { flex-direction: column; align-items: flex-start; }
+  .github-project { padding: var(--space-5); }
+}
 .settings-section { display: grid; grid-template-columns: minmax(170px,.65fr) minmax(0,1.7fr); gap: 40px; padding: 32px; }
 .settings-section + .settings-section { border-top: 1px solid var(--border); }
 .settings-section-heading h2 { font-size: var(--font-size-body-lg); font-weight: 600; letter-spacing: -.4px; }

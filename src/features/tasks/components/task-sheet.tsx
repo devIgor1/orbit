@@ -8,11 +8,12 @@ import { taskStatusLabels, type TaskFormValues } from '../schemas/task-schema'
 import { TaskForm } from './task-form'
 import { TaskComments } from './task-comments'
 import { TaskHistory } from './task-history'
+import { TaskGithub } from '@/features/github/components/task-github'
 
 type TaskSheetProps = { task: Task; members: TeamMember[]; onClose: () => void }
 
 export function TaskSheet({ task, members, onClose }: TaskSheetProps) {
-  const [tab, setTab] = useState<'details' | 'comments' | 'history'>('details')
+  const [tab, setTab] = useState<'details' | 'comments' | 'history' | 'development'>('details')
   const { updateTask } = useTaskMutations(task.project_id)
   const [saved, setSaved] = useState(false)
 
@@ -30,10 +31,12 @@ export function TaskSheet({ task, members, onClose }: TaskSheetProps) {
       <button type="button" data-active={tab === 'details'} aria-pressed={tab === 'details'} onClick={() => setTab('details')}>Detalhes</button>
       <button type="button" data-active={tab === 'comments'} aria-pressed={tab === 'comments'} onClick={() => setTab('comments')}>Comentários</button>
       <button type="button" data-active={tab === 'history'} aria-pressed={tab === 'history'} onClick={() => setTab('history')}>Histórico</button>
+      <button type="button" data-active={tab === 'development'} aria-pressed={tab === 'development'} onClick={() => setTab('development')}>Desenvolvimento</button>
     </div>
     {saved && <p role="status" className="form-success">Alterações salvas.</p>}
     <div hidden={tab !== 'details'} onChange={() => setSaved(false)}><TaskForm task={task} members={members} isPending={updateTask.isPending} error={updateTask.error} onSubmit={submit} onCancel={onClose} /></div>
     <div hidden={tab !== 'comments'}><TaskComments taskId={task.id} members={members} /></div>
     <div hidden={tab !== 'history'}><TaskHistory taskId={task.id} members={members} /></div>
+    {tab === 'development' && <TaskGithub task={task} />}
   </Sheet>
 }

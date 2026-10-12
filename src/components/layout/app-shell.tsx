@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/use-auth'
 import { useWorkspace } from '@/features/workspace/use-workspace'
@@ -13,6 +13,9 @@ export function AppShell() {
   const auth = useAuth()
   const workspace = useWorkspace(true)
   const location = useLocation()
+  // Navigate may remain mounted while the lazy login route loads. Keep its
+  // state stable so router updates do not trigger another identical redirect.
+  const loginState = useMemo(() => ({ from: location.pathname + location.search }), [location.pathname, location.search])
   const navigate = useNavigate()
   const previousCompany = useRef<string | undefined>(undefined)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -41,7 +44,7 @@ export function AppShell() {
   }, [location.pathname, workspace.data])
   if (auth.loading) return <LoadingState label="Preparando seu espaço…" />
   if (auth.configured && !auth.user)
-    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+    return <Navigate to="/login" replace state={loginState} />
   if (auth.configured && workspace.isError && workspace.error instanceof Error && 'kind' in workspace.error && workspace.error.kind === 'onboarding')
     return <Navigate to={workspace.data ? '/companies' : '/onboarding'} replace />
   const sidebar = (

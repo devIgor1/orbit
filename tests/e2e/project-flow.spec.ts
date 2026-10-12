@@ -34,6 +34,7 @@ test('projeto, responsável, status e comentário persistem no Supabase após re
   await expect(status).toHaveText('A fazer')
   await status.focus()
   await page.keyboard.press('Enter')
+  await expect(page.getByRole('option', { name: 'Concluído', exact: true })).toBeVisible()
   await page.keyboard.press('End')
   await page.keyboard.press('Enter')
   await expect(status).toHaveText('Concluído')

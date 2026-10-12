@@ -8,6 +8,7 @@ export function useTasks(projectId: string) {
     queryKey: ['tasks', scope.userId, scope.workspaceId, projectId],
     queryFn: () => service.fetchTasks(scope.requireScope().workspaceId, projectId),
     enabled: scope.enabled && Boolean(projectId),
+    refetchInterval: 30_000,
   })
 }
 

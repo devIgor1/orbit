@@ -19,6 +19,7 @@ export const router = createBrowserRouter([
       },
       { path: '/team', lazy: async () => ({ Component: (await import('@/pages/team-page')).TeamPage }) },
       { path: '/settings', lazy: async () => ({ Component: (await import('@/pages/settings-page')).SettingsPage }) },
+      { path: '/settings/github/callback', lazy: async () => ({ Component: (await import('@/pages/github-callback-page')).GithubCallbackPage }) },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

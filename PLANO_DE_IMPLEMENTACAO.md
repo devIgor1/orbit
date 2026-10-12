@@ -1412,3 +1412,106 @@ Registro da primeira versão. A composição atual está documentada na seção 
   teclado, sem overflow horizontal nem erros JavaScript. Capturas em
   `test-results/signup-layout-review`. Nenhuma conta criada ou alteração no backend.
 - Frontend integrado ao fluxo de publicação por push para `main`.
+
+## 48. GitHub App: repositórios, tarefas e merge — 11/10/2026
+
+**Estado:** implementação local concluída e verificada. Cadastro/instalação do
+GitHub App, credenciais, migrations hospedadas, deploy das funções, agendamento
+e publicação do frontend ainda precisam ser aplicados conforme
+[`docs/GITHUB_APP.md`](docs/GITHUB_APP.md). Nenhum comentário real foi publicado
+durante a implementação; não houve push ou alteração no Supabase hospedado.
+
+- Configurações ganham conexão de repositórios por OAuth, instalação do App e
+  desconexão. A pessoa precisa administrar a empresa no Orbit e o repositório no
+  GitHub. O backend valida identidade, permissão administrativa e instalação do
+  App; o navegador nunca informa um installation ID confiável.
+- Um repositório por projeto e um vínculo por tarefa neste primeiro escopo.
+  A aba Desenvolvimento permite informar branch ou número do PR; branches
+  descobrem seu PR automaticamente. Forks usam o número do PR de destino. PRs
+  encerrados antes do vínculo da branch são ignorados; ambiguidades exigem PR
+  explícito. Não são criados branches, commits, aprovações ou merges.
+- Branch/rascunho coloca a tarefa em andamento; PR pronto coloca em revisão;
+  fechamento sem merge mantém em andamento; merge conclui e agenda comentário
+  com título e link da tarefa. Descrição e comentários internos não são publicados.
+  O histórico identifica o Orbit como autor das mudanças automáticas.
+- Migrations `202610110001`–`202610110005` adicionam repositórios, vínculo ao
+  projeto, vínculo à tarefa, RLS, constraints compostas e RPCs. Estados OAuth,
+  recibos de comentários, entregas de webhook e jobs ficam no schema privado.
+  Tipos TypeScript regenerados do banco local; a stack existente foi mantida.
+- `github-api` valida a sessão pelo Auth e usa estado OAuth de uso único, com
+  validade de dez minutos, vinculado à pessoa/empresa/repositório. O retorno
+  preserva o contexto mesmo que seja necessário fazer login e remove o código
+  da barra de endereço. Credenciais e tokens GitHub ficam somente no backend.
+- `github-webhook` verifica HMAC do corpo original e registra a entrega de forma
+  idempotente. `github-worker` consulta o estado atual no GitHub, serializa cada
+  vínculo por lease e retoma falhas com espera crescente. Webhooks não aplicam
+  diretamente um status antigo; um merge confirmado não pode ser revertido.
+- A fila processa até dez vínculos por execução, com Cron a cada minuto e
+  reconciliação periódica dos vínculos ativos. `supabase/github-schedule.sql`
+  usa segredos do Vault e pode ser reaplicado sem criar jobs duplicados.
+  Comentários confirmados deixam de consumir consultas periódicas.
+- Antes de reenviar um comentário de resultado incerto, o worker procura seu
+  marcador em comentários do próprio bot. Recibos sobrevivem ao unlink/relink.
+  A API GitHub não oferece idempotency key para comentários: há reconciliação,
+  sem promessa de entrega exatamente uma vez em toda falha distribuída possível.
+- Reutilizados Button, Input, OptionsSelect/Controller, estados de consulta e
+  estruturas de página. Aparência exclusivamente no `globals.css`, com revisão
+  de desktop, tablet e celular e navegação por teclado.
+- A verificação identificou e corrigiu um loop de `<Navigate>` durante o
+  carregamento lazy do login: seu estado agora é estável. O seed local garante
+  todos os grupos da política de senha. `ORBIT_E2E_PORT` permite iniciar os E2E
+  em uma porta exclusiva, sem reutilizar o servidor de outro projeto; o teste
+  existente de status espera a opção estar visível antes da navegação por teclado.
+
+### Verificações executadas
+
+- Lint, TypeScript/build, estilos, artefato de e-mail e arquitetura aprovados.
+- Deno check aprovado para as três funções e locks das dependências gerados.
+- 188 testes unitários/contratos passaram. O teste opt-in `github-pipeline` fica
+  pulado na suíte padrão e foi executado separadamente com sucesso contra o
+  Supabase local: merge, perda de resposta após POST aceito, recuperação sem novo
+  POST e reconhecimento do recibo após remover/recriar o vínculo.
+- 162 testes de banco passaram, incluindo 38 novos sobre GitHub: permissões,
+  RLS, OAuth, jobs, status, auditoria, replay, falhas e revogação da instalação.
+- 18 E2E de GitHub, navegação e persistência de projetos/tarefas passaram em
+  desktop e celular. O cenário de merge também inspecionou tablet em 820×1180.
+  Capturas locais em `test-results/github-*`; respostas GitHub são simuladas
+  exclusivamente nos testes. Login, projetos e tarefas usam o Supabase local.
+- Script de agendamento executado duas vezes em transação local e revertido:
+  um único job foi produzido; nenhum agendamento ou segredo de teste permaneceu.
+- Falta a validação externa com OAuth, webhook e PR reais após a configuração
+  do App. O guia registra os campos, permissões, segredos, publicação e roteiro
+  de aceite dessa etapa.
+
+## 49. Configuração do GitHub App no Supabase hospedado — 11/10/2026
+
+**Estado:** backend publicado e verificado no projeto `twsfyqkagyvibsilulle`.
+Esta etapa atualiza o estado de publicação registrado na seção 48. O frontend
+ainda precisa ser publicado; instalação, conexão OAuth e PR real estão pendentes.
+
+- App `weorbit-integration` cadastrado pelo usuário. Chave convertida para
+  PKCS#8/Base64 e validada por assinatura local e autenticação real no GitHub.
+  App ID, Client ID, slug, permissões e eventos conferidos. Credenciais locais
+  permanecem em arquivos ignorados pelo Git, com permissão 600; nenhum valor
+  secreto foi exibido nos logs ou incluído na documentação.
+- As cinco migrations foram verificadas contra o banco hospedado em transação
+  revertida e depois aplicadas em uma transação pela Management API, preservando
+  as versões e os SQLs originais no histórico `supabase_migrations`.
+- Oito variáveis da integração publicadas; domínio canônico definido como
+  `https://weorbit.com.br`. Funções `github-api`, `github-webhook` e `github-worker`
+  publicadas pela CLI com `--use-api`; três funções confirmadas ativas, versão 1,
+  com autenticação própria e `verify_jwt = false`.
+- Vault configurado com URL e segredo do worker. `pg_cron` e `pg_net` habilitados;
+  job `orbit-github-worker` ativo a cada minuto. Execução automática observada
+  com sucesso no Cron e resposta HTTP 200 do worker, sem timeout e com fila vazia.
+- RLS das três tabelas públicas confirmada; leitura anônima e escrita direta
+  por membros recusadas. RPCs de recebimento, vínculo e processamento reservadas
+  ao serviço. API, webhook e worker recusam chamadas sem autenticação (401);
+  worker autenticado retorna 200.
+- O primeiro reenvio real do ping mostrou ausência de assinatura no GitHub.
+  Aplicado ao App o segredo já publicado no Supabase; novo reenvio trouxe
+  assinatura SHA-256, resposta HTTP 200 e confirmação de recebimento.
+- O bundle publicado do site ainda não contém a rota GitHub. Nenhuma instalação
+  do App ou tarefa vinculada existia nesta verificação; nenhum comentário real
+  foi enviado. Restam publicação do frontend, seleção de repositórios pelo usuário
+  e validação completa de OAuth, sincronização de um PR e comentário após merge.

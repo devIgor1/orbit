@@ -6,6 +6,7 @@ import { SettingsHelp } from '@/features/settings/components/settings-help'
 import { SettingsProfile } from '@/features/settings/components/settings-profile'
 import { useWorkspace } from '@/features/workspace/use-workspace'
 import { AppError } from '@/lib/errors/app-error'
+import { GithubSettings } from '@/features/github/components/github-settings'
 
 export function SettingsPage() {
   const auth = useAuth()
@@ -33,6 +34,7 @@ export function SettingsPage() {
         <div className="settings-sections panel">
           <SettingsProfile profile={workspace.data.profile} email={auth.user?.email} />
           <SettingsCompany workspace={workspace.data.workspace} role={workspace.data.role} />
+          <GithubSettings key={workspace.data.workspace.id} canManage={workspace.data.role === 'admin'} />
         </div>
       )}
       <SettingsHelp />
