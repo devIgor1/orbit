@@ -63,7 +63,7 @@ export function GithubRepositoryChoice({ choice }: { choice: Choice }) {
               <span>
                 {repo.isPrivate ? 'Privado' : 'Público'}
                 {repo.connected ? ' · Conectado' : ''}
-                {repo.inUse ? ' · Em uso em projeto' : ''}
+                {repo.inUse ? ' · Em uso em tarefa' : ''}
               </span>
             </span>
           </label>
@@ -72,8 +72,8 @@ export function GithubRepositoryChoice({ choice }: { choice: Choice }) {
       </fieldset>
       {choice.repositories.some((repo) => repo.inUse) && (
         <p className="github-note">
-          Repositórios em uso por projetos são mantidos na seleção. Para removê-los, revise primeiro os vínculos desses
-          projetos.
+          Repositórios em uso por tarefas são mantidos na seleção. Para removê-los, remova primeiro os vínculos dessas
+          tarefas.
         </p>
       )}
       {choice.skippedCount > 0 && (

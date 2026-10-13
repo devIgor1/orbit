@@ -38,7 +38,6 @@ function setup(results: unknown = [{ name: 'trunk' }, { name: 'feat/login' }]) {
   const rows: Record<string, Record<string, unknown>[]> = {
     workspace_members: [{ workspace_id: 'workspace', user_id: 'user', role: 'member', removed_at: null }],
     tasks: [{ workspace_id: 'workspace', id: 'task', project_id: 'project' }],
-    project_github_repositories: [{ workspace_id: 'workspace', project_id: 'project', repository_id: 'repo' }],
     github_repositories: [
       {
         workspace_id: 'workspace',
@@ -78,6 +77,19 @@ function setup(results: unknown = [{ name: 'trunk' }, { name: 'feat/login' }]) {
 }
 
 describe('Task GitHub references', () => {
+  it('links a PR directly to a task without a project repository association', async () => {
+    const { db, rpc } = setup(pull)
+    await expect(linkTask(db, 'user', { ...input, action: 'link', prNumber: 42 })).resolves.toEqual({ id: 'link-id' })
+    expect(db.from).not.toHaveBeenCalledWith('project_github_repositories')
+    expect(rpc).toHaveBeenCalledWith(
+      'link_task_github',
+      expect.objectContaining({
+        target_task: 'task',
+        target_repository: 'repo',
+        development: expect.objectContaining({ branch: 'feat/login', head_repository_id: 99, pr_number: 42 }),
+      }),
+    )
+  })
   it('lists work branches with a read-only repository token and excludes the current default', async () => {
     const { db, fetcher } = setup()
     expect(await listTaskReferences(db, 'user', input)).toEqual({
@@ -138,6 +150,7 @@ describe('Task GitHub references', () => {
     if (scenario === 'different-repository') request.repositoryId = 'foreign'
     if (scenario === 'inactive-repository') rows.github_repositories[0].active = false
     await expect(listTaskReferences(db, user, request)).rejects.toHaveProperty('code')
+    await expect(linkTask(db, user, { ...request, action: 'link', prNumber: 42 })).rejects.toHaveProperty('code')
     expect(authentication.installationToken).not.toHaveBeenCalled()
     expect(fetcher).not.toHaveBeenCalled()
   })

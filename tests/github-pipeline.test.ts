@@ -1,19 +1,16 @@
 // @vitest-environment node
-import { execFileSync } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
 import { generateKeyPairSync } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { expect, it, vi } from 'vitest'
 import type { Database } from '@/lib/supabase/database.types'
 import { processGithubJobs } from '../supabase/functions/github-worker/process'
+import { localBackend } from './support/local-backend'
 
 it.skipIf(process.env.ORBIT_GITHUB_DB_TESTS !== '1')('recovers an uncertain GitHub POST using the real local database and worker',async () => {
-  const local = JSON.parse(execFileSync('npx',['supabase','status','-o','json'],{ encoding: 'utf8',stdio: ['ignore','pipe','pipe'] }))
-  if (local.API_URL !== 'http://127.0.0.1:55521') throw new Error('Only isolated local Supabase is allowed')
+  const local = await localBackend()
   const admin = createClient<Database>(local.API_URL,local.SERVICE_ROLE_KEY,{ auth: { persistSession: false,autoRefreshToken: false } })
   const session = createClient<Database>(local.API_URL,local.ANON_KEY,{ auth: { persistSession: false,autoRefreshToken: false } })
-  const credentials = JSON.parse(await readFile('.demo-credentials.json','utf8'))
-  const { data: auth,error: authError } = await session.auth.signInWithPassword(credentials)
+  const { data: auth,error: authError } = await session.auth.signInWithPassword(local.credentials)
   if (authError || !auth.user) throw new Error('Local test login failed')
   const userId = auth.user.id
   const workspaceId = crypto.randomUUID(); const projectId = crypto.randomUUID(); const taskId = crypto.randomUUID()
@@ -32,7 +29,6 @@ it.skipIf(process.env.ORBIT_GITHUB_DB_TESTS !== '1')('recovers an uncertain GitH
     const repositoryId = await must(await admin.rpc('finish_github_connection',{ requester: userId,target_workspace: workspaceId,
       repository: { id: 10,installation_id: 20,full_name: 'orbit-test/pipeline',default_branch: 'main',private: true } }))
     if (!repositoryId) throw new Error('Repository missing')
-    await must(await session.rpc('set_project_github_repository',{ target_workspace: workspaceId,target_project: projectId,target_repository: repositoryId }))
     await must(await admin.rpc('link_task_github',{ requester: userId,target_workspace: workspaceId,target_task: taskId,target_repository: repositoryId,
       development: { branch: 'feat/test',head_repository_id: 10,pr_number: 42 } }))
     vi.stubGlobal('Deno',{ env: { get: (name: string) => secrets[name] } })

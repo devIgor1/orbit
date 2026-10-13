@@ -39,16 +39,6 @@ export async function fetchGithubRepositories(workspaceId: string) {
   if (error) throw toAppError(error)
   return requireCollection(data)
 }
-export async function fetchProjectGithub(workspaceId: string, projectId: string) {
-  const { data, error } = await getSupabase()
-    .from('project_github_repositories')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .eq('project_id', projectId)
-    .maybeSingle()
-  if (error) throw toAppError(error)
-  return data
-}
 export async function fetchTaskGithub(workspaceId: string, taskId: string) {
   const { data, error } = await getSupabase()
     .from('task_github_links')
@@ -68,14 +58,6 @@ function confirmId(data: unknown, error: unknown, expected?: string) {
   if (!z.uuid().safeParse(data).success || (expected && data !== expected))
     throw new AppError('contract', 'A alteração do vínculo não foi confirmada pelo servidor.')
 }
-export async function setProjectGithub(workspaceId: string, projectId: string, repositoryId: string) {
-  const { data, error } = await getSupabase().rpc('set_project_github_repository', {
-    target_workspace: workspaceId,
-    target_project: projectId,
-    target_repository: repositoryId,
-  })
-  confirmId(data, error, repositoryId)
-}
 export async function disconnectGithub(workspaceId: string, repositoryId: string) {
   const { data, error } = await getSupabase().rpc('disconnect_github_repository', {
     target_workspace: workspaceId,
@@ -83,7 +65,7 @@ export async function disconnectGithub(workspaceId: string, repositoryId: string
   })
   confirmId(data, error, repositoryId)
 }
-export type LinkInput = { repositoryId: string; branch?: string; prNumber?: number }
+export type LinkInput = { repositoryId: string; prNumber: number }
 export const linkGithubTask = (workspaceId: string, taskId: string, input: LinkInput) =>
   invoke({ action: 'link', workspaceId, taskId, ...input }, idSchema)
 export async function changeTaskGithub(workspaceId: string, taskId: string, action: 'unlink' | 'retry') {

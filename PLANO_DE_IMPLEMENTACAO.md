@@ -1725,3 +1725,111 @@ repositórios importados antes pela interface, sem remoção automática nesta e
   a remoção de `devIgor1/advanced-react`, em uso por um projeto. A seleção ficou
   aberta para o usuário; nenhuma escolha foi salva em seu lugar. A escrita parcial
   e as proteções foram verificadas nos testes locais, sem remover conexões reais.
+
+## 56. PR vinculado diretamente à tarefa — 13/10/2026
+
+**Estado:** implementação local. Publicação pendente: aplicar as migrations
+`202610130001` e `202610130002`, publicar `github-api` e depois o frontend.
+
+- Retirada a configuração de repositório da página do projeto. A aba
+  **Desenvolvimento** da tarefa permite escolher **Repositório do PR** e
+  **Pull request**, com botão **Vincular PR à tarefa**. A autorização dos
+  repositórios continua nas configurações da empresa. Tarefas do mesmo projeto
+  podem escolher repositórios diferentes; cada tarefa mantém um vínculo.
+- Trocar repositório ou status limpa a seleção do PR. Paginação, filtro, aviso
+  de PR integrado, bloqueio de envios duplicados e preservação de escolhas em
+  falhas reutilizam os componentes existentes. Estilos permanecem no CSS central;
+  removidas as regras do painel de repositório do projeto.
+- Listagem e escrita validam membro ativo, tarefa e repositório na mesma empresa.
+  A RPC revalida permissões e conexão sob bloqueio. Novas FKs ligam diretamente
+  o repositório e a combinação empresa/projeto/tarefa. Seleção de repositórios
+  passa a proteger os usados pelas tarefas, inclusive em alterações concorrentes.
+- Vínculos e branches antigos, histórico, fila e recibos são preservados. A tabela
+  e a RPC de associação de projeto ficam apenas para compatibilidade com clientes
+  antigos e deixam de restringir tarefas. A remoção de vínculo continua acessível
+  mesmo quando o repositório perde acesso; falhas de escrita ficam visíveis.
+- Tipos do schema público regenerados com o gerador oficial Postgres Meta a partir
+  das migrations aplicadas no banco de teste. A stack da aplicação não mudou.
+- Lint, estilos/e-mail, arquitetura, TypeScript/build, Deno check das três funções
+  e `git diff --check` aprovados. Vitest: 260 testes passaram; o teste opt-in de
+  pipeline Supabase permaneceu pulado.
+- As 23 migrations foram aplicadas em PostgreSQL 18 isolado, com os contratos de
+  Auth necessários aos testes. Passaram 129 asserções pgTAP de GitHub, incluindo
+  18 novas sobre vínculo direto, dois repositórios no mesmo projeto, permissões,
+  FKs, remoção e preservação de outras tarefas. O Supabase padrão usa PostgreSQL
+  17; seus E2E autenticados e o pipeline completo não foram executados porque o
+  Docker local falhou ao iniciar. Nenhum banco ou credencial de produção mudou.
+- Seis testes de navegador isolados passaram em desktop/celular, com inspeção
+  adicional em tablet e 320 px, nomes longos, teclado, paginação, reload, forks,
+  filtros e recuperação de erro. Usam o componente real com respostas simuladas
+  exclusivamente no teste; não são validação de OAuth/PR real. Capturas em
+  `test-results/task-pr-final`. A revisão final corrigiu apenas a execução dos
+  testes: gravações de traces fora da pasta ignorada acionavam recargas do Vite.
+
+## 57. Validação completa de tarefa → PR — 13/10/2026
+
+**Estado:** fluxo validado em ambiente local isolado. A publicação indicada na
+seção 56 e a validação com OAuth/PR real continuam pendentes.
+
+- Novo E2E opt-in percorre conexão e consentimento, escolha dos repositórios,
+  criação de projeto/tarefa e vínculo de PR pela interface. Auth, PostgREST,
+  handlers da API/webhook, worker e banco executam operações reais; somente o
+  GitHub externo é simulado. O projeto não recebe associação de repositório.
+- Verificados rascunho, revisão, fechamento sem merge, reabertura e merge,
+  persistência após reload, atualização automática da tela sem reload, histórico,
+  título e link do comentário. A resposta perdida após aceitar um comentário
+  é recuperada sem novo envio, inclusive com workers concorrentes e recriação
+  do vínculo. Tarefas do mesmo projeto usam repositórios diferentes.
+- Verificadas sessão ausente, assinatura inválida, falha de acesso, revogação,
+  bloqueio da retirada de repositório em uso e remoção do vínculo indisponível
+  sem afetar outra tarefa. Escritas recusadas não produzem sucesso fictício.
+- Docker confirmou novamente a falha de inicialização no socket de inferência.
+  A execução usou Auth 2.197.0, PostgREST 16.4 e PostgreSQL 18.3 nativos, com as
+  23 migrations. A única adaptação do Auth para Windows foi retirar a opção
+  Unix SO_REUSEPORT do listener. Os handlers TypeScript rodaram em Node; o
+  Edge Runtime e o PostgreSQL 17 padrão não foram executados nesta rodada.
+- Vitest: **261 testes aprovados, sem pulos**, incluindo o pipeline antes opt-in.
+  pgTAP: **253 asserções aprovadas** em banco separado, com Auth real e seed.
+  Lint, estilos/e-mails, arquitetura, TypeScript/build e Deno check aprovados.
+- **46 cenários distintos de navegador validados** em desktop/celular. Na
+  rodada ampla, 45 passaram e um teste de teclado falhou por enviar teclas
+  antes de o popup receber foco. O teste passou a aguardar o placeholder inicial
+  e a opção final focados: três repetições em cada dispositivo passaram. A rodada
+  adicional confirmou também o polling automático nos quatro E2E de backend real.
+  Não foi necessária correção funcional no produto nesta etapa.
+- Roteiro reproduzível em `docs/GITHUB_TESTS.md`; servidor e fixtures somente em
+  `tests/support`. O adaptador de configuração recusa backend remoto e mantém
+  credenciais administrativas fora do Vite. Evidências em
+  `test-results/full-flow-tools`, `test-results/full-flow-browser-final`,
+  `test-results/full-flow-browser-confirmed` e
+  `test-results/full-flow-keyboard-confirmed`. Produção e PRs reais não alterados.
+
+## 58. Correção da prévia ao arrastar tarefas — 13/10/2026
+
+**Estado:** corrigido e validado localmente; publicação pendente.
+
+- O arraste passa a fornecer ao navegador uma cópia isolada do card, com as
+  dimensões medidas e o deslocamento do ponteiro preservados. O adaptador
+  compartilhado `native-drag-preview.ts` remove IDs, desativa interação e limpa
+  o clone antes da próxima pintura, no cancelamento e na desmontagem.
+- A origem fica atenuada e a coluna de destino recebe destaque. O hook do quadro
+  aceita apenas o tipo de arraste interno e a tarefa em curso. Mesma coluna,
+  conteúdo externo e escrita pendente não geram outra atualização. Aparência
+  permanece em `globals.css`; o adaptador define somente geometria medida.
+- A mudança continua dependendo da confirmação do backend. Falhas mantêm o status
+  confirmado, mostram erro e permitem nova tentativa. O seletor compartilhado
+  continua oferecendo a alteração por teclado e no celular.
+- Sete cenários E2E passaram com Auth, PostgREST e PostgreSQL locais: prévia,
+  persistência/reload, cancelamento e descartes inválidos, escrita recusada e
+  recuperação, bloqueio durante escrita, tablet e seletor em desktop/celular.
+  Inspecionadas capturas em 1280, 900 e 320 px. Cinco testes de mouse são
+  intencionalmente pulados no projeto mobile; não se afirma suporte a toque.
+- O teste instrumenta o `setDragImage` nativo sem substituí-lo e confirma que o
+  elemento contém somente o card, com dimensões e offsets corretos. A captura de
+  página mostra origem/destino; não captura a imagem de arraste do SO.
+- Build/TypeScript, estilos/e-mail, arquitetura e lint aprovados. Vitest:
+  **261 testes aprovados** com dois workers; a primeira execução concorrente com
+  o navegador excedeu timeouts em testes existentes de formulários/equipe.
+  TypeScript e lint dos novos E2E também passaram. Roteiro em
+  `docs/TASK_DRAG_TESTS.md`; evidências em `test-results/task-drag-verified` e
+  `test-results/task-drag-tablet`. Nenhuma alteração em produção.

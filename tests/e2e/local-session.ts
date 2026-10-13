@@ -1,14 +1,30 @@
 import { readFile } from 'node:fs/promises'
 import { expect, type Page } from '@playwright/test'
+import { localBackend } from '../support/local-backend'
 
 export async function localCredentials() {
   try {
+    if (process.env.ORBIT_LOCAL_SUPABASE_CONFIG) {
+      if (!['http://127.0.0.1:55521', 'http://127.0.0.1:55530'].includes(process.env.VITE_SUPABASE_URL ?? ''))
+        throw new Error('Native E2E requires an explicit local VITE_SUPABASE_URL')
+      return (await localBackend()).credentials
+    }
     const env = await readFile('.env.local', 'utf8')
     if (!/^VITE_SUPABASE_URL=https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/?\s*$/m.test(env)) return null
     const credentials: unknown = JSON.parse(await readFile('.demo-credentials.json', 'utf8'))
-    if (typeof credentials !== 'object' || credentials === null || !('email' in credentials) || !('password' in credentials) || typeof credentials.email !== 'string' || typeof credentials.password !== 'string') return null
+    if (
+      typeof credentials !== 'object' ||
+      credentials === null ||
+      !('email' in credentials) ||
+      !('password' in credentials) ||
+      typeof credentials.email !== 'string' ||
+      typeof credentials.password !== 'string'
+    )
+      return null
     return { email: credentials.email, password: credentials.password }
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 export async function openWorkspace(page: Page, pathname = '/dashboard') {
@@ -20,7 +36,7 @@ export async function openWorkspace(page: Page, pathname = '/dashboard') {
   await page.getByLabel('E-mail', { exact: true }).fill(credentials.email)
   await page.getByLabel('Senha', { exact: true }).fill(credentials.password)
   await page.getByRole('button', { name: 'Entrar no workspace' }).click()
-  await expect(page).toHaveURL(url => url.pathname === pathname.split('?')[0])
+  await expect(page).toHaveURL((url) => url.pathname === pathname.split('?')[0])
   if (pathname.includes('?')) await page.goto(pathname)
   await expect(page.getByRole('banner')).toBeVisible()
   await expect(page.getByRole('main').getByRole('heading', { level: 1 })).toBeVisible()

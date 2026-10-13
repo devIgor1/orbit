@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { changeTaskGithub, fetchGithubRepositories, fetchTaskGithub, linkGithubTask, setProjectGithub } from '@/features/github/services/github-service'
+import { changeTaskGithub, fetchGithubRepositories, fetchTaskGithub, linkGithubTask, disconnectGithub } from '@/features/github/services/github-service'
 import { fetchGithubReferences } from '@/features/github/services/github-references'
 const backend = vi.hoisted(() => {
   const response: { data: unknown; error: unknown } = { data: null,error: null }
@@ -25,11 +25,11 @@ describe('GitHub frontend data contracts',() => {
   it('rejects zero affected rows and mismatched repository confirmations',async () => {
     await expect(changeTaskGithub('workspace','task','unlink')).rejects.toMatchObject({ kind: 'contract' })
     backend.response.data = 'aa000000-0000-4000-8000-000000000001'
-    await expect(setProjectGithub('workspace','project','aa000000-0000-4000-8000-000000000002')).rejects.toMatchObject({ kind: 'contract' })
+    await expect(disconnectGithub('workspace','aa000000-0000-4000-8000-000000000002')).rejects.toMatchObject({ kind: 'contract' })
   })
   it('rejects HTTP success without a confirmed link ID',async () => {
     backend.response.data = { success: true }
-    await expect(linkGithubTask('workspace','task',{ repositoryId: 'repo',branch: 'feat/login' })).rejects.toMatchObject({ kind: 'contract' })
+    await expect(linkGithubTask('workspace','task',{ repositoryId: 'repo',prNumber: 42 })).rejects.toMatchObject({ kind: 'contract' })
   })
   it('scopes reference pages and cancellation to the current task and rejects wrong kind/pagination',async () => {
     const input = { workspaceId: 'workspace', taskId: 'task', repositoryId: 'repo', kind: 'branch' as const, state: 'open' as const, page: 1 }

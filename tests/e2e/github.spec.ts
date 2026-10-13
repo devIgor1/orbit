@@ -9,7 +9,6 @@ const repo = { id: 'ad000000-0000-4000-8000-000000000001',workspace_id: workspac
   full_name: 'orbit-test/repositorio-com-nome-longo-para-validar-responsividade',default_branch: 'main',is_private: true,active: true }
 async function mockIntegration(page: Page, configured = true) {
   await page.route('**/rest/v1/github_repositories?*',route => route.fulfill({ json: [repo] }))
-  await page.route('**/rest/v1/project_github_repositories?*',route => route.fulfill({ json: { project_id: projectId,workspace_id: workspaceId,repository_id: repo.id } }))
   await page.route('**/rest/v1/task_github_links?*',route => route.fulfill({ json: null }))
   await page.route('**/functions/v1/github-api',route => {
     const body = route.request().postDataJSON()
@@ -45,11 +44,11 @@ test('vínculo da tarefa funciona por teclado e mantém a referência quando Git
   await openWorkspace(page,`/projects/${projectId}`)
   await page.locator('.task-card-title').first().click()
   await page.getByRole('button',{ name: 'Desenvolvimento',exact: true }).click()
-  const kind = page.getByRole('combobox',{ name: 'Vincular por' })
+  const kind = page.getByRole('combobox',{ name: 'Repositório do PR' })
   await kind.focus(); await page.keyboard.press('Enter'); await page.keyboard.press('End'); await page.keyboard.press('Enter')
   await page.getByRole('combobox',{ name: 'Pull request',exact: true }).click()
   await page.getByRole('option',{ name: /#42.*Login/ }).click()
-  await page.getByRole('button',{ name: 'Vincular à tarefa' }).click()
+  await page.getByRole('button',{ name: 'Vincular PR à tarefa' }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('não está disponível')
   await expect(page.getByRole('combobox',{ name: 'Pull request',exact: true })).toContainText('#42')
   const dialog = page.getByRole('dialog')

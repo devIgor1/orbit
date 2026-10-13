@@ -1,23 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: { Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json }; Returns: Json }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activity_events: {
@@ -394,18 +377,18 @@ export type Database = {
             referencedColumns: ['id']
           },
           {
-            foreignKeyName: 'task_github_links_workspace_id_project_id_repository_id_fkey'
-            columns: ['workspace_id', 'project_id', 'repository_id']
+            foreignKeyName: 'task_github_links_repository_fkey'
+            columns: ['workspace_id', 'repository_id']
             isOneToOne: false
-            referencedRelation: 'project_github_repositories'
-            referencedColumns: ['workspace_id', 'project_id', 'repository_id']
+            referencedRelation: 'github_repositories'
+            referencedColumns: ['workspace_id', 'id']
           },
           {
-            foreignKeyName: 'task_github_links_workspace_id_task_id_fkey'
-            columns: ['workspace_id', 'task_id']
+            foreignKeyName: 'task_github_links_task_fkey'
+            columns: ['workspace_id', 'project_id', 'task_id']
             isOneToOne: false
             referencedRelation: 'tasks'
-            referencedColumns: ['workspace_id', 'id']
+            referencedColumns: ['workspace_id', 'project_id', 'id']
           },
         ]
       }
@@ -702,20 +685,42 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { invitation_id: string }; Returns: string }
       advance_github_account_connection: {
-        Args: { next_hash: string; previous_hash: string; requester: string; target_installation: number }
+        Args: {
+          next_hash: string
+          previous_hash: string
+          requester: string
+          target_installation: number
+        }
         Returns: undefined
       }
-      apply_github_snapshot: { Args: { job_lease: string; snapshot: Json; target_link: string }; Returns: Json }
+      apply_github_snapshot: {
+        Args: { job_lease: string; snapshot: Json; target_link: string }
+        Returns: Json
+      }
       begin_github_account_connection: {
-        Args: { requester: string; state_hash: string; target_workspace: string }
+        Args: {
+          requester: string
+          state_hash: string
+          target_workspace: string
+        }
         Returns: undefined
       }
       begin_github_connection: {
-        Args: { repository_name: string; requester: string; state_hash: string; target_workspace: string }
+        Args: {
+          repository_name: string
+          requester: string
+          state_hash: string
+          target_workspace: string
+        }
         Returns: undefined
       }
       begin_github_discovery: {
-        Args: { available_installations?: number[]; requester: string; state_hash: string; target_workspace: string }
+        Args: {
+          available_installations?: number[]
+          requester: string
+          state_hash: string
+          target_workspace: string
+        }
         Returns: undefined
       }
       begin_github_repository_selection: {
@@ -762,10 +767,22 @@ export type Database = {
         Returns: Database['public']['Enums']['registration_email_status']
       }
       claim_github_jobs: { Args: Record<PropertyKey, never>; Returns: Json }
-      consume_github_account_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
-      consume_github_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
-      consume_github_discovery: { Args: { requester: string; state_hash: string }; Returns: string }
-      consume_github_repository_selection: { Args: { requester: string; state_hash: string }; Returns: Json }
+      consume_github_account_connection: {
+        Args: { requester: string; state_hash: string }
+        Returns: Json
+      }
+      consume_github_connection: {
+        Args: { requester: string; state_hash: string }
+        Returns: Json
+      }
+      consume_github_discovery: {
+        Args: { requester: string; state_hash: string }
+        Returns: string
+      }
+      consume_github_repository_selection: {
+        Args: { requester: string; state_hash: string }
+        Returns: Json
+      }
       create_company: {
         Args: { company_name: string }
         Returns: {
@@ -780,10 +797,20 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      dashboard_summary: { Args: { period_days?: number; target_workspace: string }; Returns: Json }
-      disconnect_github_repository: { Args: { target_repository: string; target_workspace: string }; Returns: string }
+      dashboard_summary: {
+        Args: { period_days?: number; target_workspace: string }
+        Returns: Json
+      }
+      disconnect_github_repository: {
+        Args: { target_repository: string; target_workspace: string }
+        Returns: string
+      }
       finish_github_account_connection: {
-        Args: { repositories: Json; requester: string; target_workspace: string }
+        Args: {
+          repositories: Json
+          requester: string
+          target_workspace: string
+        }
         Returns: number
       }
       finish_github_connection: {
@@ -800,7 +827,10 @@ export type Database = {
         }
         Returns: string
       }
-      finish_invitation_email: { Args: { delivery_id: string; message_id?: string }; Returns: string }
+      finish_invitation_email: {
+        Args: { delivery_id: string; message_id?: string }
+        Returns: string
+      }
       invite_collaborator: {
         Args: { invite_email: string; target_workspace: string }
         Returns: {
@@ -855,10 +885,18 @@ export type Database = {
         }[]
       }
       prepare_invitation_email: {
-        Args: { application_url: string; from_email: string; invitation_id: string; requester_id: string }
+        Args: {
+          application_url: string
+          from_email: string
+          invitation_id: string
+          requester_id: string
+        }
         Returns: Json
       }
-      receive_github_event: { Args: { delivery: string; event: Json; event_name: string }; Returns: boolean }
+      receive_github_event: {
+        Args: { delivery: string; event: Json; event_name: string }
+        Returns: boolean
+      }
       remove_workspace_member: {
         Args: {
           expected_pending_tasks: number
@@ -889,7 +927,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      retry_task_github: { Args: { target_task: string; target_workspace: string }; Returns: string }
+      retry_task_github: {
+        Args: { target_task: string; target_workspace: string }
+        Returns: string
+      }
       revoke_invitation: {
         Args: { invitation_id: string }
         Returns: {
@@ -926,19 +967,37 @@ export type Database = {
       }
       select_company: { Args: { target_workspace: string }; Returns: string }
       select_github_installation: {
-        Args: { next_hash: string; requester: string; state_hash: string; target_installation?: number }
+        Args: {
+          next_hash: string
+          requester: string
+          state_hash: string
+          target_installation?: number
+        }
         Returns: undefined
       }
       select_github_repositories: {
-        Args: { next_hash: string; repository_ids: number[]; requester: string; state_hash: string }
+        Args: {
+          next_hash: string
+          repository_ids: number[]
+          requester: string
+          state_hash: string
+        }
         Returns: undefined
       }
       set_project_github_repository: {
-        Args: { target_project: string; target_repository: string; target_workspace: string }
+        Args: {
+          target_project: string
+          target_repository: string
+          target_workspace: string
+        }
         Returns: string
       }
       team_directory: {
-        Args: { include_removed?: boolean; search_term?: string; target_workspace: string }
+        Args: {
+          include_removed?: boolean
+          search_term?: string
+          target_workspace: string
+        }
         Returns: {
           assigned_tasks: number
           avatar_url: string
@@ -950,7 +1009,10 @@ export type Database = {
           role: Database['public']['Enums']['member_role']
         }[]
       }
-      unlink_task_github: { Args: { target_task: string; target_workspace: string }; Returns: string }
+      unlink_task_github: {
+        Args: { target_task: string; target_workspace: string }
+        Returns: string
+      }
     }
     Enums: {
       activity_entity: 'project' | 'task' | 'comment'
@@ -979,7 +1041,9 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
@@ -1001,7 +1065,9 @@ export type TablesInsert<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
@@ -1022,7 +1088,9 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
@@ -1043,7 +1111,9 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never) = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
     ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
@@ -1057,16 +1127,15 @@ export type CompositeTypes<
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never) = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
     ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       activity_entity: ['project', 'task', 'comment'],

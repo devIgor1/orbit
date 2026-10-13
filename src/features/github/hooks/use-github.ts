@@ -5,7 +5,7 @@ import { AppError } from '@/lib/errors/app-error'
 import * as service from '../services/github-service'
 
 function requireContextId(id: string | undefined) {
-  if (!id) throw new AppError('contract', 'Abra um projeto ou uma tarefa antes de alterar o vínculo.')
+  if (!id) throw new AppError('contract', 'Abra uma tarefa antes de alterar o vínculo.')
   return id
 }
 
@@ -25,14 +25,6 @@ export function useGithubConfig() {
     queryFn: service.fetchGithubConfig,
   })
 }
-export function useProjectGithub(projectId: string) {
-  const scope = useQueryScope()
-  return useQuery({
-    queryKey: ['github', scope.userId, scope.workspaceId, 'project', projectId],
-    enabled: scope.enabled,
-    queryFn: () => service.fetchProjectGithub(scope.requireScope().workspaceId, projectId),
-  })
-}
 export function useTaskGithub(taskId: string) {
   const scope = useQueryScope()
   const cache = useQueryClient()
@@ -50,7 +42,7 @@ export function useTaskGithub(taskId: string) {
   }, [syncedAt, cache, scope.userId, scope.workspaceId])
   return query
 }
-export function useGithubMutations(projectId?: string, taskId?: string) {
+export function useGithubMutations(taskId?: string) {
   const scope = useQueryScope()
   const cache = useQueryClient()
   const onSuccess = async () => {
@@ -66,11 +58,6 @@ export function useGithubMutations(projectId?: string, taskId?: string) {
     }),
     disconnect: useMutation({
       mutationFn: (repositoryId: string) => service.disconnectGithub(scope.requireScope().workspaceId, repositoryId),
-      onSuccess,
-    }),
-    setProject: useMutation({
-      mutationFn: (repositoryId: string) =>
-        service.setProjectGithub(scope.requireScope().workspaceId, requireContextId(projectId), repositoryId),
       onSuccess,
     }),
     link: useMutation({

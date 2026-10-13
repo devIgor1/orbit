@@ -3,8 +3,9 @@ import { ExternalLink, GitBranch, GitPullRequest } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/query-state'
 import { formatDate } from '@/lib/format'
+import { AppError } from '@/lib/errors/app-error'
 import type { Task } from '@/lib/supabase/database.types'
-import { useGithubMutations, useGithubRepositories, useProjectGithub, useTaskGithub } from '../hooks/use-github'
+import { useGithubMutations, useGithubRepositories, useTaskGithub } from '../hooks/use-github'
 import { githubError } from '../services/github-errors'
 import { GithubLinkForm } from './github-link-form'
 
@@ -23,27 +24,18 @@ const comments: Record<string, string> = {
 }
 export function TaskGithub({ task }: { task: Task }) {
   const link = useTaskGithub(task.id)
-  const project = useProjectGithub(task.project_id)
   const repositories = useGithubRepositories()
-  const mutations = useGithubMutations(task.project_id, task.id)
+  const mutations = useGithubMutations(task.id)
   if (link.isError) return <ErrorState error={link.error} onRetry={() => void link.refetch()} />
-  if (project.isError) return <ErrorState error={project.error} onRetry={() => void project.refetch()} />
   if (repositories.isError) return <ErrorState error={repositories.error} onRetry={() => void repositories.refetch()} />
-  if (link.isPending || project.isPending || repositories.isPending)
-    return <LoadingState label="Buscando desenvolvimento…" />
-  const repository = repositories.data.find((repo) => repo.id === project.data?.repository_id)
-  if (!repository)
+  if (link.isPending || repositories.isPending) return <LoadingState label="Buscando desenvolvimento…" />
+  const data = link.data
+  const available = repositories.data.filter((repository) => repository.active)
+  if (!data && available.length === 0)
     return (
       <EmptyState
-        title="Projeto sem repositório"
-        description="Um administrador precisa vincular um repositório na página deste projeto."
-      />
-    )
-  if (!repository.active)
-    return (
-      <EmptyState
-        title="Conexão indisponível"
-        description="Reconecte o repositório nas configurações para retomar a sincronização."
+        title="Nenhum repositório disponível"
+        description="Um administrador precisa conectar um repositório nas configurações da empresa para vincular PRs às tarefas."
         action={
           <Button asChild variant="outline">
             <Link to="/settings">Abrir configurações</Link>
@@ -51,26 +43,37 @@ export function TaskGithub({ task }: { task: Task }) {
         }
       />
     )
-  const data = link.data
   if (!data)
     return (
       <GithubLinkForm
-        key={`${task.id}:${repository.id}`}
+        key={task.id}
         taskId={task.id}
-        repositoryId={repository.id}
-        repositoryName={repository.full_name}
+        repositories={available}
         isPending={mutations.link.isPending}
         error={mutations.link.error}
         onSubmit={async (values) => {
           try {
             await mutations.link.mutateAsync({
-              repositoryId: repository.id,
-              ...(values.kind === 'branch' ? { branch: values.reference } : { prNumber: Number(values.reference) }),
+              repositoryId: values.repositoryId,
+              prNumber: Number(values.reference),
             })
           } catch {
             /* Keep the edited values and show the mutation error. */
           }
         }}
+      />
+    )
+  const repository = repositories.data.find((repo) => repo.id === data.repository_id)
+  if (!repository)
+    return (
+      <ErrorState
+        error={
+          new AppError(
+            'contract',
+            'O repositório deste vínculo não foi encontrado. Atualize os dados e tente novamente.',
+          )
+        }
+        onRetry={() => void repositories.refetch()}
       />
     )
   const repoUrl = `https://github.com/${repository.full_name}`
@@ -80,7 +83,12 @@ export function TaskGithub({ task }: { task: Task }) {
       : `${repoUrl}/pull/${data.pr_number}`
   return (
     <section className="github-task" aria-label="Desenvolvimento da tarefa">
-      {data.sync_status === 'error' || data.sync_status === 'unavailable' ? (
+      <p className="github-note">
+        Repositório: <strong>{repository.full_name}</strong>
+      </p>
+      {!repository.active ? (
+        <ErrorState error={githubError('GITHUB_UNAVAILABLE')} />
+      ) : data.sync_status === 'error' || data.sync_status === 'unavailable' ? (
         <ErrorState error={githubError(data.last_error_code ?? 'GITHUB_FAILED')} />
       ) : (
         <p className="github-sync-status" role="status">
@@ -127,7 +135,7 @@ export function TaskGithub({ task }: { task: Task }) {
       <div className="github-task-actions">
         <Button
           variant="outline"
-          disabled={mutations.changeLink.isPending}
+          disabled={!repository.active || mutations.changeLink.isPending}
           onClick={() => mutations.changeLink.mutate('retry')}
         >
           Sincronizar

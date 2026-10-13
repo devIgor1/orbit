@@ -12,7 +12,7 @@ export function useGithubReferences(
   const scope = useQueryScope()
   return useInfiniteQuery({
     queryKey: ['github', scope.userId, scope.workspaceId, 'references', taskId, repositoryId, kind, state],
-    enabled: scope.enabled,
+    enabled: scope.enabled && Boolean(taskId) && Boolean(repositoryId),
     initialPageParam: 1,
     queryFn: ({ pageParam, signal }) =>
       fetchGithubReferences(

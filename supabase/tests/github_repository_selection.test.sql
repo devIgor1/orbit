@@ -29,12 +29,14 @@ select is((select active from github_repositories where github_id=11),false,'Uns
 select is((select active from github_repositories where github_id=99),true,'Other installation unchanged');
 select is((select count(*) from github_repositories where github_id=12),0::bigint,'Unselected new repository never imported');
 insert into projects(id,workspace_id,title,created_by) values('af000000-0000-4000-8000-000000000020','af000000-0000-4000-8000-000000000010','In use','af000000-0000-4000-8000-000000000001');
-insert into project_github_repositories(workspace_id,project_id,repository_id)
- select workspace_id,'af000000-0000-4000-8000-000000000020',id from github_repositories where github_id=10;
+insert into tasks(id,workspace_id,project_id,title,created_by) values
+ ('af000000-0000-4000-8000-000000000030','af000000-0000-4000-8000-000000000010','af000000-0000-4000-8000-000000000020','Linked task','af000000-0000-4000-8000-000000000001');
+select link_task_github('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',
+ 'af000000-0000-4000-8000-000000000030',(select id from github_repositories where github_id=10),'{"branch":"feat/test","head_repository_id":10,"pr_number":42}');
 select throws_ok($$select save_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,
- '[{"id":12,"installation_id":20,"full_name":"org/new","default_branch":"main","private":true}]',array[10]::bigint[])$$,'55000',null,'Concurrent project assignment blocks removal');
+ '[{"id":12,"installation_id":20,"full_name":"org/new","default_branch":"main","private":true}]',array[10]::bigint[])$$,'55000',null,'Concurrent task link blocks removal');
 select is((select count(*) from github_repositories where github_id=12),0::bigint,'Failed save rolls back new connections');
-select is(begin_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,'expired',array[10]::bigint[])->'in_use_ids','[10]'::jsonb,'Project usage returned for interface protection');
+select is(begin_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,'expired',array[10]::bigint[])->'in_use_ids','[10]'::jsonb,'Task usage returned for interface protection');
 update private.github_repository_states set expires_at=now()-interval '1 second';
 select throws_ok($$select select_github_repositories('af000000-0000-4000-8000-000000000001','expired','expired-final',array[10]::bigint[])$$,'22023',null,'Expired choice rejected');
 select begin_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,'demoted',array[10]::bigint[]);

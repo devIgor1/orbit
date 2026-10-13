@@ -17,7 +17,7 @@ const repositories = [
 ]
 test.beforeEach(async () => test.skip(!(await localCredentials()), 'Requer Supabase local.'))
 
-test('revisa conexões anteriores, preserva projetos e salva somente a seleção visível e filtrada', async ({
+test('revisa conexões anteriores, preserva tarefas e salva somente a seleção visível e filtrada', async ({
   page,
 }, testInfo) => {
   const actions: string[] = []

@@ -19,7 +19,7 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
   return (
     <SettingsSection
       title="GitHub"
-      description="Conecte os repositórios da empresa e acompanhe as entregas pelo Orbit."
+      description="Autorize os repositórios da empresa para vincular PRs diretamente às tarefas."
     >
       <div className="github-content">
         {config.isError ? (
@@ -69,7 +69,7 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
         ) : repositories.data.filter((repo) => repo.active).length === 0 ? (
           <EmptyState
             title="Nenhum repositório conectado"
-            description="Os repositórios conectados ficarão disponíveis nos projetos desta empresa."
+            description="Os repositórios conectados ficarão disponíveis para selecionar PRs nas tarefas desta empresa."
           />
         ) : (
           <ul className="github-repositories">
