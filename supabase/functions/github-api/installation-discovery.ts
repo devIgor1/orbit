@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { sha256 } from '../_shared/github/crypto.ts'
 import { confirmed, type GithubDatabase } from '../_shared/github/database.ts'
-import { accessibleInstallations } from './accessible-installations.ts'
+import { connectableInstallations } from './accessible-installations.ts'
 import { beginAccountConnection } from './account-connection.ts'
 import { checkStateError, installationUrl, newConnectionState } from './connection-state.ts'
 import { authorizationUrl, exchangeCode } from './oauth.ts'
@@ -21,7 +21,7 @@ export async function discoverInstallations(db: GithubDatabase, userId: string, 
   const result = await db.rpc('consume_github_discovery', { requester: userId, state_hash: await sha256(state) })
   checkStateError(result.error)
   const workspaceId = z.uuid().parse(confirmed(result))
-  const installations = await accessibleInstallations(await exchangeCode(code))
+  const installations = await connectableInstallations(await exchangeCode(code))
   if (!installations.length)
     return { status: 'redirect' as const, ...(await beginAccountConnection(db, userId, workspaceId)) }
 

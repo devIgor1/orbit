@@ -34,11 +34,11 @@ function setup() {
   vi.stubGlobal('Deno', { env: { get: (key: string) => secrets[key] } })
   const rpc = vi.fn().mockResolvedValue({ data: workspaceId, error: null })
   const db = { rpc } as unknown as GithubDatabase
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json({ total_count: 2, installations: [installation(20), installation(30, 'Organization')] }),
-    )
+  const fetcher = vi.fn(async (url: string) =>
+    url.includes('/repositories')
+      ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: !url.includes('/40/') } }] })
+      : Response.json({ total_count: 2, installations: [installation(20), installation(30, 'Organization')] }),
+  )
   vi.stubGlobal('fetch', fetcher)
   return { db, rpc, fetcher }
 }
@@ -79,6 +79,32 @@ describe('installed GitHub App discovery', () => {
       },
     ])
     expect(JSON.stringify([rpc.mock.calls, result])).not.toContain('fixture-user-token')
+  })
+  it('hides installations where the user only collaborates without admin', async () => {
+    const { db, rpc, fetcher } = setup()
+    fetcher.mockImplementation(async (url: string) =>
+      url.includes('/repositories')
+        ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: !url.includes('/40/') } }] })
+        : Response.json({ total_count: 2, installations: [installation(20), installation(40)] }),
+    )
+    const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
+    expect(result).toMatchObject({ status: 'choose', installations: [{ id: 20 }] })
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://api.github.com/user/installations/40/repositories?per_page=100&page=1',
+      expect.anything(),
+    )
+    expect(rpc.mock.calls[1][1].available_installations).toEqual([20])
+  })
+  it('starts installation when only collaborator installations are visible', async () => {
+    const { db, rpc, fetcher } = setup()
+    fetcher.mockImplementation(async (url: string) =>
+      url.includes('/repositories')
+        ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: false } }] })
+        : Response.json({ total_count: 1, installations: [installation(40)] }),
+    )
+    const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
+    expect(result).toMatchObject({ status: 'redirect' })
+    expect(rpc.mock.calls[1][0]).toBe('begin_github_account_connection')
   })
   it('starts installation automatically only after a confirmed empty result', async () => {
     const { db, rpc, fetcher } = setup()

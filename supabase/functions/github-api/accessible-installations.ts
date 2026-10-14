@@ -13,6 +13,10 @@ const pageSchema = z.object({
   total_count: z.number().int().nonnegative(),
   installations: z.array(installationSchema),
 })
+const repositoryPageSchema = z.object({
+  total_count: z.number().int().nonnegative(),
+  repositories: z.array(z.object({ permissions: z.object({ admin: z.boolean() }) })),
+})
 
 export async function accessibleInstallations(userToken: string) {
   // Use the OAuth user's view, never the App-wide installation directory.
@@ -32,4 +36,25 @@ export async function accessibleInstallations(userToken: string) {
     }
   }
   throw new GithubError('GITHUB_INSTALLATION_LIMIT', 400)
+}
+
+export async function connectableInstallations(userToken: string) {
+  // GitHub also lists installations where the user is merely a collaborator on
+  // someone else's repository. Connecting requires admin, so offer only those.
+  const installations = await accessibleInstallations(userToken)
+  const admin = await Promise.all(installations.map(({ id }) => administersRepository(userToken, id)))
+  return installations.filter((_, index) => admin[index])
+}
+
+async function administersRepository(userToken: string, installationId: number) {
+  for (let page = 1; page <= 10; page++) {
+    const result = await githubRequest(
+      userToken,
+      `/user/installations/${installationId}/repositories?per_page=100&page=${page}`,
+      repositoryPageSchema,
+    )
+    if (result.repositories.some((repo) => repo.permissions.admin)) return true
+    if (result.repositories.length < 100 || page * 100 >= result.total_count) return false
+  }
+  return false
 }
