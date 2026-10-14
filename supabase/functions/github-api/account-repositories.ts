@@ -1,10 +1,10 @@
 import { z } from 'zod'
 import { appToken, githubRequest } from '../_shared/github/client.ts'
-import { githubId, repositorySchema } from '../_shared/github/contracts.ts'
+import { canConnectRepository, githubId, repositoryPermissions, repositorySchema } from '../_shared/github/contracts.ts'
 import { required } from '../_shared/github/config.ts'
 import { GithubError } from '../_shared/github/errors.ts'
 
-const accessibleRepository = repositorySchema.extend({ permissions: z.object({ admin: z.boolean() }) })
+const accessibleRepository = repositorySchema.extend({ permissions: repositoryPermissions })
 const pageSchema = z.object({
   total_count: z.number().int().nonnegative(),
   repositories: z.array(accessibleRepository),
@@ -12,7 +12,7 @@ const pageSchema = z.object({
 
 export async function accountRepositories(userToken: string, installationId: number) {
   // A spoofed setup URL cannot confer access: both the App and the OAuth user
-  // must have this installation, and each imported repository requires admin.
+  // must have this installation, and each imported repository requires write access.
   const installation = await githubRequest(
     await appToken(),
     `/app/installations/${installationId}`,
@@ -44,8 +44,8 @@ export async function accountRepositories(userToken: string, installationId: num
     for (const repo of result.repositories) repositories.set(repo.id, repo)
     if (result.repositories.length < 100 || page * 100 >= result.total_count) {
       if (repositories.size !== result.total_count) throw new GithubError('GITHUB_CONTRACT')
-      const allowed = [...repositories.values()].filter((repo) => repo.permissions.admin)
-      if (!allowed.length) throw new GithubError('GITHUB_NO_ADMIN_REPOSITORIES', 403)
+      const allowed = [...repositories.values()].filter((repo) => canConnectRepository(repo.permissions))
+      if (!allowed.length) throw new GithubError('GITHUB_NO_WRITABLE_REPOSITORIES', 403)
       return {
         accountLogin: installation.account.login,
         skippedCount: repositories.size - allowed.length,

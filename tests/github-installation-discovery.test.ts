@@ -36,7 +36,10 @@ function setup() {
   const db = { rpc } as unknown as GithubDatabase
   const fetcher = vi.fn(async (url: string) =>
     url.includes('/repositories')
-      ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: !url.includes('/40/') } }] })
+      ? Response.json({
+          total_count: 1,
+          repositories: [{ permissions: { admin: false, push: !url.includes('/40/') } }],
+        })
       : Response.json({ total_count: 2, installations: [installation(20), installation(30, 'Organization')] }),
   )
   vi.stubGlobal('fetch', fetcher)
@@ -80,11 +83,14 @@ describe('installed GitHub App discovery', () => {
     ])
     expect(JSON.stringify([rpc.mock.calls, result])).not.toContain('fixture-user-token')
   })
-  it('hides installations where the user only collaborates without admin', async () => {
+  it('hides installations where the user can only read repositories', async () => {
     const { db, rpc, fetcher } = setup()
     fetcher.mockImplementation(async (url: string) =>
       url.includes('/repositories')
-        ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: !url.includes('/40/') } }] })
+        ? Response.json({
+            total_count: 1,
+            repositories: [{ permissions: { admin: false, push: !url.includes('/40/') } }],
+          })
         : Response.json({ total_count: 2, installations: [installation(20), installation(40)] }),
     )
     const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
@@ -95,11 +101,11 @@ describe('installed GitHub App discovery', () => {
     )
     expect(rpc.mock.calls[1][1].available_installations).toEqual([20])
   })
-  it('starts installation when only collaborator installations are visible', async () => {
+  it('starts installation when only read-only installations are visible', async () => {
     const { db, rpc, fetcher } = setup()
     fetcher.mockImplementation(async (url: string) =>
       url.includes('/repositories')
-        ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: false } }] })
+        ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: false, push: false } }] })
         : Response.json({ total_count: 1, installations: [installation(40)] }),
     )
     const result = await discoverInstallations(db, 'user', 'discover.state', 'code')

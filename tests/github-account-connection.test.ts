@@ -11,12 +11,12 @@ vi.mock('../supabase/functions/_shared/github/client', async (importOriginal) =>
 }))
 afterEach(() => vi.unstubAllGlobals())
 const workspaceId = 'aa000000-0000-4000-8000-000000000001'
-const repo = (id = 10, admin = true) => ({
+const repo = (id = 10, admin = true, push = admin) => ({
   id,
   full_name: `org/repo-${id}`,
   default_branch: 'main',
   private: true,
-  permissions: { admin },
+  permissions: { admin, push },
 })
 function setup() {
   const rpc = vi
@@ -87,7 +87,7 @@ describe('GitHub account connection', () => {
     )
     expect(fetcher).not.toHaveBeenCalled()
   })
-  it('imports only repositories administered by the OAuth user, into the original workspace', async () => {
+  it('imports only repositories the OAuth user can write to, into the original workspace', async () => {
     const { db, rpc, fetcher } = setup()
     expect(await completeRepositorySelection(db, 'orbit-user', 'account.state', 'code')).toEqual({
       workspaceId,
@@ -111,6 +111,20 @@ describe('GitHub account connection', () => {
           { id: 10, full_name: 'org/repo-10', default_branch: 'main', private: true, installation_id: 20 },
         ],
       },
+    ])
+  })
+  it('imports repositories where the OAuth user is a collaborator with write access', async () => {
+    const { db, rpc, fetcher, installation } = setup()
+    fetcher
+      .mockReset()
+      .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
+      .mockResolvedValueOnce(Response.json(installation))
+      .mockResolvedValueOnce(Response.json({ total_count: 1, repositories: [repo(10, false, true)] }))
+    expect(await completeRepositorySelection(db, 'orbit-user', 'account.state', 'code')).toMatchObject({
+      repositoryCount: 1,
+    })
+    expect(rpc.mock.calls[1][1].repositories).toEqual([
+      { id: 10, full_name: 'org/repo-10', default_branch: 'main', private: true, installation_id: 20 },
     ])
   })
   it('rejects an expired or foreign state before using the OAuth code', async () => {
@@ -196,12 +210,12 @@ describe('GitHub account connection', () => {
     expect(fetcher.mock.calls[3][0]).toContain('page=2')
     expect(rpc.mock.calls[1][1].repositories).toHaveLength(101)
   })
-  it.each(['empty', 'non-admin', 'incomplete', 'too-many'])('does not report success for %s results', async (kind) => {
+  it.each(['empty', 'read-only', 'incomplete', 'too-many'])('does not report success for %s results', async (kind) => {
     const { db, rpc, fetcher, installation } = setup()
     const data =
       kind === 'empty'
         ? { total_count: 0, repositories: [] }
-        : kind === 'non-admin'
+        : kind === 'read-only'
           ? { total_count: 1, repositories: [repo(10, false)] }
           : { total_count: kind === 'too-many' ? 1001 : 2, repositories: [repo()] }
     fetcher

@@ -11,6 +11,10 @@ export const repositorySchema = z.object({
   default_branch: z.string(),
   private: z.boolean(),
 })
+// Owners, admins and collaborators with write access can connect a repository.
+export const repositoryPermissions = z.object({ admin: z.boolean(), push: z.boolean() })
+export const canConnectRepository = (permissions: z.infer<typeof repositoryPermissions>) =>
+  permissions.admin || permissions.push
 export const pullSchema = z.object({
   number: githubId,
   title: z.string(),

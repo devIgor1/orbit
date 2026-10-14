@@ -29,7 +29,7 @@ export function createGithubSandbox() {
     full_name: `orbit-test/${id === 10 ? 'entregas' : 'segundo-repo'}`,
     default_branch: 'main',
     private: true,
-    permissions: { admin: true },
+    permissions: { admin: true, push: true },
   }))
   const installation = {
     id: 20,

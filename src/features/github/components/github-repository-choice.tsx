@@ -78,7 +78,7 @@ export function GithubRepositoryChoice({ choice }: { choice: Choice }) {
       )}
       {choice.skippedCount > 0 && (
         <p className="github-note">
-          {choice.skippedCount} repositório(s) sem acesso administrativo não estão disponíveis para conexão.
+          {choice.skippedCount} repositório(s) sem permissão de escrita não estão disponíveis para conexão.
         </p>
       )}
       {selection.save.isError && <ErrorState error={selection.save.error} />}
