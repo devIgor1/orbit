@@ -18,7 +18,8 @@ export function GithubInstallationChoice({
       <div className="github-content">
         <h2 className="github-choice-title">Escolha a conta para conectar</h2>
         <p className="github-note">
-          O App já está instalado nestas contas. Escolha uma conta para selecionar seus repositórios.
+          O App já está instalado na sua conta. Na próxima etapa aparecem seus repositórios e também os que você
+          colabora com permissão de escrita.
         </p>
       </div>
       <ul className="company-list" aria-label="Contas do GitHub disponíveis">

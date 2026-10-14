@@ -46,13 +46,30 @@ function setup() {
     account: { login: 'org' },
     permissions: { contents: 'read', pull_requests: 'write' },
   }
-  const fetcher = vi
-    .fn()
-    .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
-    .mockResolvedValueOnce(Response.json(installation))
-    .mockResolvedValueOnce(Response.json({ total_count: 2, repositories: [repo(), repo(11, false)] }))
+  // GitHub as seen by the App (installations) and by the OAuth user (visible, repositories pages).
+  const github = {
+    installations: { 20: installation } as Record<number, object>,
+    visible: [{ id: 20, app_id: 7, account: { id: 1, login: 'org', type: 'Organization' } }],
+    repositories: { 20: [{ total_count: 2, repositories: [repo(), repo(11, false)] }] } as Record<
+      number,
+      (object | Response)[]
+    >,
+  }
+  const fetcher = vi.fn(async (input: string) => {
+    const url = new URL(input)
+    if (url.pathname === '/login/oauth/access_token') return Response.json({ access_token: 'fixture-user-token' })
+    if (url.pathname === '/user/installations')
+      return Response.json({ total_count: github.visible.length, installations: github.visible })
+    const app = url.pathname.match(/^\/app\/installations\/(\d+)$/)
+    const repos = url.pathname.match(/^\/user\/installations\/(\d+)\/repositories$/)
+    const body = app
+      ? github.installations[Number(app[1])]
+      : repos && github.repositories[Number(repos[1])]?.[Number(url.searchParams.get('page')) - 1]
+    if (!body) return new Response(null, { status: 404 })
+    return body instanceof Response ? body : Response.json(body)
+  })
   vi.stubGlobal('fetch', fetcher)
-  return { db, rpc, fetcher, installation }
+  return { db, rpc, fetcher, installation, github }
 }
 describe('GitHub account connection', () => {
   it('starts one GitHub consent flow without asking for a repository name', async () => {
@@ -114,18 +131,45 @@ describe('GitHub account connection', () => {
     ])
   })
   it('imports repositories where the OAuth user is a collaborator with write access', async () => {
-    const { db, rpc, fetcher, installation } = setup()
-    fetcher
-      .mockReset()
-      .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
-      .mockResolvedValueOnce(Response.json(installation))
-      .mockResolvedValueOnce(Response.json({ total_count: 1, repositories: [repo(10, false, true)] }))
+    const { db, rpc, github } = setup()
+    github.repositories[20] = [{ total_count: 1, repositories: [repo(10, false, true)] }]
     expect(await completeRepositorySelection(db, 'orbit-user', 'account.state', 'code')).toMatchObject({
       repositoryCount: 1,
     })
     expect(rpc.mock.calls[1][1].repositories).toEqual([
       { id: 10, full_name: 'org/repo-10', default_branch: 'main', private: true, installation_id: 20 },
     ])
+  })
+  it('adds writable repositories from installations owned by other accounts', async () => {
+    const { db, rpc, installation, github } = setup()
+    github.visible.push({ id: 40, app_id: 7, account: { id: 2, login: 'owner', type: 'User' } })
+    github.installations[40] = { ...installation, id: 40, account: { login: 'owner' } }
+    github.repositories[40] = [{ total_count: 2, repositories: [repo(77, false, true), repo(78, false)] }]
+    rpc.mockReset().mockResolvedValueOnce({
+      data: { workspace_id: workspaceId, installation_id: 20, selected_ids: [10, 77], previous_ids: [] },
+      error: null,
+    })
+    rpc.mockResolvedValueOnce({ data: 2, error: null })
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).resolves.toMatchObject({
+      repositoryCount: 2,
+      accountLogin: 'org',
+    })
+    expect(rpc.mock.calls[1][1]).toMatchObject({
+      target_installation: 20,
+      repositories: [
+        { id: 10, installation_id: 20 },
+        { id: 77, full_name: 'org/repo-77', installation_id: 40 },
+      ],
+    })
+  })
+  it('ignores another owner’s unavailable installation instead of failing', async () => {
+    const { db, rpc, installation, github } = setup()
+    github.visible.push({ id: 40, app_id: 7, account: { id: 2, login: 'owner', type: 'User' } })
+    github.installations[40] = { ...installation, id: 40, suspended_at: '2026-10-12T00:00:00Z' }
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).resolves.toMatchObject({
+      repositoryCount: 1,
+    })
+    expect(rpc.mock.calls[1][1].repositories).toEqual([expect.objectContaining({ id: 10, installation_id: 20 })])
   })
   it('rejects an expired or foreign state before using the OAuth code', async () => {
     const { db, rpc, fetcher } = setup()
@@ -151,47 +195,34 @@ describe('GitHub account connection', () => {
     expect(fetcher).not.toHaveBeenCalled()
   })
   it('refuses an installation that the GitHub user cannot access, even if the App can', async () => {
-    const { db, rpc, fetcher, installation } = setup()
-    fetcher
-      .mockReset()
-      .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
-      .mockResolvedValueOnce(Response.json(installation))
-      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+    const { db, rpc, github } = setup()
+    github.repositories[20] = []
     await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
       code: 'GITHUB_UNAVAILABLE',
     })
     expect(rpc).toHaveBeenCalledTimes(1)
   })
   it.each(['wrong-app', 'suspended', 'missing-permission'])('rejects a %s installation', async (kind) => {
-    const { db, rpc, fetcher, installation } = setup()
-    fetcher
-      .mockReset()
-      .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
-      .mockResolvedValueOnce(
-        Response.json({
-          ...installation,
-          ...(kind === 'wrong-app'
-            ? { app_id: 999 }
-            : kind === 'suspended'
-              ? { suspended_at: '2026-10-12T00:00:00Z' }
-              : { permissions: { contents: 'read', pull_requests: 'read' } }),
-        }),
-      )
+    const { db, rpc, installation, github } = setup()
+    github.installations[20] = {
+      ...installation,
+      ...(kind === 'wrong-app'
+        ? { app_id: 999 }
+        : kind === 'suspended'
+          ? { suspended_at: '2026-10-12T00:00:00Z' }
+          : { permissions: { contents: 'read', pull_requests: 'read' } }),
+    }
     await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
       code: 'GITHUB_UNAVAILABLE',
     })
     expect(rpc).toHaveBeenCalledTimes(1)
   })
   it('paginates before committing all repositories together', async () => {
-    const { db, rpc, fetcher, installation } = setup()
-    fetcher
-      .mockReset()
-      .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
-      .mockResolvedValueOnce(Response.json(installation))
-      .mockResolvedValueOnce(
-        Response.json({ total_count: 101, repositories: Array.from({ length: 100 }, (_, i) => repo(i + 1)) }),
-      )
-      .mockResolvedValueOnce(Response.json({ total_count: 101, repositories: [repo(101)] }))
+    const { db, rpc, fetcher, github } = setup()
+    github.repositories[20] = [
+      { total_count: 101, repositories: Array.from({ length: 100 }, (_, i) => repo(i + 1)) },
+      { total_count: 101, repositories: [repo(101)] },
+    ]
     rpc
       .mockReset()
       .mockResolvedValueOnce({
@@ -211,18 +242,14 @@ describe('GitHub account connection', () => {
     expect(rpc.mock.calls[1][1].repositories).toHaveLength(101)
   })
   it.each(['empty', 'read-only', 'incomplete', 'too-many'])('does not report success for %s results', async (kind) => {
-    const { db, rpc, fetcher, installation } = setup()
+    const { db, rpc, github } = setup()
     const data =
       kind === 'empty'
         ? { total_count: 0, repositories: [] }
         : kind === 'read-only'
           ? { total_count: 1, repositories: [repo(10, false)] }
           : { total_count: kind === 'too-many' ? 1001 : 2, repositories: [repo()] }
-    fetcher
-      .mockReset()
-      .mockResolvedValueOnce(Response.json({ access_token: 'fixture-user-token' }))
-      .mockResolvedValueOnce(Response.json(installation))
-      .mockResolvedValueOnce(Response.json(data))
+    github.repositories[20] = [data]
     await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toHaveProperty('code')
     expect(rpc).toHaveBeenCalledTimes(1)
   })

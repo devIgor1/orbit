@@ -19,8 +19,12 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 const workspaceId = 'aa000000-0000-4000-8000-000000000001'
-const installation = (id: number, type = 'User') => ({ id, app_id: 7, account: { login: `account-${id}`, type } })
-function setup() {
+const installation = (id: number, type = 'User', accountId = id) => ({
+  id,
+  app_id: 7,
+  account: { id: accountId, login: `account-${id}`, type },
+})
+function setup(visible = [installation(20), installation(30, 'Organization'), installation(40)]) {
   const secrets: Record<string, string> = {
     GITHUB_APP_ID: '7',
     GITHUB_APP_SLUG: 'orbit-test',
@@ -34,13 +38,11 @@ function setup() {
   vi.stubGlobal('Deno', { env: { get: (key: string) => secrets[key] } })
   const rpc = vi.fn().mockResolvedValue({ data: workspaceId, error: null })
   const db = { rpc } as unknown as GithubDatabase
+  // The OAuth user is GitHub user 20; installations 30 and 40 belong to other accounts.
   const fetcher = vi.fn(async (url: string) =>
-    url.includes('/repositories')
-      ? Response.json({
-          total_count: 1,
-          repositories: [{ permissions: { admin: false, push: !url.includes('/40/') } }],
-        })
-      : Response.json({ total_count: 2, installations: [installation(20), installation(30, 'Organization')] }),
+    url.endsWith('/user')
+      ? Response.json({ id: 20 })
+      : Response.json({ total_count: visible.length, installations: visible }),
   )
   vi.stubGlobal('fetch', fetcher)
   return { db, rpc, fetcher }
@@ -59,62 +61,38 @@ describe('installed GitHub App discovery', () => {
     expect(rpc.mock.calls[0][1].state_hash).not.toBe(target.searchParams.get('state'))
     expect(fetcher).not.toHaveBeenCalled()
   })
-  it('offers only the OAuth user’s installations and retains no user token', async () => {
+  it('offers only the OAuth user’s personal account and retains no user token', async () => {
     const { db, rpc, fetcher } = setup()
     const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
     expect(result).toEqual({
       status: 'choose',
       state: expect.stringMatching(/^choice\./),
-      installations: [
-        { id: 20, accountLogin: 'account-20', accountType: 'User' },
-        { id: 30, accountLogin: 'account-30', accountType: 'Organization' },
-      ],
+      installations: [{ id: 20, accountLogin: 'account-20', accountType: 'User' }],
     })
-    expect(fetcher.mock.calls[0][0]).toBe('https://api.github.com/user/installations?per_page=100&page=1')
-    expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer fixture-user-token')
+    expect(fetcher).toHaveBeenCalledWith('https://api.github.com/user', expect.anything())
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://api.github.com/user/installations?per_page=100&page=1',
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer fixture-user-token' }) }),
+    )
     expect(rpc.mock.calls[1]).toEqual([
       'begin_github_discovery',
       {
         requester: 'user',
         target_workspace: workspaceId,
         state_hash: expect.any(String),
-        available_installations: [20, 30],
+        available_installations: [20],
       },
     ])
     expect(JSON.stringify([rpc.mock.calls, result])).not.toContain('fixture-user-token')
   })
-  it('hides installations where the user can only read repositories', async () => {
-    const { db, rpc, fetcher } = setup()
-    fetcher.mockImplementation(async (url: string) =>
-      url.includes('/repositories')
-        ? Response.json({
-            total_count: 1,
-            repositories: [{ permissions: { admin: false, push: !url.includes('/40/') } }],
-          })
-        : Response.json({ total_count: 2, installations: [installation(20), installation(40)] }),
-    )
-    const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
-    expect(result).toMatchObject({ status: 'choose', installations: [{ id: 20 }] })
-    expect(fetcher).toHaveBeenCalledWith(
-      'https://api.github.com/user/installations/40/repositories?per_page=100&page=1',
-      expect.anything(),
-    )
-    expect(rpc.mock.calls[1][1].available_installations).toEqual([20])
-  })
-  it('starts installation when only read-only installations are visible', async () => {
-    const { db, rpc, fetcher } = setup()
-    fetcher.mockImplementation(async (url: string) =>
-      url.includes('/repositories')
-        ? Response.json({ total_count: 1, repositories: [{ permissions: { admin: false, push: false } }] })
-        : Response.json({ total_count: 1, installations: [installation(40)] }),
-    )
+  it('starts installation when only other accounts’ installations are visible', async () => {
+    const { db, rpc } = setup([installation(30, 'Organization'), installation(40)])
     const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
     expect(result).toMatchObject({ status: 'redirect' })
     expect(rpc.mock.calls[1][0]).toBe('begin_github_account_connection')
   })
   it('starts installation automatically only after a confirmed empty result', async () => {
-    const { db, rpc, fetcher } = setup()
-    fetcher.mockResolvedValue(Response.json({ total_count: 0, installations: [] }))
+    const { db, rpc } = setup([])
     const result = await discoverInstallations(db, 'user', 'discover.state', 'code')
     expect(result).toMatchObject({
       status: 'redirect',
@@ -149,17 +127,19 @@ describe('installed GitHub App discovery', () => {
     'does not turn %s discovery into a new installation',
     async (kind) => {
       const { db, rpc, fetcher } = setup()
-      fetcher.mockResolvedValue(
-        kind === 'unavailable'
-          ? new Response(null, { status: 403 })
-          : Response.json(
-              kind === 'malformed'
-                ? {}
-                : {
-                    total_count: kind === 'too-many' ? 1001 : kind === 'partial' ? 2 : 1,
-                    installations: [{ ...installation(20), ...(kind === 'foreign-app' ? { app_id: 999 } : {}) }],
-                  },
-            ),
+      fetcher.mockImplementation(async (url: string) =>
+        url.endsWith('/user')
+          ? Response.json({ id: 20 })
+          : kind === 'unavailable'
+            ? new Response(null, { status: 403 })
+            : Response.json(
+                kind === 'malformed'
+                  ? {}
+                  : {
+                      total_count: kind === 'too-many' ? 1001 : kind === 'partial' ? 2 : 1,
+                      installations: [{ ...installation(20), ...(kind === 'foreign-app' ? { app_id: 999 } : {}) }],
+                    },
+              ),
       )
       await expect(discoverInstallations(db, 'user', 'state', 'code')).rejects.toHaveProperty('code')
       expect(rpc).toHaveBeenCalledTimes(1)

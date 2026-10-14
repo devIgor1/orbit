@@ -35,7 +35,7 @@ export function createGithubSandbox() {
     id: 20,
     app_id: 100,
     suspended_at: null,
-    account: { login: 'orbit-test', type: 'Organization' },
+    account: { id: 1, login: 'orbit-test', type: 'User' },
     permissions: { contents: 'read', pull_requests: 'write' },
   }
   const snapshot = () => ({ state, unavailable, comments: [...comments] })
@@ -73,6 +73,7 @@ export function createGithubSandbox() {
         return Response.json({ access_token: 'fixture-oauth-token', token_type: 'bearer' })
       if (url.hostname !== 'api.github.com') throw new Error('Unexpected external host in GitHub test')
       const path = url.pathname
+      if (path === '/user') return Response.json({ id: 1, login: 'orbit-test' })
       if (path === '/user/installations') return Response.json({ total_count: 1, installations: [installation] })
       if (path === '/app/installations/20') return Response.json(installation)
       if (path === '/user/installations/20/repositories') return Response.json({ total_count: 2, repositories })
