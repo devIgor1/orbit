@@ -1,0 +1,97 @@
+import { expect, test, type Page } from '@playwright/test'
+import { confirmed, notificationSandbox } from '../support/notification-backend'
+
+async function login(page: Page, password: string) {
+  await page.goto('/dashboard')
+  await page.getByLabel('E-mail', { exact: true }).fill('rafael@orbit.local')
+  await page.getByLabel('Senha', { exact: true }).fill(password)
+  await page.getByRole('button', { name: 'Entrar no workspace' }).click()
+  await expect(page.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — 0 não lidas')
+}
+
+test('recebe atribuição, comentário e status ao vivo, sincroniza leituras e abre tarefas no mesmo projeto', async ({ page, context }, testInfo) => {
+  const sandbox = await notificationSandbox()
+  try {
+    const task = await sandbox.task()
+    await login(page, sandbox.config.password)
+    await page.locator('.notification-bell').focus()
+    await page.keyboard.press('Enter')
+    const inbox = page.getByRole('dialog', { name: 'Notificações', exact: true })
+    await expect(inbox.getByText('Sua órbita está tranquila')).toBeVisible()
+    await expect(inbox.getByText('Conectando atualizações ao vivo…')).not.toBeVisible()
+    confirmed(await sandbox.owner.from('tasks').update({ assignee_id: sandbox.member.id }).eq('id', task.id).select().single())
+    await expect(page.locator('.notification-count')).toHaveText('1', { timeout: 10_000 })
+    await expect(inbox.getByText('Marina Costa', { exact: true })).toBeVisible()
+    const secondTab = await context.newPage()
+    await secondTab.goto('/dashboard')
+    await secondTab.locator('.notification-bell').click()
+    await expect(secondTab.getByText('Conectando atualizações ao vivo…')).not.toBeVisible()
+    await inbox.getByRole('button', { name: 'Marcar como lida', exact: true }).click()
+    await expect(page.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — 0 não lidas')
+    await expect(secondTab.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — 0 não lidas', { timeout: 10_000 })
+    await secondTab.close()
+    confirmed(await sandbox.owner.from('task_comments').insert({ workspace_id: sandbox.workspace, task_id: task.id, author_id: sandbox.author.id, body: 'A proposta está pronta para revisão.' }).select().single())
+    confirmed(await sandbox.owner.from('tasks').update({ status: 'review' }).eq('id', task.id).select().single())
+    await expect(page.locator('.notification-count')).toHaveText('2', { timeout: 10_000 })
+    await expect(inbox.getByText(/comentou na tarefa/)).toBeVisible()
+    await expect(inbox.getByText(/moveu a tarefa para Em revisão/)).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath('notification-inbox.png'), animations: 'disabled' })
+    await inbox.getByRole('button', { name: task.title, exact: true }).first().click()
+    await expect(page.getByRole('dialog', { name: task.title, exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Fechar', exact: true }).click()
+    const next = await sandbox.task('Outra tarefa no mesmo projeto', true)
+    await expect(page.locator('.notification-count')).toHaveText('2', { timeout: 10_000 })
+    await page.locator('.notification-bell').click()
+    await page.getByRole('button', { name: next.title, exact: true }).click()
+    await expect(page.getByRole('dialog', { name: next.title, exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Fechar', exact: true }).click()
+    await page.locator('.notification-bell').click()
+    await page.getByRole('button', { name: 'Marcar todas como lidas' }).click()
+    await expect(page.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — 0 não lidas')
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.notification-bell')).toBeFocused()
+    await page.reload()
+    await expect(page.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — 0 não lidas')
+  } finally { await sandbox.cleanup() }
+})
+
+test('pagina o histórico, filtra não lidas e recupera falha de leitura sem confirmar sucesso', async ({ page }, testInfo) => {
+  const sandbox = await notificationSandbox()
+  try {
+    await login(page, sandbox.config.password)
+    for (let i = 1; i <= 23; i++) await sandbox.task(`Entrega ${i}`, true)
+    await expect(page.locator('.notification-count')).toHaveText('23', { timeout: 10_000 })
+    await page.locator('.notification-bell').click()
+    await expect(page.locator('.notification-item')).toHaveCount(20)
+    await page.getByRole('button', { name: 'Carregar mais notificações' }).click()
+    await expect(page.locator('.notification-item')).toHaveCount(23)
+    await page.route('**/rest/v1/rpc/mark_notification_read', route => route.fulfill({ status: 403, json: { code: '42501', message: 'Test write refused' } }))
+    await page.getByRole('button', { name: 'Marcar como lida', exact: true }).first().click()
+    await expect(page.getByRole('alert')).toContainText('permissão')
+    await expect(page.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — não foi possível atualizar')
+    await page.screenshot({ path: testInfo.outputPath('notification-write-error.png') })
+    await page.unroute('**/rest/v1/rpc/mark_notification_read')
+    await page.getByRole('button', { name: 'Tentar novamente' }).click()
+    await expect(page.locator('.notification-count')).toHaveText('23')
+    await page.getByRole('button', { name: 'Marcar todas como lidas' }).click()
+    await expect(page.locator('.notification-bell')).toHaveAttribute('aria-label', 'Notificações — 0 não lidas')
+    await page.getByRole('button', { name: 'Não lidas', exact: true }).click()
+    await expect(page.getByText('Tudo em dia por aqui')).toBeVisible()
+    await page.screenshot({ path: testInfo.outputPath('notification-empty.png') })
+  } finally { await sandbox.cleanup() }
+})
+
+test('rejeita assinatura do canal de outra pessoa', async ({ browserName }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop' || browserName !== 'chromium', 'Backend authorization runs once on desktop Chromium.')
+  const sandbox = await notificationSandbox()
+  try {
+    await sandbox.recipient.realtime.setAuth()
+    const status = await new Promise<string>(resolve => {
+      const channel = sandbox.recipient.channel(`notifications:${sandbox.workspace}:${sandbox.author.id}`, { config: { private: true } })
+      channel.on('broadcast', { event: 'inbox_changed' }, () => { throw new Error('Unauthorized event received') })
+        .subscribe(value => { if (value !== 'CLOSED') resolve(value) })
+    })
+    expect(status).toBe('CHANNEL_ERROR')
+  } finally { await sandbox.cleanup() }
+})

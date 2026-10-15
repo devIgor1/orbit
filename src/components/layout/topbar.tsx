@@ -1,15 +1,18 @@
 import { Command, Menu, Search, SlidersHorizontal } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import type { ReactNode } from 'react'
 
 export function Topbar({
   onMenu,
   onSearch,
   configured,
+  notifications,
 }: {
   onMenu: () => void
   onSearch: () => void
   configured: boolean
+  notifications?: ReactNode
 }) {
   const { pathname } = useLocation()
   const title = pathname.startsWith('/projects')
@@ -47,6 +50,7 @@ export function Topbar({
             <SlidersHorizontal />
           </Link>
         </Button>
+        {notifications}
       </div>
     </header>
   )
