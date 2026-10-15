@@ -50,9 +50,12 @@ jobs:
       - name: Obter configuração de produção da Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           node scripts/link-vercel-project.mjs
           vercel pull --yes --environment=production
+          node scripts/prepare-frontend-env.mjs
           node scripts/verify-deployment.mjs target
       - name: Preparar frontend antes de alterar o backend
         env:

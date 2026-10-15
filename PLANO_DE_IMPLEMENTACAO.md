@@ -2053,3 +2053,16 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
 - Teste isolado com a CLI real e API simulada recusando conta/time reproduziu o
   erro anterior e confirmou o download de configuração pelo novo caminho. Testes
   unitários cobrem destino incorreto, token ausente, permissão e falhas de rede.
+- PR #7 mesclado com CI aprovado e 360 testes locais aprovados. O token limitado
+  funcionou na Vercel real; a execução parou na validação da conexão pública porque
+  o pull retornou valores `[SENSITIVE]`, antes de alterar o backend.
+
+## 67. Variáveis públicas do build no Actions — 15/10/2026
+
+- `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` foram configuradas como
+  variables do environment Production, com a conexão pública real confirmada na
+  API do Supabase. A preparação preenche os valores ocultos pela Vercel, valida o
+  destino e recusa divergências legíveis, sem copiar secrets administrativos.
+- Configurações restantes do pull são preservadas. O token da Vercel continua
+  limitado ao Orbit e a ordem de publicação permanece. Resultado do deploy real
+  será registrado no PR correspondente após a execução.
