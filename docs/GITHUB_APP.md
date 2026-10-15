@@ -28,7 +28,7 @@ App. Acesso somente de leitura não permite conectar.
 
 ### Atualização de 15/10/2026 — repositório por projeto
 
-Aplicar `202610150001_project_github_repository.sql`, publicar `github-api` e depois
+Aplicar `202610150005_project_github_repository.sql`, publicar `github-api` e depois
 o frontend. Não são necessários novos segredos, permissões do App ou mudanças no
 worker/webhook.
 

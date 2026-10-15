@@ -1859,7 +1859,7 @@ seção 56 e a validação com OAuth/PR real continuam pendentes.
 ## 59. Repositório do GitHub por projeto — 15/10/2026
 
 **Estado:** implementação local. Publicação pendente: aplicar a migration
-`202610150001`, publicar `github-api` e depois o frontend.
+`202610150005`, publicar `github-api` e depois o frontend.
 
 - Reverte a decisão da seção 56 a pedido do produto: cada projeto tem o próprio
   repositório. O card **Repositório do GitHub** na página do projeto mostra o
@@ -1874,3 +1874,68 @@ seção 56 e a validação com OAuth/PR real continuam pendentes.
 - Vitest, lint, estilos, arquitetura e TypeScript aprovados. pgTAP completo com
   seed no Supabase local (PostgreSQL 17). Playwright: seleção de PR, configurações
   e o fluxo completo opt-in (Auth, API, worker e banco reais) em desktop/celular.
+
+## 60. Central de notificações — 14/10/2026
+
+**Estado:** implementada na branch `codex/notifications`; migrations validadas em
+Supabase isolado. Publicação no ambiente hospedado pendente.
+
+- Sino no cabeçalho com contador confirmado de não lidas, painel responsivo,
+  filtros, histórico paginado e leitura individual ou em lote. A abertura de um
+  aviso marca a leitura no backend e abre a tarefa pelo parâmetro da URL, inclusive
+  quando outra tarefa do mesmo projeto já havia sido acessada.
+- Migrations `202610150001` a `202610150003` registram atribuição, comentário e
+  mudança de status na transação original. Destinatários são o novo responsável
+  ou criador/responsável, conforme o evento, excluindo autor e membros removidos.
+  Uma pessoa com dois papéis recebe apenas um aviso por evento.
+- Tabela protegida por RLS e RPCs que verificam destinatário e vínculo ativo.
+  Escritas diretas ficam bloqueadas; leitura individual exige o registro afetado.
+  Leitura em lote usa o snapshot do servidor para preservar eventos posteriores.
+- Supabase Broadcast em canal privado por usuário/workspace transporta somente
+  sinal de invalidação, sem dados de negócio. A consulta sempre revalida acesso.
+  Reconexão, foco e consulta periódica recuperam avisos pendentes; erros de rede,
+  autorização e escrita permanecem visíveis. O e-mail mantém seu fluxo existente.
+- Componentes, hooks, serviços e validações separados em `features/notifications`;
+  aparência centralizada na seção 13 de `globals.css`. Realtime habilitado na
+  configuração local e incluído no comando `db:start`. Tipos regenerados.
+- Vitest: 301 testes passaram, um integrado opt-in pulado. PostgreSQL/Supabase
+  isolado: 292 asserções pgTAP aprovadas. Playwright com Auth, banco e Realtime
+  reais: sete cenários aprovados em 1280, 900 e 320 px; duas repetições do teste
+  de autorização de canal foram intencionalmente puladas nos outros viewports.
+  Capturas inspecionadas em `test-results/notifications`. A falha de escrita
+  é simulada exclusivamente no teste; demais fluxos usam o backend local real.
+- Documentação de contratos, instalação e testes em `docs/NOTIFICATIONS.md`.
+  Build/TypeScript, lint, estilos/e-mails, arquitetura e tipagem adicional dos
+  novos testes e configuração Playwright aprovados; `git diff --check` aprovado.
+  A implementação preserva as alterações anteriores e os arquivos do PDF;
+  não aplica migrations no banco de uso diário nem publica em produção.
+
+## 61. Convites recebidos no sino — 14/10/2026
+
+**Estado:** implementado e validado em checkout isolado na branch
+`codex/invitation-notifications`; publicação registrada no PR correspondente.
+
+- A lista global de convites do e-mail confirmado passa a integrar o sino, inclusive
+  quando outra empresa está ativa. Reutiliza `my_invitations` e a tela de aceitação;
+  convites pendentes anteriores também aparecem, sem recriar registros ou e-mails.
+- O contador soma atividades não lidas e convites pendentes, diferenciando as duas
+  quantidades no nome acessível. O filtro e a leitura em lote afetam as atividades;
+  convites permanecem até aceitação, cancelamento ou expiração. Prévia de três
+  convites com acesso à lista completa, mantendo o padrão visual central.
+- A migration `202610150004` adiciona Broadcast privado por destinatário confirmado,
+  independente da associação ao workspace. O payload é vazio e a RPC revalida
+  autorização a cada consulta. Nenhum contrato público ou tipo gerado é alterado.
+- A conexão compartilha um adaptador com as notificações de tarefas. As duas
+  features usam o mesmo cliente Supabase. Consultas se recuperam após reconexão,
+  foco ou intervalo de 60 segundos; falhas permanecem visíveis e não viram vazio.
+- Implementação e testes ficam fora do checkout original, preservando a branch,
+  o índice, as alterações não commitadas e os arquivos do PDF.
+- Validação: 299 testes unitários aprovados, um opt-in ignorado; 310 asserções SQL
+  aprovadas em Supabase local isolado; 11 E2E aprovados, com quatro repetições de
+  autorização/recuperação puladas nos outros viewports. O navegador confirmou
+  recebimento entre empresas, sincronização em duas abas, cancelamento, aceitação,
+  convites anteriores à conexão e bloqueio do canal de outra conta. Nenhum e-mail
+  real foi enviado. Capturas em 1280, 900 e 320 px inspecionadas.
+- Lint, estilos/e-mails, arquitetura, TypeScript/build, tipagem adicional dos novos
+  testes e `git diff --check` aprovados. Preflight da migration no Supabase hospedado
+  executado com rollback, sem alterar dados de negócio.

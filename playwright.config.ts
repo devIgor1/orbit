@@ -4,7 +4,7 @@ const port = Number(process.env.ORBIT_E2E_PORT ?? 5173)
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: ['onboarding.spec.ts', 'invitation-email.spec.ts', 'member-management.spec.ts', 'registration-email.spec.ts'],
+  testIgnore: ['onboarding.spec.ts', 'invitation-email.spec.ts', 'member-management.spec.ts', 'registration-email.spec.ts', 'notifications.spec.ts', 'invitation-notifications.spec.ts'],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

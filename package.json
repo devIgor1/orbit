@@ -16,11 +16,12 @@
     "check:architecture": "node scripts/check-architecture.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:notifications": "playwright test --config playwright.notifications.config.ts",
     "test:onboarding": "playwright test --config playwright.onboarding.config.ts",
     "db:types": "npx supabase gen types typescript --local > src/lib/supabase/database.generated.ts",
     "test:db": "npx supabase test db",
     "test:members:concurrency": "node scripts/test-member-concurrency.mjs",
-    "db:start": "npx supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor",
+    "db:start": "npx supabase start -x storage-api,imgproxy,edge-runtime,logflare,vector,supavisor",
     "db:seed": "node supabase/provision-demo.mjs"
   },
   "dependencies": {

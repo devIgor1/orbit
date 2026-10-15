@@ -8,6 +8,7 @@ import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
 import { WorkspaceSearch } from './workspace-search'
 import { HelpDialog } from './help-dialog'
+import { NotificationCenter } from '@/features/notifications/components/notification-center'
 
 export function AppShell() {
   const auth = useAuth()
@@ -76,6 +77,7 @@ export function AppShell() {
           onMenu={() => setMobileOpen(true)}
           onSearch={() => setSearchOpen(true)}
           configured={auth.configured && !!auth.user}
+          notifications={auth.user && workspace.isSuccess && <NotificationCenter key={`${auth.user.id}-${workspace.data.workspace.id}`} />}
         />
         <main className="main-content" id="main-content" tabIndex={-1}>
           {signOutError ? (
