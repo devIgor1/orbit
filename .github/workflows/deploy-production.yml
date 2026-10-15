@@ -1,0 +1,89 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Backend antes do frontend
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: Production
+      url: https://weorbit.com.br
+    concurrency:
+      group: orbit-production
+      cancel-in-progress: false
+    env:
+      SUPABASE_PROJECT_ID: twsfyqkagyvibsilulle
+      VERCEL_SCOPE: devigor1s-projects
+      VERCEL_PROJECT: orbit
+      VERCEL_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Instalar dependências e CLIs fixadas
+        run: |
+          npm ci
+          npm install --prefix "$RUNNER_TEMP/orbit-deploy-tools" --no-save supabase@2.121.0 vercel@64.2.0
+          echo "$RUNNER_TEMP/orbit-deploy-tools/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Verificar credenciais antes de alterar produção
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo '::error::Configure SUPABASE_ACCESS_TOKEN.'; exit 1; }
+          test -n "$VERCEL_TOKEN" || { echo '::error::Configure VERCEL_TOKEN.'; exit 1; }
+      - name: Obter configuração de produção da Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel link --yes --project "$VERCEL_PROJECT" --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+          vercel pull --yes --environment=production --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+          node scripts/verify-deployment.mjs target
+      - name: Preparar frontend antes de alterar o backend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token "$VERCEL_TOKEN"
+      - name: Recusar commit antigo
+        run: node scripts/verify-deployment.mjs commit
+      - name: Aplicar migrations pendentes
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_ID"
+          supabase db push --linked --dry-run
+          supabase db push --linked --yes
+      - name: Publicar todas as Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID" --use-api
+      - name: Confirmar backend publicado
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/verify-deployment.mjs backend
+      - name: Confirmar que main não avançou durante o deploy
+        run: node scripts/verify-deployment.mjs commit
+      - name: Publicar frontend já compilado
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
+      - name: Registrar conclusão
+        run: |
+          echo 'Migrations e Edge Functions confirmadas antes do frontend.' >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit publicado: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Aplicação: https://weorbit.com.br' >> "$GITHUB_STEP_SUMMARY"

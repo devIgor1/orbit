@@ -49,6 +49,10 @@ por triggers na transação; timestamps de conclusão também são calculados no
 
 ## Hospedagem
 
+O fluxo normal após merge na `main` é o [deploy automatizado](../docs/DEPLOYMENT.md).
+Ele aplica migrations e publica todas as Edge Functions antes de liberar o
+frontend. Os comandos manuais abaixo servem para a preparação inicial e recuperação.
+
 O Supabase hospedado atende o frontend diretamente, sem Docker no computador do
 desenvolvedor ou na Vercel. Com a CLI autenticada, vincule o projeto e confira as
 migrations antes de aplicá-las:

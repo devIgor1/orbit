@@ -61,9 +61,14 @@ Importe o repositório na Vercel e configure `VITE_SUPABASE_URL` e
 das rotas para `index.html`. Mudanças nas variáveis exigem um novo build/deploy.
 Nunca use uma chave administrativa em variáveis `VITE_*`.
 
-Depois de obter a URL publicada, configure o Site URL e os redirecionamentos
-permitidos em Supabase Auth. Publicar o frontend não transfere dados nem aplica
-migrations automaticamente; veja [a preparação do backend](supabase/README.md#hospedagem).
+Na `main`, a publicação passa pelo workflow **Deploy production**: validação e
+build, migrations, Edge Functions e, por último, frontend. O deploy automático
+da integração Git da Vercel fica desativado somente nessa branch. Previews de PRs
+continuam funcionando e não aplicam migrations em produção.
+Veja [configuração, credenciais e recuperação do deploy](docs/DEPLOYMENT.md).
+
+Configure o Site URL e os redirecionamentos permitidos em Supabase Auth ao trocar
+o domínio. O pipeline não publica configurações de Auth nem executa seed/reset.
 Use outro projeto Supabase para testes que alteram dados.
 
 ## Interface
