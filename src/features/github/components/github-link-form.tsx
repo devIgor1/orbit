@@ -12,26 +12,25 @@ import { GithubReferencePicker } from './github-reference-picker'
 
 type Props = {
   taskId: string
-  repositories: { id: string; full_name: string }[]
+  repository: { id: string; full_name: string }
   isPending: boolean
   error: unknown
   onSubmit: (values: GithubLinkValues) => Promise<void>
 }
-export function GithubLinkForm({ taskId, repositories, isPending, error, onSubmit }: Props) {
+export function GithubLinkForm({ taskId, repository, isPending, error, onSubmit }: Props) {
   const id = useId()
   const form = useForm<GithubLinkValues>({
     resolver: zodResolver(githubLinkSchema),
-    defaultValues: { repositoryId: '', reference: '' },
+    defaultValues: { repositoryId: repository.id, reference: '' },
   })
-  const repositoryId = useWatch({ control: form.control, name: 'repositoryId' })
+  const repositoryId = repository.id
   const reference = useWatch({ control: form.control, name: 'reference' })
   const [pullState, setPullState] = useState<GithubPullFilter>('open')
   const query = useGithubReferences(taskId, repositoryId, 'pr', pullState)
   const selected = query.isSuccess
     ? referenceOptions(query.data.pages).find((option) => option.value === reference)
     : undefined
-  const hasRepository = repositories.some((repository) => repository.id === repositoryId)
-  const canSubmit = Boolean(hasRepository && selected && !selected.disabled && !query.isFetching && !isPending)
+  const canSubmit = Boolean(selected && !selected.disabled && !query.isFetching && !isPending)
   return (
     <form
       className="github-link-form"
@@ -40,71 +39,42 @@ export function GithubLinkForm({ taskId, repositories, isPending, error, onSubmi
       })}
     >
       <p className="github-note">
-        Vincule o PR que entrega esta tarefa. Escolha entre os repositórios conectados à empresa.
+        Vincule o PR que entrega esta tarefa. Repositório do projeto: <strong>{repository.full_name}</strong>
       </p>
       <div className="form-field">
-        <label htmlFor={`${id}-repository`}>Repositório do PR</label>
-        <Controller
-          control={form.control}
-          name="repositoryId"
-          render={({ field }) => (
-            <OptionsSelect
-              id={`${id}-repository`}
-              value={field.value}
-              onValueChange={(value) => {
-                form.resetField('reference')
-                setPullState('open')
-                field.onChange(value)
-              }}
-              onBlur={field.onBlur}
-              ref={field.ref}
-              disabled={isPending}
-              items={[
-                { value: '', label: 'Selecionar repositório', disabled: true },
-                ...repositories.map((repository) => ({ value: repository.id, label: repository.full_name })),
-              ]}
-            />
-          )}
+        <label htmlFor={`${id}-pull-state`}>Status dos PRs</label>
+        <OptionsSelect
+          id={`${id}-pull-state`}
+          value={pullState}
+          onValueChange={(value) => {
+            form.resetField('reference')
+            setPullState(value)
+          }}
+          disabled={isPending}
+          items={[
+            { value: 'open', label: 'Abertos e rascunhos' },
+            { value: 'closed', label: 'Fechados e integrados' },
+            { value: 'all', label: 'Todos os PRs' },
+          ]}
         />
       </div>
-      {hasRepository && (
-        <>
-          <div className="form-field">
-            <label htmlFor={`${id}-pull-state`}>Status dos PRs</label>
-            <OptionsSelect
-              id={`${id}-pull-state`}
-              value={pullState}
-              onValueChange={(value) => {
-                form.resetField('reference')
-                setPullState(value)
-              }}
-              disabled={isPending}
-              items={[
-                { value: 'open', label: 'Abertos e rascunhos' },
-                { value: 'closed', label: 'Fechados e integrados' },
-                { value: 'all', label: 'Todos os PRs' },
-              ]}
-            />
-          </div>
-          <Controller
-            control={form.control}
-            name="reference"
-            render={({ field }) => (
-              <GithubReferencePicker
-                key={`${repositoryId}:${pullState}`}
-                query={query}
-                kind="pr"
-                value={field.value}
-                onValueChange={field.onChange}
-                onBlur={field.onBlur}
-                inputRef={field.ref}
-                disabled={isPending}
-                error={form.formState.errors.reference?.message}
-              />
-            )}
+      <Controller
+        control={form.control}
+        name="reference"
+        render={({ field }) => (
+          <GithubReferencePicker
+            key={`${repositoryId}:${pullState}`}
+            query={query}
+            kind="pr"
+            value={field.value}
+            onValueChange={field.onChange}
+            onBlur={field.onBlur}
+            inputRef={field.ref}
+            disabled={isPending}
+            error={form.formState.errors.reference?.message}
           />
-        </>
-      )}
+        )}
+      />
       <p className="github-note">
         PR pronto move a tarefa para revisão. O merge conclui a tarefa e publica um comentário com o título e o link
         para o Orbit.

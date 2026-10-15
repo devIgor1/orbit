@@ -1856,6 +1856,25 @@ seção 56 e a validação com OAuth/PR real continuam pendentes.
   verificadas em transação revertida no Supabase hospedado; as RPCs mantêm acesso
   exclusivo de `service_role`, recusando `anon` e `authenticated`.
 
+## 59. Repositório do GitHub por projeto — 15/10/2026
+
+**Estado:** implementação local. Publicação pendente: aplicar a migration
+`202610150005`, publicar `github-api` e depois o frontend.
+
+- Reverte a decisão da seção 56 a pedido do produto: cada projeto tem o próprio
+  repositório. O card **Repositório do GitHub** na página do projeto mostra o
+  repositório e, para administradores, permite escolher, trocar ou remover entre
+  os conectados à empresa. Membros apenas visualizam.
+- A aba **Desenvolvimento** deixa de oferecer **Repositório do PR** e lista PRs
+  somente do repositório do projeto. Sem repositório ou com ele desconectado, a
+  aba informa o estado e leva ao projeto. Vínculos anteriores são preservados.
+- `link_task_github` e a API (`taskRepository`) recusam outro repositório com
+  `GITHUB_PROJECT_REPOSITORY_REQUIRED`. Nova RPC `clear_project_github_repository`
+  (administrador). A revisão das conexões protege repositórios usados por projetos.
+- Vitest, lint, estilos, arquitetura e TypeScript aprovados. pgTAP completo com
+  seed no Supabase local (PostgreSQL 17). Playwright: seleção de PR, configurações
+  e o fluxo completo opt-in (Auth, API, worker e banco reais) em desktop/celular.
+
 ## 60. Central de notificações — 14/10/2026
 
 **Estado:** implementada na branch `codex/notifications`; migrations validadas em

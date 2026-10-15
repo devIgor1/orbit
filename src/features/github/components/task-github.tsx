@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/format'
 import { AppError } from '@/lib/errors/app-error'
 import type { Task } from '@/lib/supabase/database.types'
 import { useGithubMutations, useGithubRepositories, useTaskGithub } from '../hooks/use-github'
+import { useProjectRepository } from '../hooks/use-project-repository'
 import { githubError } from '../services/github-errors'
 import { GithubLinkForm } from './github-link-form'
 
@@ -25,30 +26,38 @@ const comments: Record<string, string> = {
 export function TaskGithub({ task }: { task: Task }) {
   const link = useTaskGithub(task.id)
   const repositories = useGithubRepositories()
+  const projectRepository = useProjectRepository(task.project_id)
   const mutations = useGithubMutations(task.id)
   if (link.isError) return <ErrorState error={link.error} onRetry={() => void link.refetch()} />
   if (repositories.isError) return <ErrorState error={repositories.error} onRetry={() => void repositories.refetch()} />
-  if (link.isPending || repositories.isPending) return <LoadingState label="Buscando desenvolvimento…" />
+  if (projectRepository.isError)
+    return <ErrorState error={projectRepository.error} onRetry={() => void projectRepository.refetch()} />
+  if (link.isPending || repositories.isPending || projectRepository.isPending)
+    return <LoadingState label="Buscando desenvolvimento…" />
   const data = link.data
-  const available = repositories.data.filter((repository) => repository.active)
-  if (!data && available.length === 0)
+  const projectRepo = repositories.data.find((repository) => repository.id === projectRepository.data)
+  if (!data && !projectRepo?.active)
     return (
       <EmptyState
-        title="Nenhum repositório disponível"
-        description="Um administrador precisa conectar um repositório nas configurações da empresa para vincular PRs às tarefas."
+        title={projectRepo ? 'Repositório do projeto indisponível' : 'Projeto sem repositório'}
+        description={
+          projectRepo
+            ? 'O repositório deste projeto foi desconectado. Um administrador pode reconectá-lo ou escolher outro na página do projeto.'
+            : 'Um administrador precisa escolher o repositório do GitHub na página do projeto para vincular PRs às tarefas.'
+        }
         action={
           <Button asChild variant="outline">
-            <Link to="/settings">Abrir configurações</Link>
+            <Link to={`/projects/${task.project_id}`}>Abrir projeto</Link>
           </Button>
         }
       />
     )
-  if (!data)
+  if (!data && projectRepo)
     return (
       <GithubLinkForm
-        key={task.id}
+        key={`${task.id}:${projectRepo.id}`}
         taskId={task.id}
-        repositories={available}
+        repository={projectRepo}
         isPending={mutations.link.isPending}
         error={mutations.link.error}
         onSubmit={async (values) => {
@@ -63,6 +72,7 @@ export function TaskGithub({ task }: { task: Task }) {
         }}
       />
     )
+  if (!data) return null
   const repository = repositories.data.find((repo) => repo.id === data.repository_id)
   if (!repository)
     return (

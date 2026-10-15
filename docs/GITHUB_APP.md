@@ -3,7 +3,7 @@
 ## O que está implementado
 
 - Administradores usam **Configurações → GitHub → Conectar GitHub**. Autorizam a identidade no GitHub; a escolha inicial oferece somente a instalação da conta pessoal autenticada. Sem ela, o fluxo segue para a instalação do App. A lista reúne os repositórios próprios e de outras instalações em que o usuário possui escrita, conectando somente os marcados em **Salvar seleção**. Repositórios novos começam desmarcados. OAuth comprova e revalida o acesso ao salvar; cada repositório conserva a instalação do proprietário.
-- Cada tarefa escolhe seu repositório e PR na aba **Desenvolvimento**, entre os repositórios autorizados pela empresa. Não há configuração de repositório no projeto. Tarefas do mesmo projeto podem usar repositórios diferentes. Cada tarefa aceita um vínculo; várias tarefas podem compartilhar um PR.
+- Cada projeto tem seu próprio repositório: administradores o escolhem no card **Repositório do GitHub** da página do projeto, entre os repositórios conectados à empresa. Na aba **Desenvolvimento**, a tarefa vincula PRs somente do repositório do seu projeto. Sem repositório no projeto, a aba orienta a configurá-lo. Trocar o repositório do projeto preserva os vínculos já existentes. Cada tarefa aceita um vínculo; várias tarefas podem compartilhar um PR.
 - PRs mostram número, título, status, branch e origem, incluindo forks. A lista inicia em abertos/rascunhos e permite consultar fechados/integrados ou todos. A seleção de um PR já integrado avisa sobre conclusão e comentário antes de vincular. Trocar repositório ou filtro limpa a seleção do PR.
 - Listas carregam 50 itens por página, com **Carregar mais opções**, **Atualizar opções** e filtro textual sobre as opções já carregadas. Não é necessário digitar nomes de branches ou números de PR. PRs cujo repositório de origem foi removido ficam indisponíveis para seleção.
 - A aba **Desenvolvimento** mostra branch, PR, última sincronização, falhas e confirmação do comentário.
@@ -25,6 +25,20 @@ parcial não é salva como sucesso. Não são necessários novos segredos.
 Um administrador da empresa no Orbit que tenha escrita em um repositório no
 GitHub pode conectá-lo. Os membros da empresa passam a consultar seus dados pelo
 App. Acesso somente de leitura não permite conectar.
+
+### Atualização de 15/10/2026 — repositório por projeto
+
+Aplicar `202610150005_project_github_repository.sql`, publicar `github-api` e depois
+o frontend. Não são necessários novos segredos, permissões do App ou mudanças no
+worker/webhook.
+
+`project_github_repositories` volta a definir o repositório de cada projeto. A RPC
+`link_task_github` e a API recusam PRs de outro repositório
+(`GITHUB_PROJECT_REPOSITORY_REQUIRED`). `clear_project_github_repository` remove a
+associação; ambas as RPCs exigem administrador. Repositórios associados a projetos
+ficam protegidos na revisão das conexões, como os usados por tarefas. Vínculos
+criados antes da regra não são alterados. Projetos sem repositório precisam ter um
+escolhido antes de novos vínculos.
 
 ### Atualização de 13/10/2026 — vínculo direto tarefa/PR
 
@@ -176,8 +190,8 @@ Referência: [agendamento de Edge Functions com Cron e Vault](https://supabase.c
 1. Entre no Orbit como administrador da empresa e vá a **Configurações → GitHub**.
 2. Clique em **Conectar GitHub** e autorize sua identidade no GitHub. Se o App já estiver instalado, o Orbit lista as contas e organizações acessíveis. Clique em **Conectar** na conta desejada: a confirmação continua automaticamente até a lista de repositórios no Orbit, sem editar a instalação ou depender do botão **Save** do GitHub. Marque os repositórios desejados e clique em **Salvar seleção**.
 3. Sem instalações acessíveis, o fluxo abre a instalação no GitHub. Para adicionar outra conta, use **Conectar outra conta ou organização**. Escolha a conta e autorize somente os repositórios desejados; nenhum programa é baixado. O retorno confirma o App, a identidade e o acesso administrativo e abre a seleção no Orbit. Somente os repositórios escolhidos são conectados em uma transação. Repositórios sem permissão administrativa são excluídos com aviso; se nenhum for elegível, há erro explícito. Em organizações que exigem aprovação, conclua a aprovação no GitHub e reinicie a conexão no Orbit.
-4. Abra a tarefa desejada e entre na aba **Desenvolvimento**. Escolha o **Repositório do PR** entre os conectados à empresa.
-5. Selecione o **Pull request** carregado do GitHub. Use o filtro textual, o status dos PRs e **Carregar mais opções** quando necessário. Clique em **Vincular PR à tarefa**. O backend confere novamente a referência antes de persistir; se ela foi removida ou perdeu acesso, o formulário mantém a seleção e mostra o erro. Outra tarefa do mesmo projeto pode escolher outro repositório.
+4. Abra o projeto e escolha o repositório no card **Repositório do GitHub**. Depois abra a tarefa desejada e entre na aba **Desenvolvimento**: o repositório do projeto já vem definido.
+5. Selecione o **Pull request** carregado do GitHub. Use o filtro textual, o status dos PRs e **Carregar mais opções** quando necessário. Clique em **Vincular PR à tarefa**. O backend confere novamente a referência antes de persistir; se ela foi removida ou perdeu acesso, o formulário mantém a seleção e mostra o erro.
 6. Use uma tarefa e um PR de teste: confirme **Em andamento** no rascunho, **Em revisão** após marcar pronto e **Concluído** após o merge.
 7. Confira o comentário do bot no PR e seu link de volta à tarefa. Clique em **Sincronizar** novamente: o comentário anterior deve ser reconhecido, sem um novo envio.
 8. Feche outro PR sem merge e confirme que a tarefa continua **Em andamento** e sem comentário de conclusão.
@@ -195,7 +209,7 @@ O ID recebido na Setup URL é apenas uma alegação: o servidor exige OAuth e co
 
 Em **Configurações → GitHub**, use **Revisar repositórios conectados** e escolha a conta. A lista distingue os repositórios já conectados dos novos, que começam desmarcados. Use a busca, marque os desejados ou **Limpar seleção** para refazer a escolha. Filtrar não muda a seleção; **Selecionar resultados** marca apenas os resultados atuais.
 
-**Salvar seleção** mostra a quantidade selecionada e a quantidade que será desconectada. Repositórios em uso por tarefas ficam marcados e bloqueados para preservar seus vínculos. Um vínculo criado durante a escolha também é verificado no servidor e impede a remoção. Ao salvar, apenas conexões anteriores incluídas nessa revisão e desmarcadas são desativadas; outras instalações e conexões novas feitas em paralelo são preservadas. Nenhuma permissão de instalação é alterada no GitHub. Cancelar ou apenas abrir a lista não altera conexões.
+**Salvar seleção** mostra a quantidade selecionada e a quantidade que será desconectada. Repositórios em uso por projetos ou tarefas ficam marcados e bloqueados para preservar seus vínculos. Um vínculo criado durante a escolha também é verificado no servidor e impede a remoção. Ao salvar, apenas conexões anteriores incluídas nessa revisão e desmarcadas são desativadas; outras instalações e conexões novas feitas em paralelo são preservadas. Nenhuma permissão de instalação é alterada no GitHub. Cancelar ou apenas abrir a lista não altera conexões.
 
 A escolha tem dez minutos de validade, armazena somente hashes e IDs no servidor e passa novamente por OAuth antes da escrita. A API valida todos os IDs selecionados com as permissões atuais; qualquer perda de acesso recusa a operação inteira. Não há persistência de tokens GitHub no navegador ou banco.
 
@@ -211,7 +225,7 @@ A escolha tem dez minutos de validade, armazena somente hashes e IDs no servidor
 - **Conexão expirada:** volte às configurações e clique em **Conectar GitHub** novamente. A descoberta e a escolha no Orbit expiram em dez minutos. A seleção de repositórios para uma instalação nova no GitHub expira em 30 minutos; o retorno troca o estado e inicia OAuth com dez minutos de validade. Estados são de uso único, associados ao usuário/empresa e não são prorrogados retroativamente. Erros de callback não são reenviados automaticamente ao remontar a página, focar a janela ou reconectar a rede. A instalação só é confiável depois da verificação na API GitHub.
 - **Importação extensa ou incompleta:** até mil repositórios por conexão, com paginação e validação da quantidade. Falhas interrompem toda a importação. Para contas maiores, selecione somente os repositórios necessários nas permissões do GitHub.
 - **Rotação de credenciais:** atualize os segredos no Supabase. Se trocar o webhook secret, atualize também o GitHub; se trocar o worker secret, atualize também o Vault. Credenciais nunca são registradas nos logs.
-- **Troca do PR/repositório da tarefa:** remova o vínculo dessa tarefa e selecione o novo repositório/PR. As demais tarefas permanecem vinculadas. Mesmo com repositório desconectado, a remoção continua disponível; sincronizar exige reconexão.
+- **Troca do PR da tarefa:** remova o vínculo dessa tarefa e selecione o novo PR do repositório do projeto. Para usar outro repositório, troque-o na página do projeto; as demais tarefas permanecem vinculadas. Mesmo com repositório desconectado, a remoção continua disponível; sincronizar exige reconexão.
 
 ## Verificação local
 

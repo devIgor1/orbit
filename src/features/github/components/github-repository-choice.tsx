@@ -72,8 +72,8 @@ export function GithubRepositoryChoice({ choice }: { choice: Choice }) {
       </fieldset>
       {choice.repositories.some((repo) => repo.inUse) && (
         <p className="github-note">
-          Repositórios em uso por tarefas são mantidos na seleção. Para removê-los, remova primeiro os vínculos dessas
-          tarefas.
+          Repositórios em uso por projetos ou tarefas são mantidos na seleção. Para removê-los, troque o repositório
+          desses projetos e remova os vínculos dessas tarefas.
         </p>
       )}
       {choice.skippedCount > 0 && (
