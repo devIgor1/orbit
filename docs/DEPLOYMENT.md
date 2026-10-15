@@ -12,9 +12,10 @@ O workflow `.github/workflows/deploy-production.yml` executa em cada push na
 2. O job de produção instala Supabase CLI **2.121.0** e Vercel CLI **64.2.0**,
    verifica os secrets e consulta somente `/v9/projects/orbit` para resolver o
    projeto e seu proprietário. Confere o vínculo com o repositório do deploy,
-   grava `.vercel/project.json` e usa `vercel pull` para obter as variáveis de
-   produção e a configuração. A URL e a chave pública precisam corresponder ao
-   Supabase esperado.
+   grava `.vercel/project.json` e usa `vercel pull` para obter a configuração.
+   As duas variáveis públicas de conexão vêm do environment Production do GitHub,
+   pois a Vercel pode devolver `[SENSITIVE]` no pull. Valores legíveis que divirjam
+   entre os provedores bloqueiam o deploy. A conexão precisa corresponder ao Supabase esperado.
 3. `vercel build --prod` prepara o frontend antes de qualquer mudança no backend.
 4. Depois de confirmar que o commit ainda é o atual da `main`, `supabase db push`
    aplica somente migrations pendentes, com uma prévia registrada no log.
@@ -60,10 +61,18 @@ Os secrets são disponibilizados apenas nos passos que os utilizam. A CLI Supaba
 fixada obtém a credencial temporária do banco pela API; não é necessário salvar a
 senha permanente do PostgreSQL no workflow.
 
-As variáveis públicas `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` continuam
-na Vercel, no ambiente Production. SMTP, GitHub App e demais secrets das Edge
-Functions permanecem no Supabase: o workflow não os substitui. A pasta `.vercel/`
-é ignorada pelo Git e não é publicada como artifact do Actions.
+Configure também `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` como
+**variables** no environment **Production** do GitHub. São valores públicos que
+entram no bundle do navegador; use somente uma publishable key ou a chave `anon`
+do Supabase esperado. O script recusa chaves administrativas e não copia outros
+secrets do GitHub para o arquivo de build.
+
+Mantenha esses mesmos valores na Vercel para previews/builds feitos por ela.
+Ao rotacionar a chave pública, atualize os dois provedores. O workflow preenche
+valores ausentes ou `[SENSITIVE]` do pull e recusa divergências visíveis.
+SMTP, GitHub App e demais secrets das Edge Functions permanecem no Supabase:
+o workflow não os substitui. A pasta `.vercel/` é ignorada pelo Git e não é
+publicada como artifact do Actions.
 
 ## Recuperação
 
