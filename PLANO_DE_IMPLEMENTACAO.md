@@ -1890,3 +1890,33 @@ Supabase isolado. Publicação no ambiente hospedado pendente.
   novos testes e configuração Playwright aprovados; `git diff --check` aprovado.
   A implementação preserva as alterações anteriores e os arquivos do PDF;
   não aplica migrations no banco de uso diário nem publica em produção.
+
+## 61. Convites recebidos no sino — 14/10/2026
+
+**Estado:** implementado e validado em checkout isolado na branch
+`codex/invitation-notifications`; publicação registrada no PR correspondente.
+
+- A lista global de convites do e-mail confirmado passa a integrar o sino, inclusive
+  quando outra empresa está ativa. Reutiliza `my_invitations` e a tela de aceitação;
+  convites pendentes anteriores também aparecem, sem recriar registros ou e-mails.
+- O contador soma atividades não lidas e convites pendentes, diferenciando as duas
+  quantidades no nome acessível. O filtro e a leitura em lote afetam as atividades;
+  convites permanecem até aceitação, cancelamento ou expiração. Prévia de três
+  convites com acesso à lista completa, mantendo o padrão visual central.
+- A migration `202610150004` adiciona Broadcast privado por destinatário confirmado,
+  independente da associação ao workspace. O payload é vazio e a RPC revalida
+  autorização a cada consulta. Nenhum contrato público ou tipo gerado é alterado.
+- A conexão compartilha um adaptador com as notificações de tarefas. As duas
+  features usam o mesmo cliente Supabase. Consultas se recuperam após reconexão,
+  foco ou intervalo de 60 segundos; falhas permanecem visíveis e não viram vazio.
+- Implementação e testes ficam fora do checkout original, preservando a branch,
+  o índice, as alterações não commitadas e os arquivos do PDF.
+- Validação: 299 testes unitários aprovados, um opt-in ignorado; 310 asserções SQL
+  aprovadas em Supabase local isolado; 11 E2E aprovados, com quatro repetições de
+  autorização/recuperação puladas nos outros viewports. O navegador confirmou
+  recebimento entre empresas, sincronização em duas abas, cancelamento, aceitação,
+  convites anteriores à conexão e bloqueio do canal de outra conta. Nenhum e-mail
+  real foi enviado. Capturas em 1280, 900 e 320 px inspecionadas.
+- Lint, estilos/e-mails, arquitetura, TypeScript/build, tipagem adicional dos novos
+  testes e `git diff --check` aprovados. Preflight da migration no Supabase hospedado
+  executado com rollback, sem alterar dados de negócio.

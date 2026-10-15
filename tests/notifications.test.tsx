@@ -8,15 +8,21 @@ import { fetchWorkspace } from '@/features/workspace/workspace-service'
 import { AppError } from '@/lib/errors/app-error'
 import { createTestClient, TestProviders, testWorkspace } from './test-providers'
 import { notification, notificationPage } from './fixtures/notifications'
+import { fetchMyInvitations } from '@/features/companies/services/invitation-service'
+import { subscribeToPrivateBroadcast } from '@/lib/supabase/private-broadcast'
 
 vi.mock('@/features/workspace/workspace-service', () => ({ fetchWorkspace: vi.fn() }))
 vi.mock('@/features/notifications/services/notification-service', () => ({ fetchNotifications: vi.fn(), markNotificationRead: vi.fn(), markAllNotificationsRead: vi.fn() }))
 vi.mock('@/features/notifications/services/notification-realtime', () => ({ subscribeToNotifications: vi.fn() }))
+vi.mock('@/features/companies/services/invitation-service', () => ({ fetchMyInvitations: vi.fn() }))
+vi.mock('@/lib/supabase/private-broadcast', () => ({ subscribeToPrivateBroadcast: vi.fn() }))
 
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(fetchWorkspace).mockResolvedValue(testWorkspace)
   vi.mocked(service.fetchNotifications).mockResolvedValue(notificationPage)
+  vi.mocked(fetchMyInvitations).mockResolvedValue([])
+  vi.mocked(subscribeToPrivateBroadcast).mockImplementation((_topic, _event, _refresh, status) => { status('connected'); return vi.fn() })
   vi.mocked(subscribeToNotifications).mockImplementation((_workspace, _user, _refresh, status) => { status('connected'); return vi.fn() })
 })
 function setup() {

@@ -3,7 +3,7 @@ import { notificationTestConfig } from './tests/support/notification-backend'
 
 const config = notificationTestConfig()
 export default defineConfig({
-  testDir: './tests/e2e', testMatch: 'notifications.spec.ts', fullyParallel: false, workers: 1,
+  testDir: './tests/e2e', testMatch: ['notifications.spec.ts', 'invitation-notifications.spec.ts'], fullyParallel: false, workers: 1,
   timeout: 60_000, reporter: 'list', outputDir: 'test-results/notifications',
   use: { baseURL: 'http://127.0.0.1:5187', trace: 'retain-on-failure' },
   projects: [

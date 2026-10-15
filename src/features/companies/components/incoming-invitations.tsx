@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { EmptyState, ErrorState, LoadingState } from '@/components/shared/query-state'
 import { useMyInvitations } from '../hooks/use-companies'
+import { LiveUpdateStatus } from '@/components/shared/live-update-status'
 
 export function IncomingInvitations({
   invitationId,
@@ -21,6 +22,7 @@ export function IncomingInvitations({
   const unavailable = invitationId && !invitations.data.some((item) => item.id === invitationId)
   return (
     <>
+      <LiveUpdateStatus state={invitations.connection} onReconnect={invitations.reconnect} subject="Convites" />
       {unavailable && !busy && (
         <div className="invitation-account-notice" role="alert">
           <p>
