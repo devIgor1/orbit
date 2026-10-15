@@ -11,6 +11,7 @@ import { useProject } from '@/features/projects/hooks/use-projects'
 import { ProjectDialog } from '@/features/projects/components/project-dialog'
 import { ArchiveProjectDialog } from '@/features/projects/components/archive-project-dialog'
 import { ProjectSummary } from '@/features/projects/components/project-summary'
+import { ProjectRepository } from '@/features/github/components/project-repository'
 import { useTasks, useTaskMutations } from '@/features/tasks/hooks/use-tasks'
 import { useTeam } from '@/features/team/hooks/use-team'
 import { TaskBoard } from '@/features/tasks/components/task-board'
@@ -59,6 +60,7 @@ export function ProjectPage() {
       <Button disabled={!ready} onClick={() => create()}><Plus aria-hidden="true" />Nova tarefa</Button>
     </div>} />
     {project.isSuccess && !project.isError && tasks.isSuccess && !tasks.isError && <ProjectSummary project={project.data} tasks={tasks.data} />}
+    {project.isSuccess && !project.isError && workspace.isSuccess && <ProjectRepository projectId={projectId} canManage={canManage} />}
     <div className="board-header"><h2>Tarefas do projeto</h2><p>Um passo de cada vez, todos na mesma direção.</p></div>
     <TasksToolbar search={search} priority={priority} view={view} onSearchChange={value => setFilter('search', value)} onPriorityChange={value => setFilter('priority', value)} onViewChange={setView} />
     {!isSupabaseConfigured ? <ConnectionState /> : workspace.isError ? <ErrorState error={workspace.error} onRetry={() => void workspace.refetch()} /> : project.isError ? <ErrorState error={project.error} onRetry={() => void project.refetch()} /> : tasks.isError ? <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} /> : team.isError ? <ErrorState error={team.error} onRetry={() => void team.refetch()} /> : !ready || !filteredTasks || !team.data ? <LoadingState label="Preparando seu quadro…" /> : <>

@@ -7,7 +7,9 @@ const messages: Record<string, string> = {
   GITHUB_SELECTION_CHANGED:
     'O acesso a um dos repositórios selecionados mudou. Volte às configurações e revise a seleção novamente.',
   GITHUB_REPOSITORY_IN_USE:
-    'Um dos repositórios que seria desconectado está em uso por uma tarefa. Volte às configurações e revise a seleção novamente.',
+    'Um dos repositórios que seria desconectado está em uso por um projeto ou tarefa. Volte às configurações e revise a seleção novamente.',
+  GITHUB_PROJECT_REPOSITORY_REQUIRED:
+    'Esta tarefa só pode vincular PRs do repositório do projeto. Atualize a página e confira o repositório na página do projeto.',
   GITHUB_NOT_CONFIGURED: 'A integração GitHub ainda precisa ser ativada pela administração do Orbit.',
   GITHUB_UNAVAILABLE:
     'O repositório, a branch ou o PR não está disponível. Confira o acesso do GitHub App e reconecte o repositório se necessário.',

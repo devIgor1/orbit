@@ -54,12 +54,12 @@ npm test -- tests/github-pipeline.test.ts
 ## Cobertura
 
 - Login, descoberta de instalação, consentimento e escolha explícita de repositórios.
-- Criação de projeto e tarefa pela interface e vínculo de PR sem associação do projeto.
+- Criação de projeto pela interface, escolha do repositório do projeto e vínculo de PR da tarefa a partir dele.
 - Rascunho → revisão → fechado sem merge → reaberto → integrado, com status e histórico persistidos.
 - Atualização automática da tela e do status da tarefa sem recarregar a página.
 - Comentário aceito pelo GitHub com resposta perdida, recuperação por reconciliação,
   dois workers concorrentes e recriação do vínculo sem novo comentário.
-- Tarefas do mesmo projeto em repositórios diferentes; revisão dos repositórios
+- Troca do repositório do projeto preservando vínculos anteriores; revisão dos repositórios
   identifica e bloqueia a remoção daqueles em uso.
 - API sem sessão, assinatura de webhook inválida, indisponibilidade do GitHub,
   revogação de acesso e remoção do vínculo sem afetar a outra tarefa.

@@ -34,6 +34,8 @@ select is((select installation_id from github_repositories where github_id=77),4
 insert into projects(id,workspace_id,title,created_by) values('af000000-0000-4000-8000-000000000020','af000000-0000-4000-8000-000000000010','In use','af000000-0000-4000-8000-000000000001');
 insert into tasks(id,workspace_id,project_id,title,created_by) values
  ('af000000-0000-4000-8000-000000000030','af000000-0000-4000-8000-000000000010','af000000-0000-4000-8000-000000000020','Linked task','af000000-0000-4000-8000-000000000001');
+insert into project_github_repositories(workspace_id,project_id,repository_id) select
+ workspace_id,'af000000-0000-4000-8000-000000000020',id from github_repositories where github_id=10;
 select link_task_github('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',
  'af000000-0000-4000-8000-000000000030',(select id from github_repositories where github_id=10),'{"branch":"feat/test","head_repository_id":10,"pr_number":42}');
 select throws_ok($$select save_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,

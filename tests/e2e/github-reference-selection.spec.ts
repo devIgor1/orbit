@@ -30,6 +30,9 @@ async function prepare(page: Page, failFirst = false) {
     }),
   )
   await page.route('**/rest/v1/task_github_links?*', (route) => route.fulfill({ json: linked }))
+  await page.route('**/rest/v1/project_github_repositories?*', (route) =>
+    route.fulfill({ json: { repository_id: repositoryId } }),
+  )
   await page.route('**/functions/v1/github-api', (route) => {
     const body = route.request().postDataJSON()
     expect(body.workspaceId).toBe(workspaceId)
@@ -91,8 +94,7 @@ async function prepare(page: Page, failFirst = false) {
     return route.fulfill({ json: { id: linkId } })
   })
   await page.goto('/tests/fixtures/task-github.html')
-  await page.getByRole('combobox', { name: 'Repositório do PR' }).click()
-  await page.getByRole('option', { name: 'orbit-test/projeto', exact: true }).click()
+  await expect(page.getByText('orbit-test/projeto')).toBeVisible()
   return { submissions, dialog: page.getByRole('dialog') }
 }
 test('seleciona um PR paginado por teclado e envia a referência correta', async ({ page }, testInfo) => {

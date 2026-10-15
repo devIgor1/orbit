@@ -11,6 +11,7 @@ import {
   openTask,
   pullEvent,
   refreshTask,
+  setProjectRepository,
   workspaceId,
 } from './github-full-flow-helpers'
 
@@ -25,6 +26,7 @@ test.describe('GitHub com Auth, API, worker e banco reais', () => {
     await fixture(page, 'github', { reset: true })
     await connectRepositories(page, String(info.project.use.baseURL))
     projectId = await createProject(page, `GitHub completo ${info.project.name} ${Date.now()}`)
+    await setProjectRepository(page)
   })
   test.afterEach(async () => {
     if (!projectId) return
@@ -48,7 +50,7 @@ test.describe('GitHub com Auth, API, worker e banco reais', () => {
       (await must(await db.from('tasks').select('status').eq('id', taskId).single()))!.status
     expect(
       await must(await db.from('project_github_repositories').select('project_id').eq('project_id', projectId!)),
-    ).toEqual([])
+    ).toEqual([{ project_id: projectId }])
     expect(await fixture(page, 'worker')).toEqual([expect.objectContaining({ ok: true })])
     expect(await taskStatus()).toBe('in_progress')
     // Confirm background polling refreshes both the PR and the task status without reload.
@@ -92,7 +94,7 @@ test.describe('GitHub com Auth, API, worker e banco reais', () => {
     expect(await page.getByRole('dialog').evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
     await page.screenshot({ path: info.outputPath('github-complete-merge.png'), animations: 'disabled' })
     await page.getByRole('button', { name: 'Remover vínculo', exact: true }).click()
-    await expect(page.getByRole('combobox', { name: 'Repositório do PR' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Vincular PR à tarefa' })).toBeVisible()
     await fixture(page, 'github', { state: 'open' })
     await linkPR(page)
     await fixture(page, 'github', { state: 'merged' })
@@ -105,13 +107,14 @@ test.describe('GitHub com Auth, API, worker e banco reais', () => {
     expect(history!.length).toBeGreaterThanOrEqual(5)
   })
 
-  test('tarefas escolhem repositórios diferentes; acesso revogado mostra falha e permite desvincular', async ({
+  test('trocar o repositório do projeto preserva vínculos; acesso revogado mostra falha e permite desvincular', async ({
     page,
   }) => {
     await createTask(page, 'Primeira tarefa')
     await linkPR(page)
     await fixture(page, 'worker')
     await page.keyboard.press('Escape')
+    await setProjectRepository(page, 'orbit-test/segundo-repo')
     await createTask(page, 'Segunda tarefa')
     await linkPR(page, 'orbit-test/segundo-repo')
     await fixture(page, 'worker')
@@ -127,7 +130,7 @@ test.describe('GitHub com Auth, API, worker e banco reais', () => {
       headers: { 'x-hub-signature-256': 'sha256=invalid' },
     })
     expect(invalidWebhook.status()).toBe(401)
-    // The real repository selection RPC marks both repositories as in use by tasks.
+    // The real repository selection RPC marks both repositories as in use by the project and tasks.
     await page.goto('/settings')
     await page.getByRole('button', { name: 'Revisar repositórios conectados' }).click()
     await page.getByRole('button', { name: 'Conectar orbit-test', exact: true }).click()
@@ -156,7 +159,7 @@ test.describe('GitHub com Auth, API, worker e banco reais', () => {
     await refreshTask(page, 'Segunda tarefa')
     await expect(page.getByRole('button', { name: 'Sincronizar', exact: true })).toBeDisabled()
     await page.getByRole('button', { name: 'Remover vínculo', exact: true }).click()
-    await expect(page.getByRole('combobox', { name: 'Repositório do PR' })).toBeVisible()
+    await expect(page.getByText('Repositório do projeto indisponível', { exact: true })).toBeVisible()
     expect(await must(await db.from('task_github_links').select('id').eq('project_id', projectId!))).toHaveLength(1)
     expect(await fixture(page, 'worker')).toEqual([])
     expect((await (await page.request.get(`${fixtureUrl}/__test/github`)).json()).comments).toEqual([])

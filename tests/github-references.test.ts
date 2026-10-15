@@ -38,6 +38,7 @@ function setup(results: unknown = [{ name: 'trunk' }, { name: 'feat/login' }]) {
   const rows: Record<string, Record<string, unknown>[]> = {
     workspace_members: [{ workspace_id: 'workspace', user_id: 'user', role: 'member', removed_at: null }],
     tasks: [{ workspace_id: 'workspace', id: 'task', project_id: 'project' }],
+    project_github_repositories: [{ workspace_id: 'workspace', project_id: 'project', repository_id: 'repo' }],
     github_repositories: [
       {
         workspace_id: 'workspace',
@@ -77,10 +78,10 @@ function setup(results: unknown = [{ name: 'trunk' }, { name: 'feat/login' }]) {
 }
 
 describe('Task GitHub references', () => {
-  it('links a PR directly to a task without a project repository association', async () => {
+  it('links a PR from the repository of the task’s project', async () => {
     const { db, rpc } = setup(pull)
     await expect(linkTask(db, 'user', { ...input, action: 'link', prNumber: 42 })).resolves.toEqual({ id: 'link-id' })
-    expect(db.from).not.toHaveBeenCalledWith('project_github_repositories')
+    expect(db.from).toHaveBeenCalledWith('project_github_repositories')
     expect(rpc).toHaveBeenCalledWith(
       'link_task_github',
       expect.objectContaining({
@@ -139,6 +140,8 @@ describe('Task GitHub references', () => {
     'different-task',
     'different-repository',
     'inactive-repository',
+    'other-project-repository',
+    'project-without-repository',
   ])('refuses %s before making a GitHub request', async (scenario) => {
     const { db, rows, fetcher } = setup()
     const request = { ...input }
@@ -149,6 +152,8 @@ describe('Task GitHub references', () => {
     if (scenario === 'different-task') request.taskId = 'foreign'
     if (scenario === 'different-repository') request.repositoryId = 'foreign'
     if (scenario === 'inactive-repository') rows.github_repositories[0].active = false
+    if (scenario === 'other-project-repository') rows.project_github_repositories[0].repository_id = 'other'
+    if (scenario === 'project-without-repository') rows.project_github_repositories.length = 0
     await expect(listTaskReferences(db, user, request)).rejects.toHaveProperty('code')
     await expect(linkTask(db, user, { ...request, action: 'link', prNumber: 42 })).rejects.toHaveProperty('code')
     expect(authentication.installationToken).not.toHaveBeenCalled()

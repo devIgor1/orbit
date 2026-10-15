@@ -767,6 +767,10 @@ export type Database = {
         Returns: Database['public']['Enums']['registration_email_status']
       }
       claim_github_jobs: { Args: Record<PropertyKey, never>; Returns: Json }
+      clear_project_github_repository: {
+        Args: { target_project: string; target_workspace: string }
+        Returns: string
+      }
       consume_github_account_connection: {
         Args: { requester: string; state_hash: string }
         Returns: Json

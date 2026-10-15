@@ -63,9 +63,14 @@ export async function openTask(page: Page, title: string) {
   await page.getByRole('button', { name: title, exact: true }).click()
   await page.getByRole('button', { name: 'Desenvolvimento', exact: true }).click()
 }
-export async function linkPR(page: Page, repository = 'orbit-test/entregas') {
-  await page.getByRole('combobox', { name: 'Repositório do PR', exact: true }).click()
+export async function setProjectRepository(page: Page, repository = 'orbit-test/entregas') {
+  const card = page.locator('.project-repository')
+  await card.getByRole('combobox').click()
   await page.getByRole('option', { name: repository, exact: true }).click()
+  await expect(card.getByRole('link', { name: repository, exact: true })).toBeVisible()
+}
+export async function linkPR(page: Page, repository = 'orbit-test/entregas') {
+  await expect(page.getByRole('dialog').getByText(repository, { exact: true })).toBeVisible()
   await page.getByRole('combobox', { name: 'Pull request', exact: true }).click()
   await page.getByRole('option', { name: /#42.*Entrega do fluxo completo/ }).click()
   await page.getByRole('button', { name: 'Vincular PR à tarefa' }).click()

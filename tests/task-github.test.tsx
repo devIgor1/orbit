@@ -7,11 +7,17 @@ import { TaskGithub } from '@/features/github/components/task-github'
 import type { Database, Task } from '@/lib/supabase/database.types'
 import { AppError } from '@/lib/errors/app-error'
 
-const backend = vi.hoisted(() => ({ repositories: vi.fn(), link: vi.fn(), change: vi.fn() }))
+const backend = vi.hoisted(() => ({ repositories: vi.fn(), link: vi.fn(), change: vi.fn(), project: vi.fn() }))
 vi.mock('@/features/github/services/github-service', () => ({
   fetchGithubRepositories: backend.repositories,
   fetchTaskGithub: backend.link,
   changeTaskGithub: backend.change,
+}))
+vi.mock('@/features/github/services/project-repository-service', () => ({
+  fetchProjectRepository: backend.project,
+}))
+vi.mock('@/features/github/services/github-references', () => ({
+  fetchGithubReferences: vi.fn(async () => ({ kind: 'pr', items: [], nextPage: null })),
 }))
 vi.mock('@/features/workspace/use-query-scope', () => ({
   useQueryScope: () => ({
@@ -61,6 +67,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   backend.repositories.mockResolvedValue([repository])
   backend.link.mockResolvedValue(null)
+  backend.project.mockResolvedValue(repository.id)
 })
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -73,17 +80,34 @@ function setup() {
   )
   return userEvent.setup()
 }
-it('offers configuration only after a successful response with no active repositories', async () => {
-  backend.repositories.mockResolvedValue([{ ...repository, active: false }])
+it('asks for the project repository before linking PRs', async () => {
+  backend.project.mockResolvedValue(null)
   setup()
-  expect(await screen.findByText('Nenhum repositório disponível')).toBeVisible()
-  expect(screen.getByRole('link', { name: 'Abrir configurações' })).toHaveAttribute('href', '/settings')
+  expect(await screen.findByText('Projeto sem repositório')).toBeVisible()
+  expect(screen.getByRole('link', { name: 'Abrir projeto' })).toHaveAttribute('href', '/projects/project')
+  expect(screen.queryByRole('button', { name: 'Vincular PR à tarefa' })).not.toBeInTheDocument()
+})
+it('reports a disconnected project repository instead of offering another one', async () => {
+  backend.repositories.mockResolvedValue([
+    { ...repository, active: false },
+    { ...repository, id: 'other' },
+  ])
+  setup()
+  expect(await screen.findByText('Repositório do projeto indisponível')).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'Vincular PR à tarefa' })).not.toBeInTheDocument()
+})
+it('links PRs from the project repository only', async () => {
+  backend.repositories.mockResolvedValue([{ ...repository, id: 'other', full_name: 'org/other' }, repository])
+  setup()
+  expect(await screen.findByRole('button', { name: 'Vincular PR à tarefa' })).toBeDisabled()
+  expect(screen.getByText('org/repo')).toBeVisible()
+  expect(screen.queryByText('org/other')).not.toBeInTheDocument()
 })
 it('shows backend failures rather than treating them as no repository or no link', async () => {
   backend.repositories.mockRejectedValue(new AppError('network', 'Rede indisponível.'))
   setup()
   expect(await screen.findByRole('alert')).toHaveTextContent('Rede indisponível.')
-  expect(screen.queryByText('Nenhum repositório disponível')).not.toBeInTheDocument()
+  expect(screen.queryByText('Projeto sem repositório')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Vincular PR à tarefa' })).not.toBeInTheDocument()
 })
 it('resolves an existing PR using its own repository instead of another repository in the company', async () => {
@@ -120,5 +144,5 @@ it('treats a missing repository for a persisted link as an inconsistent response
   backend.link.mockResolvedValue(link)
   setup()
   expect(await screen.findByRole('alert')).toHaveTextContent('O repositório deste vínculo não foi encontrado.')
-  expect(screen.queryByText('Nenhum repositório disponível')).not.toBeInTheDocument()
+  expect(screen.queryByText('Projeto sem repositório')).not.toBeInTheDocument()
 })

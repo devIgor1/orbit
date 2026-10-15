@@ -10,6 +10,7 @@ const repo = { id: 'ad000000-0000-4000-8000-000000000001',workspace_id: workspac
 async function mockIntegration(page: Page, configured = true) {
   await page.route('**/rest/v1/github_repositories?*',route => route.fulfill({ json: [repo] }))
   await page.route('**/rest/v1/task_github_links?*',route => route.fulfill({ json: null }))
+  await page.route('**/rest/v1/project_github_repositories?*',route => route.fulfill({ json: { repository_id: repo.id } }))
   await page.route('**/functions/v1/github-api',route => {
     const body = route.request().postDataJSON()
     if (body.action === 'references') return route.fulfill({ json: body.kind === 'branch'
@@ -44,10 +45,10 @@ test('vínculo da tarefa funciona por teclado e mantém a referência quando Git
   await openWorkspace(page,`/projects/${projectId}`)
   await page.locator('.task-card-title').first().click()
   await page.getByRole('button',{ name: 'Desenvolvimento',exact: true }).click()
-  const kind = page.getByRole('combobox',{ name: 'Repositório do PR' })
-  await kind.focus(); await page.keyboard.press('Enter'); await page.keyboard.press('End'); await page.keyboard.press('Enter')
-  await page.getByRole('combobox',{ name: 'Pull request',exact: true }).click()
-  await page.getByRole('option',{ name: /#42.*Login/ }).click()
+  await expect(page.getByRole('dialog').getByText(repo.full_name,{ exact: true })).toBeVisible()
+  const pullRequest = page.getByRole('combobox',{ name: 'Pull request',exact: true })
+  await pullRequest.focus(); await page.keyboard.press('Enter'); await page.keyboard.press('End'); await page.keyboard.press('Enter')
+  await expect(pullRequest).toContainText('#42')
   await page.getByRole('button',{ name: 'Vincular PR à tarefa' }).click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('não está disponível')
   await expect(page.getByRole('combobox',{ name: 'Pull request',exact: true })).toContainText('#42')
