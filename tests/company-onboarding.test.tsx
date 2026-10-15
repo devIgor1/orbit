@@ -11,6 +11,8 @@ vi.mock('@/features/companies/services/company-service', () => ({
   createCompany: vi.fn(),
   fetchCompanies: vi.fn(),
   selectCompany: vi.fn(),
+  fetchDeletedCompanies: vi.fn(async () => []),
+  restoreCompany: vi.fn(),
 }))
 vi.mock('@/features/companies/services/invitation-service', () => ({
   fetchMyInvitations: vi.fn(),

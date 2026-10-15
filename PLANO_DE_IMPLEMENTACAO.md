@@ -1939,3 +1939,35 @@ Supabase isolado. Publicação no ambiente hospedado pendente.
 - Lint, estilos/e-mails, arquitetura, TypeScript/build, tipagem adicional dos novos
   testes e `git diff --check` aprovados. Preflight da migration no Supabase hospedado
   executado com rollback, sem alterar dados de negócio.
+
+## 62. Edição e exclusão de empresa, projetos e tarefas, com lixeira — 16/10/2026
+
+**Estado:** implementação local. Publicação pendente: aplicar a migration
+`202610160001_trash.sql` e depois publicar `github-api` e o frontend.
+
+- Somente administradores excluem. Empresas, projetos e tarefas excluídos vão para
+  a lixeira por 15 dias e podem ser restaurados; depois são apagados
+  definitivamente, junto com tarefas, comentários, histórico, notificações e
+  vínculos do GitHub (cascatas existentes). A limpeza acontece ao abrir a lixeira,
+  restaurar ou listar empresas excluídas.
+- **Empresa:** em Configurações → Empresa, administradores renomeiam a empresa e a
+  excluem digitando o nome. A exclusão cancela convites pendentes e tira o acesso de
+  todos os membros; o administrador restaura em **Suas empresas → Empresas excluídas**.
+- **Projeto:** botão **Excluir projeto** na página do projeto, ao lado de Editar e
+  Arquivar. As tarefas vão junto e voltam com o projeto.
+- **Tarefa:** **Excluir tarefa** na aba Detalhes, com confirmação. Editar projeto e
+  tarefa já existia.
+- **Lixeira** (`/trash`, só administradores): lista projetos e tarefas, quem excluiu,
+  quando e quantos dias restam, com **Restaurar** e **Excluir agora**. Uma tarefa de
+  projeto excluído volta somente com o projeto.
+- Banco: colunas `deleted_at`/`deleted_by`; `is_member`/`is_admin` ignoram empresas
+  na lixeira; políticas de leitura e escrita ocultam itens excluídos (dashboard,
+  equipe, atividade, comentários, notificações e GitHub). O worker do GitHub pausa
+  vínculos de tarefas excluídas e retoma após a restauração; a API do GitHub recusa
+  tarefas e projetos excluídos. Novas RPCs: `delete_/restore_/purge_project`,
+  `delete_/restore_/purge_task`, `trash_items`, `rename_company`, `delete_company`,
+  `deleted_companies`, `restore_company`.
+- Verificação: 61 asserções pgTAP novas e suíte pgTAP completa com seed; Vitest,
+  lint, TypeScript, arquitetura e estilos aprovados; fluxo no navegador contra o
+  Supabase local (excluir/restaurar projeto e tarefa, excluir definitivamente,
+  renomear, excluir e restaurar empresa) em desktop e celular.

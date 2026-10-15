@@ -9,10 +9,11 @@ import { TaskForm } from './task-form'
 import { TaskComments } from './task-comments'
 import { TaskHistory } from './task-history'
 import { TaskGithub } from '@/features/github/components/task-github'
+import { TaskDelete } from './task-delete'
 
-type TaskSheetProps = { task: Task; members: TeamMember[]; onClose: () => void }
+type TaskSheetProps = { task: Task; members: TeamMember[]; canDelete?: boolean; onClose: () => void }
 
-export function TaskSheet({ task, members, onClose }: TaskSheetProps) {
+export function TaskSheet({ task, members, canDelete = false, onClose }: TaskSheetProps) {
   const [tab, setTab] = useState<'details' | 'comments' | 'history' | 'development'>('details')
   const { updateTask } = useTaskMutations(task.project_id)
   const [saved, setSaved] = useState(false)
@@ -34,7 +35,7 @@ export function TaskSheet({ task, members, onClose }: TaskSheetProps) {
       <button type="button" data-active={tab === 'development'} aria-pressed={tab === 'development'} onClick={() => setTab('development')}>Desenvolvimento</button>
     </div>
     {saved && <p role="status" className="form-success">Alterações salvas.</p>}
-    <div hidden={tab !== 'details'} onChange={() => setSaved(false)}><TaskForm task={task} members={members} isPending={updateTask.isPending} error={updateTask.error} onSubmit={submit} onCancel={onClose} /></div>
+    <div hidden={tab !== 'details'} onChange={() => setSaved(false)}><TaskForm task={task} members={members} isPending={updateTask.isPending} error={updateTask.error} onSubmit={submit} onCancel={onClose} />{canDelete && <TaskDelete taskId={task.id} onDeleted={onClose} />}</div>
     <div hidden={tab !== 'comments'}><TaskComments taskId={task.id} members={members} /></div>
     <div hidden={tab !== 'history'}><TaskHistory taskId={task.id} members={members} /></div>
     {tab === 'development' && <TaskGithub task={task} />}

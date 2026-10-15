@@ -15,6 +15,8 @@ const actionNames: Record<string, string> = {
   github_linked: 'Vinculada ao GitHub',
   github_unlinked: 'Vínculo GitHub removido',
   github_status_changed: 'Etapa sincronizada pelo GitHub',
+  deleted: 'Movido para a lixeira',
+  restored: 'Restaurado da lixeira',
 }
 export function RecentActivity() {
   const { configured } = useAuth()

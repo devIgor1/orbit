@@ -8,6 +8,7 @@ import { useCompanyAccess } from '@/features/companies/hooks/use-companies'
 import { CompanyForm } from '@/features/companies/components/company-form'
 import { CompanyAccessList } from '@/features/companies/components/company-access-list'
 import { IncomingInvitations } from '@/features/companies/components/incoming-invitations'
+import { DeletedCompanies } from '@/features/companies/components/deleted-companies'
 
 export function CompaniesPage() {
   const auth = useAuth()
@@ -64,6 +65,7 @@ export function CompaniesPage() {
             <CompanyForm busy={busy} onCreate={(name) => enter({ action: 'create', name })} />
           </section>
           {!params.has('invitation') && incomingInvitations}
+          <DeletedCompanies busy={busy} onRestore={(id) => void enter({ action: 'restore', id })} />
         </div>
         <Link className="text-link" to="/">
           Conhecer o Orbit

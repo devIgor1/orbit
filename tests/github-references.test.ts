@@ -37,7 +37,8 @@ const pull = {
 function setup(results: unknown = [{ name: 'trunk' }, { name: 'feat/login' }]) {
   const rows: Record<string, Record<string, unknown>[]> = {
     workspace_members: [{ workspace_id: 'workspace', user_id: 'user', role: 'member', removed_at: null }],
-    tasks: [{ workspace_id: 'workspace', id: 'task', project_id: 'project' }],
+    tasks: [{ workspace_id: 'workspace', id: 'task', project_id: 'project', deleted_at: null }],
+    projects: [{ workspace_id: 'workspace', id: 'project', deleted_at: null }],
     project_github_repositories: [{ workspace_id: 'workspace', project_id: 'project', repository_id: 'repo' }],
     github_repositories: [
       {
@@ -142,6 +143,8 @@ describe('Task GitHub references', () => {
     'inactive-repository',
     'other-project-repository',
     'project-without-repository',
+    'task-in-trash',
+    'project-in-trash',
   ])('refuses %s before making a GitHub request', async (scenario) => {
     const { db, rows, fetcher } = setup()
     const request = { ...input }
@@ -154,6 +157,8 @@ describe('Task GitHub references', () => {
     if (scenario === 'inactive-repository') rows.github_repositories[0].active = false
     if (scenario === 'other-project-repository') rows.project_github_repositories[0].repository_id = 'other'
     if (scenario === 'project-without-repository') rows.project_github_repositories.length = 0
+    if (scenario === 'task-in-trash') rows.tasks[0].deleted_at = '2026-10-16'
+    if (scenario === 'project-in-trash') rows.projects[0].deleted_at = '2026-10-16'
     await expect(listTaskReferences(db, user, request)).rejects.toHaveProperty('code')
     await expect(linkTask(db, user, { ...request, action: 'link', prNumber: 42 })).rejects.toHaveProperty('code')
     expect(authentication.installationToken).not.toHaveBeenCalled()

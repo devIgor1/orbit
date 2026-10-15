@@ -55,6 +55,7 @@ export function AppShell() {
       jobTitle={workspace.data?.profile.job_title}
       avatar={workspace.data?.profile.avatar_url}
       authenticated={!!auth.user}
+      showTrash={workspace.data?.role === 'admin'}
       onHelp={() => {
         setMobileOpen(false)
         setHelpOpen(true)
