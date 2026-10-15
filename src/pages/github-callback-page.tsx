@@ -31,7 +31,7 @@ export function GithubCallbackPage() {
             </p>
             {connection.data.skippedCount > 0 && (
               <p className="github-note">
-                {connection.data.skippedCount} repositório(s) sem acesso administrativo não foram conectados.
+                {connection.data.skippedCount} repositório(s) sem permissão de escrita não foram conectados.
               </p>
             )}
           </div>

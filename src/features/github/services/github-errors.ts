@@ -12,8 +12,8 @@ const messages: Record<string, string> = {
   GITHUB_UNAVAILABLE:
     'O repositório, a branch ou o PR não está disponível. Confira o acesso do GitHub App e reconecte o repositório se necessário.',
   GITHUB_ADMIN_REQUIRED: 'Conecte com uma conta administradora deste repositório no GitHub.',
-  GITHUB_NO_ADMIN_REPOSITORIES:
-    'Nenhum repositório com acesso administrativo foi autorizado. Conecte novamente e selecione os repositórios no GitHub.',
+  GITHUB_NO_WRITABLE_REPOSITORIES:
+    'Nenhum repositório com permissão de escrita foi autorizado. Conecte novamente e selecione os repositórios no GitHub.',
   GITHUB_REPOSITORY_LIMIT:
     'Esta conta disponibiliza mais de 1.000 repositórios. Conecte novamente e selecione apenas os repositórios desta empresa no GitHub.',
   GITHUB_INSTALLATION_LIMIT:

@@ -55,7 +55,9 @@ export function GithubSettings({ canManage }: { canManage: boolean }) {
                 Revisar repositórios conectados
               </Button>
             )}
-            <p className="github-note">Use uma conta com acesso de administrador aos repositórios escolhidos.</p>
+            <p className="github-note">
+              Use uma conta com permissão de escrita nos repositórios escolhidos, como dono ou colaborador.
+            </p>
             {connect.isError && <ErrorState error={connect.error} />}
           </>
         ) : (

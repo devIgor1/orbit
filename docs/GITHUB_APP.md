@@ -2,7 +2,7 @@
 
 ## O que está implementado
 
-- Administradores usam **Configurações → GitHub → Conectar GitHub**. Autorizam a identidade no GitHub; instalações existentes aparecem no Orbit para escolha da conta/organização. Sem instalação, o fluxo segue automaticamente para a seleção dos repositórios no GitHub. O Orbit lista os repositórios com acesso administrativo e conecta somente os marcados em **Salvar seleção**, sem pedir URLs. Repositórios novos começam desmarcados. A conexão exige acesso administrativo aos repositórios, comprovado por OAuth e revalidado ao salvar.
+- Administradores usam **Configurações → GitHub → Conectar GitHub**. Autorizam a identidade no GitHub; a escolha inicial oferece somente a instalação da conta pessoal autenticada. Sem ela, o fluxo segue para a instalação do App. A lista reúne os repositórios próprios e de outras instalações em que o usuário possui escrita, conectando somente os marcados em **Salvar seleção**. Repositórios novos começam desmarcados. OAuth comprova e revalida o acesso ao salvar; cada repositório conserva a instalação do proprietário.
 - Cada tarefa escolhe seu repositório e PR na aba **Desenvolvimento**, entre os repositórios autorizados pela empresa. Não há configuração de repositório no projeto. Tarefas do mesmo projeto podem usar repositórios diferentes. Cada tarefa aceita um vínculo; várias tarefas podem compartilhar um PR.
 - PRs mostram número, título, status, branch e origem, incluindo forks. A lista inicia em abertos/rascunhos e permite consultar fechados/integrados ou todos. A seleção de um PR já integrado avisa sobre conclusão e comentário antes de vincular. Trocar repositório ou filtro limpa a seleção do PR.
 - Listas carregam 50 itens por página, com **Carregar mais opções**, **Atualizar opções** e filtro textual sobre as opções já carregadas. Não é necessário digitar nomes de branches ou números de PR. PRs cujo repositório de origem foi removido ficam indisponíveis para seleção.
@@ -13,6 +13,18 @@
 - Alterações manuais de status são preservadas até a próxima transição de estado no GitHub. Remover o vínculo interrompe a automação e preserva comentários já enviados.
 
 A integração exige migrations/funções publicadas, credenciais, agendamento e instalação do App. Não há credenciais GitHub no frontend.
+
+### Atualização de 14/10/2026 — repositórios de colaboradores
+
+Aplicar `202610140001_github_collaborator_repositories.sql` após as duas migrations
+de 13/10, publicar `github-api` e depois o frontend. A seleção considera o ID do
+repositório por empresa, incluindo conexões de instalações diferentes. Falhas de
+consulta, suspensão, revogação e limites excedidos permanecem erros; uma lista
+parcial não é salva como sucesso. Não são necessários novos segredos.
+
+Um administrador da empresa no Orbit que tenha escrita em um repositório no
+GitHub pode conectá-lo. Os membros da empresa passam a consultar seus dados pelo
+App. Acesso somente de leitura não permite conectar.
 
 ### Atualização de 13/10/2026 — vínculo direto tarefa/PR
 

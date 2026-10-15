@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path=public,extensions;
-select plan(25);
+select plan(27);
 insert into auth.users(id,email,raw_user_meta_data) values
  ('af000000-0000-4000-8000-000000000001','repo-selection-admin@example.test','{"full_name":"Admin"}'),
  ('af000000-0000-4000-8000-000000000002','repo-selection-member@example.test','{"full_name":"Member"}');
@@ -24,10 +24,13 @@ select throws_ok($$select select_github_repositories('af000000-0000-4000-8000-00
 select is(consume_github_repository_selection('af000000-0000-4000-8000-000000000001','final')->'selected_ids','[10]'::jsonb,'Final authorization receives only selected IDs');
 select throws_ok($$select consume_github_repository_selection('af000000-0000-4000-8000-000000000001','final')$$,'22023',null,'Final callback cannot replay');
 select is(save_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,
- '[{"id":10,"installation_id":20,"full_name":"org/keep","default_branch":"main","private":true}]',array[10,11,99]::bigint[]),1,'Confirms only selected repository count');
+ '[{"id":10,"installation_id":20,"full_name":"org/keep","default_branch":"main","private":true}]',array[10,11]::bigint[]),1,'Confirms only selected repository count');
 select is((select active from github_repositories where github_id=11),false,'Unselected prior connection disabled');
-select is((select active from github_repositories where github_id=99),true,'Other installation unchanged');
+select is((select active from github_repositories where github_id=99),true,'Repository outside the reviewed set unchanged');
 select is((select count(*) from github_repositories where github_id=12),0::bigint,'Unselected new repository never imported');
+select is(save_github_repository_selection('af000000-0000-4000-8000-000000000001','af000000-0000-4000-8000-000000000010',20,
+ '[{"id":10,"installation_id":20,"full_name":"org/keep","default_branch":"main","private":true},{"id":77,"installation_id":40,"full_name":"owner/collab","default_branch":"main","private":true}]',array[10]::bigint[]),2,'Combines own and collaborator installations');
+select is((select installation_id from github_repositories where github_id=77),40::bigint,'Collaborator repository keeps its owner installation');
 insert into projects(id,workspace_id,title,created_by) values('af000000-0000-4000-8000-000000000020','af000000-0000-4000-8000-000000000010','In use','af000000-0000-4000-8000-000000000001');
 insert into tasks(id,workspace_id,project_id,title,created_by) values
  ('af000000-0000-4000-8000-000000000030','af000000-0000-4000-8000-000000000010','af000000-0000-4000-8000-000000000020','Linked task','af000000-0000-4000-8000-000000000001');

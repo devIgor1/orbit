@@ -7,7 +7,7 @@ import { GithubError } from '../_shared/github/errors.ts'
 const installationSchema = z.object({
   id: githubId,
   app_id: githubId,
-  account: z.object({ login: z.string().min(1), type: z.enum(['User', 'Organization']) }),
+  account: z.object({ id: githubId, login: z.string().min(1), type: z.enum(['User', 'Organization']) }),
 })
 const pageSchema = z.object({
   total_count: z.number().int().nonnegative(),
@@ -27,9 +27,26 @@ export async function accessibleInstallations(userToken: string) {
     if (result.installations.length < 100 || page * 100 >= result.total_count) {
       if (installations.size !== result.total_count) throw new GithubError('GITHUB_CONTRACT')
       return [...installations.values()]
-        .map(({ id, account }) => ({ id, accountLogin: account.login, accountType: account.type }))
+        .map(({ id, account }) => ({
+          id,
+          accountId: account.id,
+          accountLogin: account.login,
+          accountType: account.type,
+        }))
         .sort((a, b) => a.accountLogin.localeCompare(b.accountLogin))
     }
   }
   throw new GithubError('GITHUB_INSTALLATION_LIMIT', 400)
+}
+
+export async function ownInstallations(userToken: string) {
+  // GitHub also lists installations on other accounts where the user collaborates.
+  // Only the user's personal account is offered; its repository list includes those collaborations.
+  const [user, installations] = await Promise.all([
+    githubRequest(userToken, '/user', z.object({ id: githubId })),
+    accessibleInstallations(userToken),
+  ])
+  return installations
+    .filter(({ accountType, accountId }) => accountType === 'User' && accountId === user.id)
+    .map(({ id, accountLogin, accountType }) => ({ id, accountLogin, accountType }))
 }

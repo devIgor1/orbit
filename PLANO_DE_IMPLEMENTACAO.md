@@ -1833,3 +1833,25 @@ seção 56 e a validação com OAuth/PR real continuam pendentes.
   TypeScript e lint dos novos E2E também passaram. Roteiro em
   `docs/TASK_DRAG_TESTS.md`; evidências em `test-results/task-drag-verified` e
   `test-results/task-drag-tablet`. Nenhuma alteração em produção.
+
+## Validação do PR #1 — 14/10/2026
+
+- A escolha inicial oferece a conta pessoal autenticada. A seleção de repositórios
+  inclui aqueles em que o usuário possui escrita, mantendo a instalação de cada
+  proprietário e revalidando o acesso antes de salvar.
+- A revisão corrigiu a conversão de falhas de instalações de colaboradores em
+  listas vazias. Suspensão, revogação, limite excedido, resposta incompleta e falha
+  do GitHub impedem a escrita e permanecem erros visíveis.
+- Lint, estilos/e-mails, arquitetura, TypeScript/build e Deno check aprovados.
+  Vitest: 268 testes passaram e um teste integrado opt-in permaneceu pulado.
+  PostgreSQL 18.3 isolado: 255 asserções pgTAP passaram com Auth e seed locais,
+  incluindo permissões e seleção entre instalações. Seis cenários Playwright de
+  seleção de PR passaram em desktop/celular, incluindo teclado e falha de acesso.
+- Docker indisponível nesta rodada. A execução integrada adicional foi bloqueada
+  pela revisão automática de aprovação; não se declara validação OAuth real.
+  No checkout Windows, o artefato de e-mail foi normalizado para LF, sem mudança
+  de conteúdo versionado, antes de executar seu check.
+- A publicação requer, nesta ordem, as migrations `202610130001`, `202610130002`
+  e `202610140001`, a função `github-api` e o frontend. As três migrations foram
+  verificadas em transação revertida no Supabase hospedado; as RPCs mantêm acesso
+  exclusivo de `service_role`, recusando `anon` e `authenticated`.
