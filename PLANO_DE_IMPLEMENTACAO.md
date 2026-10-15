@@ -2008,3 +2008,34 @@ sem publicação. Supabase isolado `orbit_pr5_review`, na porta 55921.
   `git diff --check` aprovados. O lint excluiu `.supabase/`, que contém a cópia
   operacional local do backend. O artefato de e-mail foi regenerado em LF para
   seu check, sem diferença de conteúdo versionado.
+
+## 64. Correção do deploy hospedado do PR #5 — 15/10/2026
+
+- Após o merge, a Vercel publicou o frontend enquanto o Supabase ainda estava na
+  migration `202610150004`. Isso causou HTTP 404 na RPC `delete_project`.
+- Backup local de schema/dados e prévia transacional com rollback precederam a
+  aplicação de `202610150005_project_github_repository` e `202610160001_trash`.
+  A `github-api` foi publicada na versão 7. Confirmadas 11 RPCs, permissões,
+  seis colunas e nenhuma migration pendente; contagens de registros preservadas.
+
+## 65. Deploy ordenado após merge na main — 15/10/2026
+
+**Estado:** implementação na branch `codex/ordered-production-deploy`; ativação
+depende das credenciais no GitHub e do merge do workflow na `main`.
+
+- GitHub Actions coordena validação, build, migrations, todas as Edge Functions,
+  verificação do backend e publicação do frontend compilado. Erros interrompem
+  a sequência. O deploy Git da Vercel é desativado somente para `main`.
+- Deploys de produção são serializados e commits antigos são recusados antes do
+  backend e antes do frontend. Configuração do Supabase e JWT das funções são
+  verificados. Tokens ficam em secrets, fora do bundle e dos previews de PRs.
+- CI reutilizável também valida PRs. Scripts de verificação têm testes para
+  ambientes incorretos, chaves administrativas, migrations pendentes, funções
+  ausentes/inativas, divergência de autenticação e commits antigos.
+- Procedimento de ativação, recuperação e compatibilidade entre versões em
+  `docs/DEPLOYMENT.md`. Não há nova alteração de schema ou interface.
+- Validação local: 348 testes aprovados e um opt-in pulado, lint, estilos/e-mail,
+  arquitetura, TypeScript/build, tipagem do verificador, actionlint e diff check
+  aprovados. Environment `Production` restrito à branch `main`, com
+  `SUPABASE_ACCESS_TOKEN` configurado. `VERCEL_TOKEN` pendente de configuração;
+  a publicação integrada ainda não foi executada.
