@@ -21,7 +21,9 @@ export function Topbar({
       ? 'Equipe'
       : pathname.startsWith('/settings')
         ? 'Configurações'
-        : 'Visão geral'
+        : pathname.startsWith('/trash')
+          ? 'Lixeira'
+          : 'Visão geral'
   return (
     <header className="topbar">
       <div className="topbar-breadcrumb">

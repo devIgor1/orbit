@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Archive, ArrowLeft, Pencil, Plus } from 'lucide-react'
+import { Archive, ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { ConnectionState, EmptyState, ErrorState, LoadingState } from '@/components/shared/query-state'
@@ -10,6 +10,7 @@ import { useWorkspace } from '@/features/workspace/use-workspace'
 import { useProject } from '@/features/projects/hooks/use-projects'
 import { ProjectDialog } from '@/features/projects/components/project-dialog'
 import { ArchiveProjectDialog } from '@/features/projects/components/archive-project-dialog'
+import { DeleteProjectDialog } from '@/features/projects/components/delete-project-dialog'
 import { ProjectSummary } from '@/features/projects/components/project-summary'
 import { ProjectRepository } from '@/features/github/components/project-repository'
 import { useTasks, useTaskMutations } from '@/features/tasks/hooks/use-tasks'
@@ -26,6 +27,7 @@ export function ProjectPage() {
   const [view, setView] = useState<'board' | 'list'>('board')
   const [editing, setEditing] = useState(false)
   const [archiving, setArchiving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [creating, setCreating] = useState(false)
   const [initialStatus, setInitialStatus] = useState<Task['status']>('todo')
   const selectedId = params.get('task')
@@ -57,7 +59,7 @@ export function ProjectPage() {
   return <div className="page-content">
     <Link to="/projects" className="project-back-link"><ArrowLeft aria-hidden="true" />Todos os projetos</Link>
     <PageHeader eyebrow="CADA ETAPA CONTA" title={project.isSuccess && !project.isError ? project.data.title : 'Detalhes do projeto'} description={project.isSuccess && !project.isError ? project.data.description || 'Organize os próximos passos e crie em equipe.' : 'Ideias em movimento. Equipe em sintonia.'} actions={<div className="page-actions">
-      {canManage && project.isSuccess && <><Button variant="outline" size="icon" aria-label="Editar projeto" onClick={() => setEditing(true)}><Pencil aria-hidden="true" /></Button>{project.data.status !== 'archived' && <Button variant="outline" size="icon" aria-label="Arquivar projeto" onClick={() => setArchiving(true)}><Archive aria-hidden="true" /></Button>}</>}
+      {canManage && project.isSuccess && <><Button variant="outline" size="icon" aria-label="Editar projeto" onClick={() => setEditing(true)}><Pencil aria-hidden="true" /></Button>{project.data.status !== 'archived' && <Button variant="outline" size="icon" aria-label="Arquivar projeto" onClick={() => setArchiving(true)}><Archive aria-hidden="true" /></Button>}<Button variant="outline" size="icon" aria-label="Excluir projeto" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" /></Button></>}
       <Button disabled={!ready} onClick={() => create()}><Plus aria-hidden="true" />Nova tarefa</Button>
     </div>} />
     {project.isSuccess && !project.isError && tasks.isSuccess && !tasks.isError && <ProjectSummary project={project.data} tasks={tasks.data} />}
@@ -68,8 +70,8 @@ export function ProjectPage() {
       {updateTask.isError && <ErrorState error={updateTask.error} onRetry={() => updateTask.reset()} />}
       {filteredTasks.length === 0 && (search || priority !== 'all') ? <EmptyState title="Nenhuma tarefa encontrada" description="Experimente uma nova busca ou ajuste a prioridade." /> : view === 'board' ? <TaskBoard tasks={filteredTasks} members={team.data} isPending={updateTask.isPending} onOpen={task => setSelectedId(task.id)} onCreate={create} onStatusChange={changeStatus} /> : filteredTasks.length === 0 ? <EmptyState title="Seu próximo passo começa aqui" description="Adicione a primeira tarefa e dê vida ao seu projeto." action={<Button onClick={() => create()}><Plus aria-hidden="true" />Criar tarefa</Button>} /> : <TaskList tasks={filteredTasks} members={team.data} isPending={updateTask.isPending} onOpen={task => setSelectedId(task.id)} onStatusChange={changeStatus} />}
       <TaskDialog open={creating} projectId={projectId} members={team.data} initialStatus={initialStatus} onOpenChange={setCreating} />
-      {selected && <TaskSheet key={selected.id} task={selected} members={team.data} onClose={() => setSelectedId(null)} />}
+      {selected && <TaskSheet key={selected.id} task={selected} members={team.data} canDelete={canManage} onClose={() => setSelectedId(null)} />}
     </>}
-    {project.isSuccess && !project.isError && <><ProjectDialog open={editing} onOpenChange={setEditing} project={project.data} /><ArchiveProjectDialog open={archiving} onOpenChange={setArchiving} project={project.data} /></>}
+    {project.isSuccess && !project.isError && <><ProjectDialog open={editing} onOpenChange={setEditing} project={project.data} /><ArchiveProjectDialog open={archiving} onOpenChange={setArchiving} project={project.data} /><DeleteProjectDialog open={deleting} onOpenChange={setDeleting} project={project.data} taskCount={tasks.data?.length ?? 0} /></>}
   </div>
 }

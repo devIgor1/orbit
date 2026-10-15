@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ErrorState } from '@/components/shared/query-state'
 import type { Task, TeamMember } from '@/lib/supabase/database.types'
 import { taskSchema, taskStatusLabels, taskPriorityLabels, type TaskFormValues } from '../schemas/task-schema'
+import { hasFormChanges } from '@/lib/forms/has-form-changes'
 
 type TaskFormProps = {
   task?: Task
@@ -30,6 +31,14 @@ export function TaskForm({
   onCancel,
 }: TaskFormProps) {
   const id = useId()
+  const savedValues: TaskFormValues = {
+    title: task?.title ?? '',
+    description: task?.description ?? '',
+    status: task?.status ?? initialStatus,
+    priority: task?.priority ?? 'medium',
+    assignee_id: task?.assignee_id ?? '',
+    due_date: task?.due_date?.slice(0, 10) ?? '',
+  }
   const {
     register,
     control,
@@ -37,18 +46,15 @@ export function TaskForm({
     formState: { errors },
   } = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
-    defaultValues: {
-      title: task?.title ?? '',
-      description: task?.description ?? '',
-      status: task?.status ?? initialStatus,
-      priority: task?.priority ?? 'medium',
-      assignee_id: task?.assignee_id ?? '',
-      due_date: task?.due_date?.slice(0, 10) ?? '',
-    },
+    defaultValues: savedValues,
+    values: savedValues,
+    resetOptions: { keepDirtyValues: true },
   })
+  const hasChanges = hasFormChanges(useWatch({ control }), savedValues)
+  const canSubmit = !isPending && (!task || hasChanges)
 
   return (
-    <form className="form-stack" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form className="form-stack" onSubmit={handleSubmit(values => { if (canSubmit) return onSubmit(values) })} noValidate>
       <div className="form-field">
         <label className="form-label" htmlFor={`${id}-title`}>
           Nome da tarefa <span aria-hidden="true">*</span>
@@ -174,7 +180,7 @@ export function TaskForm({
         <Button type="button" variant="outline" disabled={isPending} onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={!canSubmit}>
           {isPending ? 'Salvando…' : task ? 'Salvar alterações' : 'Criar tarefa'}
         </Button>
       </div>

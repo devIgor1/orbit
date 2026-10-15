@@ -3,7 +3,7 @@ import { formatDate } from '@/lib/format'
 import type { TeamMember } from '@/lib/supabase/database.types'
 import { useTaskHistory } from '../hooks/use-tasks'
 
-const actionLabels: Record<string, string> = { created: 'criou a tarefa', updated: 'atualizou a tarefa', commented: 'adicionou um comentário', status_changed: 'alterou o status', archived: 'arquivou o projeto', github_linked: 'vinculou a tarefa ao GitHub', github_unlinked: 'removeu o vínculo com o GitHub', github_status_changed: 'sincronizou o status pelo GitHub' }
+const actionLabels: Record<string, string> = { created: 'criou a tarefa', updated: 'atualizou a tarefa', commented: 'adicionou um comentário', status_changed: 'alterou o status', archived: 'arquivou o projeto', github_linked: 'vinculou a tarefa ao GitHub', github_unlinked: 'removeu o vínculo com o GitHub', github_status_changed: 'sincronizou o status pelo GitHub', deleted: 'moveu para a lixeira', restored: 'restaurou da lixeira' }
 
 export function TaskHistory({ taskId, members }: { taskId: string; members: TeamMember[] }) {
   const history = useTaskHistory(taskId)

@@ -1939,3 +1939,72 @@ Supabase isolado. Publicação no ambiente hospedado pendente.
 - Lint, estilos/e-mails, arquitetura, TypeScript/build, tipagem adicional dos novos
   testes e `git diff --check` aprovados. Preflight da migration no Supabase hospedado
   executado com rollback, sem alterar dados de negócio.
+
+## 62. Edição e exclusão de empresa, projetos e tarefas, com lixeira — 16/10/2026
+
+**Estado:** implementação local. Publicação pendente: aplicar a migration
+`202610160001_trash.sql` e depois publicar `github-api` e o frontend.
+
+- Somente administradores excluem. Empresas, projetos e tarefas excluídos vão para
+  a lixeira por 15 dias e podem ser restaurados; depois são apagados
+  definitivamente, junto com tarefas, comentários, histórico, notificações e
+  vínculos do GitHub (cascatas existentes). A limpeza acontece ao abrir a lixeira,
+  restaurar ou listar empresas excluídas.
+- **Empresa:** em Configurações → Empresa, administradores renomeiam a empresa e a
+  excluem digitando o nome. A exclusão cancela convites pendentes e tira o acesso de
+  todos os membros; o administrador restaura em **Suas empresas → Empresas excluídas**.
+- **Projeto:** botão **Excluir projeto** na página do projeto, ao lado de Editar e
+  Arquivar. As tarefas vão junto e voltam com o projeto.
+- **Tarefa:** **Excluir tarefa** na aba Detalhes, com confirmação. Editar projeto e
+  tarefa já existia.
+- **Lixeira** (`/trash`, só administradores): lista projetos e tarefas, quem excluiu,
+  quando e quantos dias restam, com **Restaurar** e **Excluir agora**. Uma tarefa de
+  projeto excluído volta somente com o projeto.
+- Banco: colunas `deleted_at`/`deleted_by`; `is_member`/`is_admin` ignoram empresas
+  na lixeira; políticas de leitura e escrita ocultam itens excluídos (dashboard,
+  equipe, atividade, comentários, notificações e GitHub). O worker do GitHub pausa
+  vínculos de tarefas excluídas e retoma após a restauração; a API do GitHub recusa
+  tarefas e projetos excluídos. Novas RPCs: `delete_/restore_/purge_project`,
+  `delete_/restore_/purge_task`, `trash_items`, `rename_company`, `delete_company`,
+  `deleted_companies`, `restore_company`.
+- Verificação: 61 asserções pgTAP novas e suíte pgTAP completa com seed; Vitest,
+  lint, TypeScript, arquitetura e estilos aprovados; fluxo no navegador contra o
+  Supabase local (excluir/restaurar projeto e tarefa, excluir definitivamente,
+  renomear, excluir e restaurar empresa) em desktop e celular.
+
+## 63. Validação pela interface do PR #5 e salvamento de alterações — 15/10/2026
+
+**Estado:** validado no checkout local de `feat/edit-delete-trash`. Ajustes locais,
+sem publicação. Supabase isolado `orbit_pr5_review`, na porta 55921.
+
+- Fluxos executados pela interface com Auth, API e PostgreSQL reais, usando uma
+  empresa criada para a revisão. Empresa, projeto e tarefa foram editados,
+  excluídos e restaurados. Recarregar confirmou a persistência. Cancelamentos e
+  confirmação pelo nome da empresa também foram verificados.
+- A tarefa restaurada manteve nome, descrição, prazo, comentário e histórico.
+  Restaurar o projeto recuperou sua tarefa e comentário. Excluir a empresa
+  bloqueou o acesso direto ao projeto; restaurá-la recuperou o acesso e o conteúdo.
+  A empresa de evidência ficou como **Revisão PR 5 — Concluída**. A sessão voltou
+  ao Estúdio Criativo e ao projeto que o usuário estava examinando.
+- Os formulários de renomear empresa, editar projeto e editar tarefa desabilitam
+  salvar até existir diferença em relação aos dados confirmados. Desfazer uma
+  edição ou acrescentar apenas espaços nas extremidades mantém o botão bloqueado.
+  A submissão também verifica essa condição, inclusive pelo teclado.
+- Comparação compartilhada em `src/lib/forms/has-form-changes.ts`, sem novos
+  estilos. Campos sem edição acompanham respostas atualizadas; rascunhos são
+  preservados quando o backend muda ou uma escrita falha. Somente a confirmação
+  dos novos valores passa a desabilitar novamente o salvamento.
+- Verificados seletores, calendário, salvamento por Enter, atualização após salvar
+  e edição posterior. Inspeção em desktop, tablet de 900 px e celular de 390/320 px,
+  sem rolagem horizontal nas regiões examinadas. Evidências em
+  `test-results/pr-5-*.jpg`; operações do teste permaneceram no banco isolado.
+- Quatorze testes novos cobrem ausência de alterações, reversão, espaços,
+  validação, criação, escrita pendente, falha/repetição, confirmação e preservação
+  de rascunhos durante atualização remota. Dois testes existentes de páginas
+  passaram a simular também o transporte Realtime: a primeira rodada revelou
+  conexões reais indevidas a partir de respostas de negócio já simuladas.
+- Rodada final: **331 testes passaram e um integrado opt-in ficou pulado**, sem
+  erros não tratados. TypeScript/build, lint, arquitetura, estilos/e-mail e
+  `git diff --check` aprovados. O lint excluiu `.supabase/`, que contém a cópia
+  operacional local do backend. O artefato de e-mail foi regenerado em LF para
+  seu check, sem diferença de conteúdo versionado.

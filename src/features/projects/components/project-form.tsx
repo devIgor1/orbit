@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ErrorState } from '@/components/shared/query-state'
 import { projectSchema, projectStatusLabels, type ProjectFormValues } from '../schemas/project-schema'
 import type { Project } from '@/lib/supabase/database.types'
+import { hasFormChanges } from '@/lib/forms/has-form-changes'
 
 type ProjectFormProps = {
   project?: Project
@@ -20,6 +21,12 @@ type ProjectFormProps = {
 
 export function ProjectForm({ project, isPending, error, onSubmit, onCancel }: ProjectFormProps) {
   const id = useId()
+  const savedValues: ProjectFormValues = {
+    title: project?.title ?? '',
+    description: project?.description ?? '',
+    status: project?.status ?? 'active',
+    due_date: project?.due_date?.slice(0, 10) ?? '',
+  }
   const {
     register,
     control,
@@ -27,16 +34,15 @@ export function ProjectForm({ project, isPending, error, onSubmit, onCancel }: P
     formState: { errors },
   } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
-    defaultValues: {
-      title: project?.title ?? '',
-      description: project?.description ?? '',
-      status: project?.status ?? 'active',
-      due_date: project?.due_date?.slice(0, 10) ?? '',
-    },
+    defaultValues: savedValues,
+    values: savedValues,
+    resetOptions: { keepDirtyValues: true },
   })
+  const hasChanges = hasFormChanges(useWatch({ control }), savedValues)
+  const canSubmit = !isPending && (!project || hasChanges)
 
   return (
-    <form className="form-stack" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form className="form-stack" onSubmit={handleSubmit(values => { if (canSubmit) return onSubmit(values) })} noValidate>
       <div className="form-field">
         <label className="form-label" htmlFor={`${id}-title`}>
           Nome do projeto <span aria-hidden="true">*</span>
@@ -117,7 +123,7 @@ export function ProjectForm({ project, isPending, error, onSubmit, onCancel }: P
         <Button variant="outline" type="button" onClick={onCancel} disabled={isPending}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={!canSubmit}>
           {isPending ? 'Salvando…' : project ? 'Salvar alterações' : 'Criar projeto'}
         </Button>
       </div>

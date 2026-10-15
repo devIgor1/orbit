@@ -286,6 +286,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -298,6 +300,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -309,6 +313,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -483,6 +489,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -499,6 +507,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -514,6 +524,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -747,17 +759,23 @@ export type Database = {
       workspaces: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           name: string
         }
         ComputedFields: never
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           name: string
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           name?: string
         }
@@ -839,6 +857,8 @@ export type Database = {
         Args: { company_name: string }
         Returns: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           name: string
         }
@@ -850,6 +870,13 @@ export type Database = {
         }
       }
       dashboard_summary: { Args: { period_days?: number; target_workspace: string }; Returns: Json }
+      delete_company: { Args: { confirmation: string; target_workspace: string }; Returns: string }
+      delete_project: { Args: { target_project: string; target_workspace: string }; Returns: string }
+      delete_task: { Args: { target_task: string; target_workspace: string }; Returns: string }
+      deleted_companies: {
+        Args: Record<PropertyKey, never>
+        Returns: { deleted_at: string; id: string; name: string; purge_at: string }[]
+      }
       disconnect_github_repository: { Args: { target_repository: string; target_workspace: string }; Returns: string }
       finish_github_account_connection: {
         Args: { repositories: Json; requester: string; target_workspace: string }
@@ -956,6 +983,8 @@ export type Database = {
         Args: { application_url: string; from_email: string; invitation_id: string; requester_id: string }
         Returns: Json
       }
+      purge_project: { Args: { target_project: string; target_workspace: string }; Returns: string }
+      purge_task: { Args: { target_task: string; target_workspace: string }; Returns: string }
       receive_github_event: { Args: { delivery: string; event: Json; event_name: string }; Returns: boolean }
       remove_workspace_member: {
         Args: {
@@ -987,6 +1016,25 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      rename_company: {
+        Args: { company_name: string; target_workspace: string }
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          name: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'workspaces'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      restore_company: { Args: { target_workspace: string }; Returns: string }
+      restore_project: { Args: { target_project: string; target_workspace: string }; Returns: string }
+      restore_task: { Args: { target_task: string; target_workspace: string }; Returns: string }
       retry_task_github: { Args: { target_task: string; target_workspace: string }; Returns: string }
       revoke_invitation: {
         Args: { invitation_id: string }
@@ -1048,6 +1096,7 @@ export type Database = {
           role: Database['public']['Enums']['member_role']
         }[]
       }
+      trash_items: { Args: { target_workspace: string }; Returns: Json }
       unlink_task_github: { Args: { target_task: string; target_workspace: string }; Returns: string }
     }
     Enums: {

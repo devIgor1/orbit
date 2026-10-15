@@ -9,8 +9,11 @@ import { acceptInvitation, fetchMyInvitations } from '@/features/companies/servi
 import { AppError } from '@/lib/errors/app-error'
 import { createTestClient, TestProviders, testAuth } from './test-providers'
 
+// These page tests mock backend data; keep the realtime transport isolated too.
+vi.mock('@/lib/supabase/private-broadcast', () => ({ subscribeToPrivateBroadcast: vi.fn() }))
 vi.mock('@/features/companies/services/company-service', () => ({
   createCompany: vi.fn(), fetchCompanies: vi.fn(), selectCompany: vi.fn(),
+  fetchDeletedCompanies: vi.fn(async () => []), restoreCompany: vi.fn(),
 }))
 vi.mock('@/features/companies/services/invitation-service', () => ({
   fetchMyInvitations: vi.fn(), acceptInvitation: vi.fn(),

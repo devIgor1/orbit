@@ -7,6 +7,7 @@ import {
   LogIn,
   LogOut,
   Settings2,
+  Trash2,
   Users,
 } from 'lucide-react'
 import { NavLink, Link } from 'react-router-dom'
@@ -20,6 +21,7 @@ interface SidebarProps {
   jobTitle?: string | null
   avatar?: string | null
   authenticated: boolean
+  showTrash?: boolean
   onHelp: () => void
   onNavigate?: () => void
   onSignOut: () => void
@@ -35,6 +37,7 @@ export function Sidebar({
   jobTitle,
   avatar,
   authenticated,
+  showTrash = false,
   onHelp,
   onNavigate,
   onSignOut,
@@ -100,6 +103,16 @@ export function Sidebar({
             <Settings2 />
             <span className="navigation-link-label">Configurações</span>
           </NavLink>
+          {showTrash && (
+            <NavLink
+              className={({ isActive }) => `navigation-link${isActive ? ' navigation-link-active' : ''}`}
+              to="/trash"
+              onClick={onNavigate}
+            >
+              <Trash2 />
+              <span className="navigation-link-label">Lixeira</span>
+            </NavLink>
+          )}
           <button className="navigation-link" onClick={onHelp}>
             <CircleHelp />
             <span className="navigation-link-label">Ajuda e primeiros passos</span>
