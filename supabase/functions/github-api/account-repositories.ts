@@ -41,17 +41,11 @@ export async function accountRepositories(userToken: string, installationId: num
 }
 
 async function collaboratorRepositories(userToken: string, installationId: number) {
-  try {
-    await verifiedInstallation(installationId)
-    return (await installationRepositories(userToken, installationId)).filter((repo) =>
-      canConnectRepository(repo.permissions),
-    )
-  } catch (error) {
-    // Another owner's suspended, revoked or oversized installation must not block the user's own account.
-    if (error instanceof GithubError && ['GITHUB_UNAVAILABLE', 'GITHUB_REPOSITORY_LIMIT'].includes(error.code))
-      return []
-    throw error
-  }
+  // An incomplete listing must remain an error, including during the final access recheck.
+  await verifiedInstallation(installationId)
+  return (await installationRepositories(userToken, installationId)).filter((repo) =>
+    canConnectRepository(repo.permissions),
+  )
 }
 
 async function verifiedInstallation(installationId: number) {

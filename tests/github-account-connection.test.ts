@@ -162,15 +162,30 @@ describe('GitHub account connection', () => {
       ],
     })
   })
-  it('ignores another owner’s unavailable installation instead of failing', async () => {
+  it('reports another owner’s unavailable installation without saving a partial result', async () => {
     const { db, rpc, installation, github } = setup()
     github.visible.push({ id: 40, app_id: 7, account: { id: 2, login: 'owner', type: 'User' } })
     github.installations[40] = { ...installation, id: 40, suspended_at: '2026-10-12T00:00:00Z' }
-    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).resolves.toMatchObject({
-      repositoryCount: 1,
+    await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toMatchObject({
+      code: 'GITHUB_UNAVAILABLE',
     })
-    expect(rpc.mock.calls[1][1].repositories).toEqual([expect.objectContaining({ id: 10, installation_id: 20 })])
+    expect(rpc).toHaveBeenCalledTimes(1)
   })
+  it.each(['revoked', 'too-many', 'incomplete', 'server-error'])(
+    'does not save when a collaborator repository listing is %s',
+    async (kind) => {
+      const { db, rpc, installation, github } = setup()
+      github.visible.push({ id: 40, app_id: 7, account: { id: 2, login: 'owner', type: 'User' } })
+      github.installations[40] = { ...installation, id: 40 }
+      github.repositories[40] = [
+        kind === 'revoked' || kind === 'server-error'
+          ? new Response(null, { status: kind === 'revoked' ? 403 : 503 })
+          : { total_count: kind === 'too-many' ? 1001 : 2, repositories: [repo(77, false, true)] },
+      ]
+      await expect(completeRepositorySelection(db, 'orbit-user', 'state', 'code')).rejects.toHaveProperty('code')
+      expect(rpc).toHaveBeenCalledTimes(1)
+    },
+  )
   it('rejects an expired or foreign state before using the OAuth code', async () => {
     const { db, rpc, fetcher } = setup()
     rpc.mockReset().mockResolvedValue({ data: null, error: { code: '22023' } })
