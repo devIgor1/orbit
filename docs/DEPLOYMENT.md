@@ -37,6 +37,38 @@ paralela fora dessa sequência. As demais branches mantêm previews automáticos
 Previews podem precisar de um Supabase separado para funcionalidades cujo schema
 ainda não existe em produção; eles não recebem credenciais administrativas do CI.
 
+## Check central dos PRs
+
+`Validações do PR`, no `ci.yml`, consolida o job `Qualidade e build` (actionlint,
+lint, estilos/e-mail, arquitetura, testes e TypeScript/build), o status `Vercel`
+e o check `Vercel Preview Comments`. O job roda mesmo quando o CI falha e só
+aprova dependências com resultado `success`; cancelamentos e jobs pulados falham.
+O preview é consultado no SHA da branch do PR, enquanto o CI testa o merge com a
+base. A origem da Vercel também é conferida. Evidência ausente fica pendente por
+até dez minutos de espera, e erro de API ou prazo excedido reprova o check.
+
+A proteção da `main` exige esse check do GitHub Actions, branch atualizada e PR,
+inclusive para administradores, sem obrigar aprovação de outra pessoa. Os checks
+individuais existentes também permanecem obrigatórios: isso impede que uma
+reexecução independente da Vercel com falha seja encoberta por um resultado
+central aprovado anteriormente. Force push e exclusão da `main` ficam bloqueados.
+
+Para adicionar validações sem editar a proteção no GitHub:
+
+- Novas etapas/testes dentro de `quality` já participam automaticamente.
+- Novos jobs do Actions devem entrar em `pr-validation.needs`; todos os resultados
+  desse objeto são verificados, sem alterar o script. Workflows reutilizáveis podem
+  ser chamados como jobs do CI e conectados da mesma forma.
+- Novas integrações externas devem entrar em `requiredPrStatuses` ou
+  `requiredPrChecks`, em `scripts/pr-validation-policy.ts`, com sua origem esperada.
+  Integrações que reexecutam fora do CI devem manter também sua proteção direta.
+
+Não use `continue-on-error` nas validações obrigatórias, não renomeie o check
+central sem ajustar a proteção e não inclua o deploy de produção como dependência
+do PR: ele acontece depois do merge. Se um preview for corrigido/reexecutado após
+o check central falhar ou expirar, reexecute os jobs com falha do CI. O agregador
+usa apenas o `GITHUB_TOKEN` de leitura, sem tokens do Supabase ou da Vercel.
+
 ## Credenciais e destinos
 
 Destino Supabase: `twsfyqkagyvibsilulle`. Vercel: projeto `orbit` no time

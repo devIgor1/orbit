@@ -2066,3 +2066,22 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
 - Configurações restantes do pull são preservadas. O token da Vercel continua
   limitado ao Orbit e a ordem de publicação permanece. Resultado do deploy real
   será registrado no PR correspondente após a execução.
+
+## 68. Check central obrigatório dos PRs — 15/10/2026
+
+- `Validações do PR` consolida todas as validações atuais do CI e os dois
+  resultados da Vercel. Jobs com falha, cancelados ou pulados reprovam o check;
+  resultados externos ausentes ou pendentes aguardam confirmação com prazo.
+- As consultas usam o commit exato do PR e conferem o publicador dos resultados.
+  Erros de API, paginação incompleta e resposta inválida bloqueiam o sucesso.
+  O job usa somente permissões de leitura e não roda no deploy de produção.
+- A ativação na proteção da main preserva os checks individuais para reexecuções
+  independentes, exigência de branch atualizada, PR e aplicação a administradores.
+  Novos jobs conectam-se via `needs`; integrações externas pela política versionada.
+  O procedimento está em `docs/DEPLOYMENT.md`.
+- Testes cobrem dependências com falha/cancelamento/skip, resultados ausentes,
+  preview pendente, origem/commit incorretos, reexecução, paginação, falhas de API
+  e timeout. Validação local: 403 testes aprovados e um opt-in pulado, lint,
+  estilos/e-mail, arquitetura, TypeScript/build, tipagem dos scripts, actionlint
+  e diff check aprovados. Consulta real dos checks do PR #8 confirmada; execução
+  do novo check no Actions e ativação da proteção serão registradas no PR.

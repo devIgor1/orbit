@@ -11,6 +11,10 @@ permissions:
 jobs:
   validate:
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      checks: read
+      statuses: read
     uses: ./.github/workflows/ci.yml
 
   deploy:
