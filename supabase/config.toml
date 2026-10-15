@@ -17,7 +17,7 @@ enabled = false
 sql_paths = ["./seed.sql"]
 
 [realtime]
-enabled = false
+enabled = true
 
 [studio]
 enabled = true

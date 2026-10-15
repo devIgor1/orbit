@@ -1855,3 +1855,38 @@ seção 56 e a validação com OAuth/PR real continuam pendentes.
   e `202610140001`, a função `github-api` e o frontend. As três migrations foram
   verificadas em transação revertida no Supabase hospedado; as RPCs mantêm acesso
   exclusivo de `service_role`, recusando `anon` e `authenticated`.
+
+## 60. Central de notificações — 14/10/2026
+
+**Estado:** implementada na branch `codex/notifications`; migrations validadas em
+Supabase isolado. Publicação no ambiente hospedado pendente.
+
+- Sino no cabeçalho com contador confirmado de não lidas, painel responsivo,
+  filtros, histórico paginado e leitura individual ou em lote. A abertura de um
+  aviso marca a leitura no backend e abre a tarefa pelo parâmetro da URL, inclusive
+  quando outra tarefa do mesmo projeto já havia sido acessada.
+- Migrations `202610150001` a `202610150003` registram atribuição, comentário e
+  mudança de status na transação original. Destinatários são o novo responsável
+  ou criador/responsável, conforme o evento, excluindo autor e membros removidos.
+  Uma pessoa com dois papéis recebe apenas um aviso por evento.
+- Tabela protegida por RLS e RPCs que verificam destinatário e vínculo ativo.
+  Escritas diretas ficam bloqueadas; leitura individual exige o registro afetado.
+  Leitura em lote usa o snapshot do servidor para preservar eventos posteriores.
+- Supabase Broadcast em canal privado por usuário/workspace transporta somente
+  sinal de invalidação, sem dados de negócio. A consulta sempre revalida acesso.
+  Reconexão, foco e consulta periódica recuperam avisos pendentes; erros de rede,
+  autorização e escrita permanecem visíveis. O e-mail mantém seu fluxo existente.
+- Componentes, hooks, serviços e validações separados em `features/notifications`;
+  aparência centralizada na seção 13 de `globals.css`. Realtime habilitado na
+  configuração local e incluído no comando `db:start`. Tipos regenerados.
+- Vitest: 301 testes passaram, um integrado opt-in pulado. PostgreSQL/Supabase
+  isolado: 292 asserções pgTAP aprovadas. Playwright com Auth, banco e Realtime
+  reais: sete cenários aprovados em 1280, 900 e 320 px; duas repetições do teste
+  de autorização de canal foram intencionalmente puladas nos outros viewports.
+  Capturas inspecionadas em `test-results/notifications`. A falha de escrita
+  é simulada exclusivamente no teste; demais fluxos usam o backend local real.
+- Documentação de contratos, instalação e testes em `docs/NOTIFICATIONS.md`.
+  Build/TypeScript, lint, estilos/e-mails, arquitetura e tipagem adicional dos
+  novos testes e configuração Playwright aprovados; `git diff --check` aprovado.
+  A implementação preserva as alterações anteriores e os arquivos do PDF;
+  não aplica migrations no banco de uso diário nem publica em produção.

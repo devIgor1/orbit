@@ -27,7 +27,7 @@ export function ProjectPage() {
   const [archiving, setArchiving] = useState(false)
   const [creating, setCreating] = useState(false)
   const [initialStatus, setInitialStatus] = useState<Task['status']>('todo')
-  const [selectedId, setSelectedId] = useState<string | null>(() => params.get('task'))
+  const selectedId = params.get('task')
   const project = useProject(projectId)
   const tasks = useTasks(projectId)
   const team = useTeam('', true)
@@ -46,6 +46,7 @@ export function ProjectPage() {
       return current
     }, { replace: true })
   }
+  function setSelectedId(id: string | null) { setFilter('task', id ?? '') }
   function create(status: Task['status'] = 'todo') { setInitialStatus(status); setCreating(true) }
   function changeStatus(task: Task, status: Task['status']) { updateTask.mutate({ id: task.id, status }) }
 
