@@ -2020,8 +2020,9 @@ sem publicação. Supabase isolado `orbit_pr5_review`, na porta 55921.
 
 ## 65. Deploy ordenado após merge na main — 15/10/2026
 
-**Estado:** implementação na branch `codex/ordered-production-deploy`; ativação
-depende das credenciais no GitHub e do merge do workflow na `main`.
+**Estado:** PR #6 mesclado na `main`, com ambas as credenciais configuradas.
+A primeira execução passou no CI e interrompeu o deploy antes do backend por
+incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
 
 - GitHub Actions coordena validação, build, migrations, todas as Edge Functions,
   verificação do backend e publicação do frontend compilado. Erros interrompem
@@ -2037,5 +2038,18 @@ depende das credenciais no GitHub e do merge do workflow na `main`.
 - Validação local: 348 testes aprovados e um opt-in pulado, lint, estilos/e-mail,
   arquitetura, TypeScript/build, tipagem do verificador, actionlint e diff check
   aprovados. Environment `Production` restrito à branch `main`, com
-  `SUPABASE_ACCESS_TOKEN` configurado. `VERCEL_TOKEN` pendente de configuração;
-  a publicação integrada ainda não foi executada.
+  `SUPABASE_ACCESS_TOKEN` configurado. `VERCEL_TOKEN` configurado no repositório,
+  limitado somente ao projeto `orbit`.
+
+## 66. Deploy com token limitado ao Orbit — 15/10/2026
+
+- A preparação consulta somente a API do projeto `orbit`, confere seu vínculo
+  com este repositório e grava os IDs em `.vercel/project.json`. `vercel pull`,
+  build e publicação reutilizam esse vínculo sem exigir permissão de consulta à
+  conta ou ao time. A CLI fixada em 64.2.0 lê o token pela variável de ambiente;
+  `vercel link --scope` foi removido.
+- A ordem migrations → Edge Functions → frontend e os bloqueios de erro e de
+  commit antigo permanecem. A validação do deploy integrado será registrada no PR.
+- Teste isolado com a CLI real e API simulada recusando conta/time reproduziu o
+  erro anterior e confirmou o download de configuração pelo novo caminho. Testes
+  unitários cobrem destino incorreto, token ausente, permissão e falhas de rede.
