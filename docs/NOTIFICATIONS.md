@@ -6,6 +6,38 @@ marcar uma ou todas como lidas e abrir a tarefa relacionada. A leitura persiste 
 backend e sincroniza entre abas. O histórico começa após a instalação das migrations;
 atividades antigas não são convertidas em avisos.
 
+## Convites para a conta
+
+O sino também consulta os convites pendentes do e-mail confirmado da conta, mesmo
+quando o usuário está em outra empresa. Eles aparecem em “Convites para você”,
+com o nome da empresa, validade e acesso à tela existente de aceitação. Convites
+já enviados aparecem na próxima consulta; não há backfill, reenvio de e-mail nem
+necessidade de pertencer à empresa para receber o aviso.
+
+O contador soma **atividades não lidas do workspace + convites pendentes da conta**.
+O nome acessível do sino diferencia as duas quantidades. Abrir um convite não o
+aceita. Filtros e “Marcar todas como lidas”, na seção de atividades, não descartam
+convites: eles saem após aceitação, cancelamento ou expiração. A prévia mostra até
+três convites e oferece a lista completa quando houver mais.
+
+A migration `202610150004_invitation_notifications.sql` envia um sinal sem dados de negócio pelo
+canal privado `invitations:<user_id>` quando a criação, renovação, cancelamento,
+aceitação ou exclusão altera a lista. Somente contas com o e-mail confirmado
+recebem o sinal. A RPC existente `my_invitations` revalida e-mail, status e validade
+e não concede acesso aos projetos da empresa convidante. Seu contrato público
+não mudou; os tipos gerados permanecem válidos.
+
+O sino e a tela de empresas compartilham a consulta por identidade e atualizam ao
+assinar/reconectar, voltar ao foco e a cada 60 segundos. Isso também remove convites
+que expiram sem uma escrita no banco. Erros de consulta e conexão são exibidos.
+O Supabase pode acrescentar o ID técnico da mensagem ao payload vazio enviado pelo
+trigger. Os canais de tarefas e convites reutilizam o mesmo cliente/WebSocket do Supabase.
+Não há nova Edge Function. Aplicar a migration antes de publicar o frontend.
+
+Testes adicionais: `tests/invitation-notifications.test.tsx`,
+`supabase/tests/invitation_notifications.test.sql` e
+`tests/e2e/invitation-notifications.spec.ts` (incluído em `npm run test:notifications`).
+
 ## Eventos e destinatários
 
 | Evento confirmado | Quem recebe |

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/features/auth/use-auth'
 import { createCompany, fetchCompanies, selectCompany } from '../services/company-service'
 import { acceptInvitation, fetchMyInvitations } from '../services/invitation-service'
+import { useInvitationRealtime } from './use-invitation-realtime'
 
 export function useCompanies() {
   const { user, configured } = useAuth()
@@ -10,11 +11,15 @@ export function useCompanies() {
 
 export function useMyInvitations() {
   const { user, configured } = useAuth()
-  return useQuery({
+  const live = useInvitationRealtime(configured ? user?.id : undefined)
+  const query = useQuery({
     queryKey: ['my-invitations', user?.id],
     queryFn: fetchMyInvitations,
     enabled: configured && !!user,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: 'always',
   })
+  return { ...query, ...live }
 }
 
 type CompanyAction =

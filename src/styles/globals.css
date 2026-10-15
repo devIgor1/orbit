@@ -1566,6 +1566,12 @@ body:has(.app-shell,.login-page,.companies-page) {
 .notification-connection { display: flex; flex-wrap: wrap; gap: var(--space-1); padding: var(--space-2) var(--space-5); background: var(--warning-soft); color: var(--warning); font-size: var(--font-size-caption); line-height: 1.6; }
 .notification-connection .ui-button { min-height: 28px; padding: 0; color: inherit; font-size: inherit; }
 .notification-list { list-style: none; margin: 0; padding: 0; }
+.notification-section-header { padding: var(--space-3) var(--space-5); }
+.notification-section-header h3 { font-size: var(--font-size-label); font-weight: 600; }
+.notification-section-header p { margin-top: var(--space-1); color: var(--muted-foreground); font-size: var(--font-size-caption); line-height: 1.5; }
+.notification-invitations { border-bottom: 1px solid var(--border); background: var(--paper); }
+.notification-invitations .query-state { min-height: 120px; }
+.notification-invitation-item { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border); }
 .notification-item { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); border-left: 3px solid transparent; }
 .notification-item:last-child { border-bottom: 0; }
 .notification-item[data-unread=true] { background: var(--paper); border-left-color: var(--primary); }
@@ -1587,7 +1593,7 @@ body:has(.app-shell,.login-page,.companies-page) {
 .notification-panel-footer { flex-shrink: 0; border-top: 1px solid var(--border); padding: var(--space-3) var(--space-5); color: var(--muted-foreground); font-size: var(--font-size-caption); background: var(--surface-muted); }
 @media (max-width: 600px) {
   .notification-panel { width: calc(100vw - 2 * var(--popover-edge)); max-height: min(78dvh,var(--radix-popover-content-available-height)); }
-  .notification-panel-header,.notification-item { padding-inline: var(--space-4); }
+  .notification-panel-header,.notification-item,.notification-section-header,.notification-invitation-item { padding-inline: var(--space-4); }
   .notification-toolbar { padding-inline: var(--space-4); }
   .notification-item .notification-read-action,.notification-toolbar .notification-mark-all { min-height: 44px; }
 }
