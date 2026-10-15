@@ -27,7 +27,6 @@ jobs:
       cancel-in-progress: false
     env:
       SUPABASE_PROJECT_ID: twsfyqkagyvibsilulle
-      VERCEL_SCOPE: devigor1s-projects
       VERCEL_PROJECT: orbit
       VERCEL_TELEMETRY_DISABLED: '1'
     steps:
@@ -52,13 +51,13 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          vercel link --yes --project "$VERCEL_PROJECT" --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
-          vercel pull --yes --environment=production --scope "$VERCEL_SCOPE" --token "$VERCEL_TOKEN"
+          node scripts/link-vercel-project.mjs
+          vercel pull --yes --environment=production
           node scripts/verify-deployment.mjs target
       - name: Preparar frontend antes de alterar o backend
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+        run: vercel build --prod
       - name: Recusar commit antigo
         run: node scripts/verify-deployment.mjs commit
       - name: Aplicar migrations pendentes
@@ -81,7 +80,7 @@ jobs:
       - name: Publicar frontend já compilado
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
+        run: vercel deploy --prebuilt --prod --yes
       - name: Registrar conclusão
         run: |
           {

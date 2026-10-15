@@ -10,8 +10,11 @@ O workflow `.github/workflows/deploy-production.yml` executa em cada push na
    arquitetura, testes unitários e TypeScript/build. PRs também recebem esse CI,
    sem credenciais de produção.
 2. O job de produção instala Supabase CLI **2.121.0** e Vercel CLI **64.2.0**,
-   verifica os secrets, vincula o projeto Vercel existente e obtém suas variáveis
-   de produção. A URL e a chave pública precisam corresponder ao Supabase esperado.
+   verifica os secrets e consulta somente `/v9/projects/orbit` para resolver o
+   projeto e seu proprietário. Confere o vínculo com o repositório do deploy,
+   grava `.vercel/project.json` e usa `vercel pull` para obter as variáveis de
+   produção e a configuração. A URL e a chave pública precisam corresponder ao
+   Supabase esperado.
 3. `vercel build --prod` prepara o frontend antes de qualquer mudança no backend.
 4. Depois de confirmar que o commit ainda é o atual da `main`, `supabase db push`
    aplica somente migrations pendentes, com uma prévia registrada no log.
@@ -44,10 +47,15 @@ do repositório. O environment deve aceitar deployments somente da branch `main`
 | Secret | Uso |
 | --- | --- |
 | `SUPABASE_ACCESS_TOKEN` | Autenticar a CLI para migrations e Edge Functions. |
-| `VERCEL_TOKEN` | Ler a configuração, compilar e publicar no projeto existente. |
+| `VERCEL_TOKEN` | Token limitado ao projeto `orbit`: ler configuração, compilar e publicar. |
 
-Prefira tokens dedicados ao deploy, limitados ao projeto/time e com validade
-monitorada. As credenciais não entram no repositório nem em variáveis `VITE_*`.
+Crie o token da Vercel em Account → Tokens, selecionando o time
+`devigor1s-projects` e somente o projeto `orbit`. Mantenha uma validade monitorada.
+O workflow resolve os IDs pela API do próprio projeto e passa o vínculo local
+para a CLI **64.2.0**. Não usa `vercel link --scope`, que tenta
+consultar a conta e falha com tokens limitados a um projeto. A CLI lê o token
+diretamente de `VERCEL_TOKEN`; não é necessário colocá-lo nos argumentos.
+As credenciais não entram no repositório nem em variáveis `VITE_*`.
 Os secrets são disponibilizados apenas nos passos que os utilizam. A CLI Supabase
 fixada obtém a credencial temporária do banco pela API; não é necessário salvar a
 senha permanente do PostgreSQL no workflow.
@@ -79,4 +87,5 @@ Deploys manuais por CLI ou dashboard devem respeitar a mesma ordem.
 Referências: [Supabase CI/CD](https://supabase.com/docs/guides/deployment/managing-environments),
 [Edge Functions no Actions](https://supabase.com/docs/guides/functions/examples/github-actions),
 [Vercel no Actions](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel) e
-[controle de deploys Git](https://vercel.com/docs/project-configuration/git-configuration).
+[controle de deploys Git](https://vercel.com/docs/project-configuration/git-configuration),
+[tokens por projeto](https://vercel.com/docs/accounts/access-tokens).
