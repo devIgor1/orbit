@@ -84,6 +84,8 @@ jobs:
         run: vercel deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN"
       - name: Registrar conclusão
         run: |
-          echo 'Migrations e Edge Functions confirmadas antes do frontend.' >> "$GITHUB_STEP_SUMMARY"
-          echo "Commit publicado: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          echo 'Aplicação: https://weorbit.com.br' >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo 'Migrations e Edge Functions confirmadas antes do frontend.'
+            echo "Commit publicado: $GITHUB_SHA"
+            echo 'Aplicação: https://weorbit.com.br'
+          } >> "$GITHUB_STEP_SUMMARY"
