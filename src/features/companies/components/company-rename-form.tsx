@@ -1,9 +1,10 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ErrorState } from '@/components/shared/query-state'
 import { companySchema, type CompanyValues } from '../schemas/company-schema'
+import { hasFormChanges } from '@/lib/forms/has-form-changes'
 
 type Props = {
   name: string
@@ -16,11 +17,19 @@ type Props = {
 export function CompanyRenameForm({ name, isPending, error, onSubmit, onCancel }: Props) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
-  } = useForm<CompanyValues>({ resolver: zodResolver(companySchema), defaultValues: { name } })
+  } = useForm<CompanyValues>({
+    resolver: zodResolver(companySchema),
+    defaultValues: { name },
+    values: { name },
+    resetOptions: { keepDirtyValues: true },
+  })
+  const hasChanges = hasFormChanges(useWatch({ control }), { name })
+  const canSubmit = !isPending && hasChanges
   return (
-    <form className="form-stack" noValidate onSubmit={handleSubmit((values) => onSubmit(values.name))}>
+    <form className="form-stack" noValidate onSubmit={handleSubmit(values => { if (canSubmit) return onSubmit(values.name) })}>
       <div className="form-field">
         <label htmlFor="company-rename">Nome da empresa</label>
         <Input
@@ -43,7 +52,7 @@ export function CompanyRenameForm({ name, isPending, error, onSubmit, onCancel }
         <Button variant="outline" onClick={onCancel} disabled={isPending}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={!canSubmit}>
           {isPending ? 'Salvando…' : 'Salvar nome'}
         </Button>
       </div>

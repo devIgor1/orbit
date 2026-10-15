@@ -1971,3 +1971,40 @@ Supabase isolado. Publicação no ambiente hospedado pendente.
   lint, TypeScript, arquitetura e estilos aprovados; fluxo no navegador contra o
   Supabase local (excluir/restaurar projeto e tarefa, excluir definitivamente,
   renomear, excluir e restaurar empresa) em desktop e celular.
+
+## 63. Validação pela interface do PR #5 e salvamento de alterações — 15/10/2026
+
+**Estado:** validado no checkout local de `feat/edit-delete-trash`. Ajustes locais,
+sem publicação. Supabase isolado `orbit_pr5_review`, na porta 55921.
+
+- Fluxos executados pela interface com Auth, API e PostgreSQL reais, usando uma
+  empresa criada para a revisão. Empresa, projeto e tarefa foram editados,
+  excluídos e restaurados. Recarregar confirmou a persistência. Cancelamentos e
+  confirmação pelo nome da empresa também foram verificados.
+- A tarefa restaurada manteve nome, descrição, prazo, comentário e histórico.
+  Restaurar o projeto recuperou sua tarefa e comentário. Excluir a empresa
+  bloqueou o acesso direto ao projeto; restaurá-la recuperou o acesso e o conteúdo.
+  A empresa de evidência ficou como **Revisão PR 5 — Concluída**. A sessão voltou
+  ao Estúdio Criativo e ao projeto que o usuário estava examinando.
+- Os formulários de renomear empresa, editar projeto e editar tarefa desabilitam
+  salvar até existir diferença em relação aos dados confirmados. Desfazer uma
+  edição ou acrescentar apenas espaços nas extremidades mantém o botão bloqueado.
+  A submissão também verifica essa condição, inclusive pelo teclado.
+- Comparação compartilhada em `src/lib/forms/has-form-changes.ts`, sem novos
+  estilos. Campos sem edição acompanham respostas atualizadas; rascunhos são
+  preservados quando o backend muda ou uma escrita falha. Somente a confirmação
+  dos novos valores passa a desabilitar novamente o salvamento.
+- Verificados seletores, calendário, salvamento por Enter, atualização após salvar
+  e edição posterior. Inspeção em desktop, tablet de 900 px e celular de 390/320 px,
+  sem rolagem horizontal nas regiões examinadas. Evidências em
+  `test-results/pr-5-*.jpg`; operações do teste permaneceram no banco isolado.
+- Quatorze testes novos cobrem ausência de alterações, reversão, espaços,
+  validação, criação, escrita pendente, falha/repetição, confirmação e preservação
+  de rascunhos durante atualização remota. Dois testes existentes de páginas
+  passaram a simular também o transporte Realtime: a primeira rodada revelou
+  conexões reais indevidas a partir de respostas de negócio já simuladas.
+- Rodada final: **331 testes passaram e um integrado opt-in ficou pulado**, sem
+  erros não tratados. TypeScript/build, lint, arquitetura, estilos/e-mail e
+  `git diff --check` aprovados. O lint excluiu `.supabase/`, que contém a cópia
+  operacional local do backend. O artefato de e-mail foi regenerado em LF para
+  seu check, sem diferença de conteúdo versionado.
