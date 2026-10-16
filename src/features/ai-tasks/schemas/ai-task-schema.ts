@@ -18,7 +18,13 @@ export const aiTaskDraftSchema = z.strictObject({
   due_date: z.iso.date().nullable(),
 })
 
+export const aiTaskRejectionReasonSchema = z.enum(['out_of_scope', 'unsupported_action', 'instruction_override'])
+export const aiTaskClarificationReasonSchema = z.enum([
+  'missing_task_details', 'multiple_tasks', 'ambiguous_assignee', 'unknown_assignee', 'ambiguous_date',
+])
+
 export const aiTaskResultSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('rejected'), reason: aiTaskRejectionReasonSchema }),
   z.strictObject({ kind: z.literal('clarification'), message: z.string().min(1).max(600) }),
   z.strictObject({ kind: z.literal('created'), task: z.strictObject({
     id: z.uuid(), title: z.string().min(1).max(160),

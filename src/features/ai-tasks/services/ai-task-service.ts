@@ -7,6 +7,7 @@ import { aiTaskRequestSchema, aiTaskResultSchema, type AiTaskRequest } from '../
 const messages: Record<string, string> = {
   AI_NOT_CONFIGURED: 'A criação com IA ainda precisa ser ativada pela administração do Orbit.',
   AI_RATE_LIMITED: 'Você atingiu o limite de uso da IA. Aguarde e tente novamente mais tarde.',
+  AI_WORKSPACE_RATE_LIMITED: 'Sua empresa atingiu o limite de uso da IA. Aguarde e tente novamente mais tarde ou use Nova tarefa.',
   AI_IN_PROGRESS: 'Este pedido ainda está em processamento. Aguarde alguns instantes e tente novamente com o mesmo texto.',
   AI_PROVIDER_LIMIT: 'A IA está temporariamente indisponível. Tente novamente em instantes.',
   AI_UNAVAILABLE: 'Não foi possível concluir o pedido com a IA. Seu texto foi preservado. Tente novamente.',

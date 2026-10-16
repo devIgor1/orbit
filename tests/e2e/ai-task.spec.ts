@@ -37,3 +37,46 @@ test('pedido por teclado, erro recuperável, esclarecimento e sucesso confirmado
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByText(`Tarefa aberta: ${aiCreated.task.id}`)).toBeVisible()
 })
+
+test('recusa de escopo e limite da empresa preservam o pedido sem criar tarefa', async ({ page }, info) => {
+  let calls = 0
+  await page.route('**/functions/v1/create-ai-task', async route => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204,
+      headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' } })
+    calls++
+    await route.fulfill({ status: calls === 1 ? 200 : 429, headers: { 'Access-Control-Allow-Origin': '*' },
+      json: calls === 1 ? { kind: 'rejected', reason: 'out_of_scope' } : { code: 'AI_WORKSPACE_RATE_LIMITED' } })
+  })
+  await page.goto('/tests/fixtures/ai-task.html')
+  await page.getByRole('button', { name: 'Criar com IA', exact: true }).click()
+  const prompt = page.getByLabel('O que precisa ser feito?')
+  await expect(prompt).toBeFocused()
+  await prompt.fill('Qual é a capital da França?')
+  await page.getByRole('button', { name: 'Criar tarefa com IA' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByText(/A IA do Orbit serve para cadastrar tarefas/)).toBeVisible()
+  await page.getByText(/A IA do Orbit serve para cadastrar tarefas/).scrollIntoViewIfNeeded()
+  await expect(page.getByText(/A IA do Orbit serve para cadastrar tarefas/)).toBeInViewport()
+  await expect(page.getByText('Tarefa criada', { exact: true })).toHaveCount(0)
+  await expect(prompt).toHaveValue('Qual é a capital da França?')
+  await page.screenshot({ path: info.outputPath('ai-task-rejected.png'), fullPage: true })
+  await prompt.fill(aiRequest.prompt)
+  await page.getByRole('button', { name: 'Criar tarefa com IA' }).click()
+  await expect(page.getByRole('alert')).toContainText('Sua empresa atingiu o limite')
+  await page.getByRole('alert').scrollIntoViewIfNeeded()
+  await expect(page.getByRole('alert')).toBeInViewport()
+  await expect(prompt).toHaveValue(aiRequest.prompt)
+  await expect(page.getByText('Tarefa criada', { exact: true })).toHaveCount(0)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: info.outputPath('ai-task-company-quota.png'), fullPage: true })
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  if (info.project.name === 'desktop') {
+    await page.setViewportSize({ width: 820, height: 1180 })
+    await page.getByRole('button', { name: 'Criar com IA', exact: true }).click()
+    await page.getByRole('alert').scrollIntoViewIfNeeded()
+    await expect(page.getByRole('alert')).toBeInViewport()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: info.outputPath('ai-task-company-quota-tablet.png'), fullPage: true })
+  }
+})

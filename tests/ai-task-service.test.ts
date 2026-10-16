@@ -28,4 +28,14 @@ describe('AI task frontend contract', () => {
     backend.invoke.mockResolvedValue({ data: null, error: new TypeError('network') })
     await expect(createAiTask(aiRequest, aiUserId)).rejects.toMatchObject({ kind: 'network', message: expect.stringContaining('mesmo texto') })
   })
+  it('distinguishes the company quota from the individual quota', async () => {
+    backend.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(Response.json(
+      { code: 'AI_WORKSPACE_RATE_LIMITED' }, { status: 429 })) })
+    await expect(createAiTask(aiRequest, aiUserId)).rejects.toMatchObject({ message: expect.stringContaining('Sua empresa') })
+  })
+  it.each([{ kind: 'rejected', reason: 'unknown' }, { kind: 'rejected', reason: 'out_of_scope', message: 'free text' }])(
+    'rejects invalid refusal contracts: %j', async data => {
+      backend.invoke.mockResolvedValue({ data, error: null })
+      await expect(createAiTask(aiRequest, aiUserId)).rejects.toMatchObject({ kind: 'contract' })
+    })
 })

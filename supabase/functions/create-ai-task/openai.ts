@@ -23,11 +23,11 @@ export async function generateTask(input: AiTaskRequest, context: TaskContext, a
         max_output_tokens: 1600, parallel_tool_calls: false, tool_choice: 'required',
         instructions: taskInstructions, tools: taskTools,
         input: [
-          { role: 'developer', content: JSON.stringify({
+          { role: 'user', content: JSON.stringify({ reference_context: {
             currentDate: new Intl.DateTimeFormat('en-CA', { timeZone: input.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now),
             timeZone: input.timeZone, ...context,
-          }) },
-          { role: 'user', content: input.prompt },
+          } }) },
+          { role: 'user', content: JSON.stringify({ task_request: input.prompt }) },
         ],
       }),
     })
@@ -41,10 +41,13 @@ export async function generateTask(input: AiTaskRequest, context: TaskContext, a
   if (calls.length !== 1 || !calls[0].arguments) throw new AiTaskError('AI_INVALID_RESPONSE', 502)
   let args: unknown
   try { args = JSON.parse(calls[0].arguments) } catch { throw new AiTaskError('AI_INVALID_RESPONSE', 502) }
+  if (typeof args === 'object' && args !== null && 'kind' in args) throw new AiTaskError('AI_INVALID_RESPONSE', 502)
   const decision = decisionSchema.safeParse(calls[0].name === 'create_task'
     ? { kind: 'create', task: args }
     : calls[0].name === 'request_clarification' && typeof args === 'object' && args !== null
-      ? { ...args, kind: 'clarification' } : null)
+      ? { ...args, kind: 'clarification' }
+      : calls[0].name === 'reject_request' && typeof args === 'object' && args !== null
+        ? { ...args, kind: 'rejected' } : null)
   if (!decision.success) throw new AiTaskError('AI_INVALID_RESPONSE', 502)
   const assignee = decision.data.kind === 'create' ? decision.data.task.assignee_id : null
   if (assignee !== null && !context.members.some(member => member.id === assignee))

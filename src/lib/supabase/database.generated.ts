@@ -1022,6 +1022,7 @@ export type Database = {
       purge_project: { Args: { target_project: string; target_workspace: string }; Returns: string }
       purge_task: { Args: { target_task: string; target_workspace: string }; Returns: string }
       receive_github_event: { Args: { delivery: string; event: Json; event_name: string }; Returns: boolean }
+      reject_ai_task_request: { Args: { lease: string; reason: string; request_id: string }; Returns: Json }
       remove_workspace_member: {
         Args: {
           expected_pending_tasks: number
