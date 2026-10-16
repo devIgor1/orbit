@@ -11,5 +11,11 @@ export default defineConfig({
       output: { codeSplitting: { groups: [{ name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/ }] } },
     },
   },
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173, strictPort: true,
+    fs: { deny: [
+      '**/.env', '**/.env.*', '**/*.env', '**/*.{crt,pem}', '**/.git/**',
+      '**/.supabase/**', '**/.vercel/**', '**/*credentials*.json',
+    ] },
+  },
 })

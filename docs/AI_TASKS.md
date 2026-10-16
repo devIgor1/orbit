@@ -28,16 +28,46 @@ usuário. **A função não usa `service_role`.** `verify_jwt = false` desliga a
 a verificação legada do gateway: o handler exige Bearer e chama `auth.getUser`
 antes de qualquer consulta de contexto ou chamada à OpenAI.
 
-Para desenvolvimento, use somente o Supabase local e um arquivo ignorado com
-`OPENAI_API_KEY`. Exemplo, após configurar o ambiente local:
+Para desenvolvimento, use somente o Supabase local. Guarde a chave em
+`.supabase/ai-functions.env`, separado das variáveis públicas do Vite:
+
+```dotenv
+OPENAI_API_KEY=sua_chave_aqui
+```
+
+O diretório `.supabase/` é ignorado pelo Git e bloqueado pelo servidor Vite,
+inclusive em imports `?raw`. Arquivos de credenciais locais e outros arquivos
+`.env` também são bloqueados. Não coloque segredos em `public/` nem os importe
+no código. Após salvar ou trocar a chave, reinicie o processo da função:
 
 ```sh
-npx supabase functions serve create-ai-task --env-file .env.local
+npx supabase functions serve create-ai-task --env-file .supabase/ai-functions.env
 ```
 
 Não execute os testes de escrita contra o Supabase hospedado. Os testes de
 provedor usam respostas simuladas; chamadas reais à OpenAI consomem créditos e
 devem usar dados próprios de teste.
+
+### Teste antes do merge
+
+O frontend precisa apontar para o Supabase **local**, com as migrations desta
+branch aplicadas. Subir apenas o Vite usando a conexão hospedada não disponibiliza
+o backend novo. Com Docker funcionando, use `npm run db:start`,
+`npm run db:seed` e o comando de `functions serve` acima. O provisionador grava
+somente a URL/chave pública em `.env.local`; o login de demonstração fica em
+`.demo-credentials.json`, ignorado pelo Git e bloqueado pelo Vite.
+
+Como alternativa, o Supabase CLI 2.121.0 oferece runtime nativo experimental em
+Linux, inclusive no Ubuntu/WSL. Use um diretório local separado, com cópias do
+código dentro dele: o runtime recusa funções cujos links simbólicos escapem da
+raiz. Preserve as migrations, habilite `edge_runtime` na configuração local e
+inicie com `SUPABASE_EXPERIMENTAL_STACK=1` e `supabase start --runtime native`.
+Nunca use `db push --linked` nem publique secrets remotos para este teste.
+
+No ambiente Ubuntu/WSL preparado para esta entrega, Auth, PostgREST, PostgreSQL
+17, Realtime e Edge Runtime são serviços reais. Os 33 testes SQL passaram também
+nesse stack. Uma chamada real à OpenAI criou uma tarefa e o reenvio recuperou o
+mesmo registro; chamadas anônimas e a projeto sem acesso foram recusadas.
 
 ## Contratos e permissões
 
@@ -102,4 +132,5 @@ interrupção com recarga, confira a lista antes de solicitar a mesma tarefa.
 
 Referências: [modelo](https://developers.openai.com/api/docs/models/gpt-6-luna),
 [function calling](https://developers.openai.com/api/docs/guides/function-calling),
-[secrets das funções](https://supabase.com/docs/guides/functions/secrets).
+[secrets das funções](https://supabase.com/docs/guides/functions/secrets),
+[runtime nativo local](https://supabase.com/docs/guides/local-development/docker-and-native-runtimes).

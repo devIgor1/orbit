@@ -2116,3 +2116,23 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
   Produção depende de `OPENAI_API_KEY` nos secrets das Edge Functions, publicação
   pelo pipeline e teste real com projeto autorizado. Merge depende da aprovação
   do usuário.
+
+## 70. Teste local da IA antes do merge — 16/10/2026
+
+- Supabase real configurado no Ubuntu/WSL com CLI 2.121.0 e runtime nativo
+  experimental, pois o Docker Desktop falhou ao iniciar. Todas as migrations
+  foram aplicadas em um banco PostgreSQL 17 local novo, com Auth, PostgREST,
+  Realtime e Edge Runtime reais. Contas e projetos foram provisionados localmente.
+- A chave fica em `.supabase/ai-functions.env`, ignorado pelo Git, separado do
+  frontend e com ACL restrita à conta local e ao sistema. Nenhum segredo foi
+  publicado. Vite passou a negar arquivos de ambiente, diretórios privados e
+  credenciais também por HTTP/imports raw; cobertura em Playwright.
+- Os 33 testes SQL de IA passaram no stack real. Login e consulta retornaram 200;
+  função anônima retornou 401 e projeto inacessível 403. A chamada real com
+  `gpt-6-luna` criou uma tarefa local, confirmou autoria/status/valores no banco e
+  recuperou o mesmo registro ao repetir a solicitação. Produção não foi alterada.
+- Operação local e reinício da função após trocar a chave documentados em
+  `docs/AI_TASKS.md`. A aprovação de merge continua pendente do usuário.
+- Lint, estilos/e-mail, arquitetura, TypeScript/build e os dois cenários
+  Playwright de bloqueio de segredos aprovados. O navegador confirmou login,
+  tarefa persistida visível e abertura do formulário de IA sem falhas de rede.
