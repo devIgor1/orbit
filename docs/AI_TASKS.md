@@ -184,6 +184,17 @@ palavras proibidas como barreira de segurança.
   interceptadas, teclado, recusa e limite da empresa em desktop/celular; não consome
   créditos. Testes simulados verificam o contrato e a aplicação das decisões, não
   medem a precisão de classificação do modelo real.
+- `tests/task-title-safety.test.tsx` e `tests/ai-task-dialog.test.tsx`: títulos com
+  `<b>` e `<img onerror=…>` permanecem texto no quadro, lista, detalhe, notificação
+  e confirmação. A busca de tarefas filtra os mesmos componentes do quadro/lista.
+  Esta versão não implementa exportação CSV/PDF. Guardar tags como texto no banco
+  não implica interpretá-las como HTML; novos destinos devem preservar essa regra.
+
+Para comparar relatos de testes, registre a URL do frontend, a URL do backend e a
+versão publicada da função, sem tokens. Um preview do frontend pode apontar para
+um backend de outra versão. No novo backend, esclarecimentos de solicitações novas
+usam mensagens fixas; resultados antigos do ledger podem conter mensagens geradas
+antes desta mudança. Não confunda reenvio idempotente com uma nova avaliação.
 
 Referências: [modelo](https://developers.openai.com/api/docs/models/gpt-6-luna),
 [function calling](https://developers.openai.com/api/docs/guides/function-calling),

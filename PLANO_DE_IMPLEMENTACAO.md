@@ -2167,3 +2167,8 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
   pode errar e uma primeira recusa ainda consome tokens. Os testes de modelo usam
   respostas simuladas, sem consumo real da OpenAI; não medem sua precisão. Produção
   não foi alterada. Entrega em branch/PR, sem merge até aprovação do usuário.
+- Regressões adicionais de apresentação verificam títulos com `<b>` e
+  `<img onerror=…>` na confirmação, quadro, lista, detalhe/formulário e notificações.
+  Os cinco cenários novos passaram junto aos testes do diálogo/adaptador (14 no
+  total), sem chamadas à OpenAI ou escrita em banco. A revisão da busca confirmou
+  o uso do quadro/lista; exportação CSV/PDF não está implementada nesta versão.
