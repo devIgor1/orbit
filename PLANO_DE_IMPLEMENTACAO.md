@@ -2085,3 +2085,54 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
   estilos/e-mail, arquitetura, TypeScript/build, tipagem dos scripts, actionlint
   e diff check aprovados. Consulta real dos checks do PR #8 confirmada; execução
   do novo check no Actions e ativação da proteção serão registradas no PR.
+
+## 69. Criação de tarefas com IA — 16/10/2026
+
+- Na página do projeto, **Criar com IA** recebe um pedido em português e cria uma
+  tarefa usando `gpt-6-luna`. Pedidos ambíguos retornam uma pergunta para completar
+  o texto. Sucesso permite abrir a tarefa no painel existente; falhas preservam
+  o texto. Componentes oficiais, teclado e estilos centralizados foram mantidos.
+- `create-ai-task` usa a Responses API com ferramentas estritas e chave somente
+  no backend. Valida a sessão pelo Supabase Auth, consulta contexto com o JWT do
+  usuário e aceita apenas uma tarefa no projeto selecionado. Autor, workspace e
+  permissões nunca vêm do modelo. A gravação usa SECURITY INVOKER, RLS e triggers
+  existentes, inclusive após revogação de acesso durante a geração.
+- As duas migrations adicionam um ledger privado para confirmação atômica,
+  reenvios idempotentes e controle de concorrência. Limites por usuário: 10
+  tentativas em 10 minutos e 100 em 24 horas; timeout de 30 segundos e saída de
+  até 1.600 tokens. Prompts brutos, credenciais e erros do provedor não são salvos
+  nem registrados em logs. Tipos foram regenerados a partir do schema aplicado.
+- Validação local: 443 testes aprovados e um opt-in pulado, incluindo 40 testes
+  novos do fluxo. Lint, estilos/e-mail, arquitetura, tipagem frontend e Deno,
+  tipagem dos testes e build aprovados. Uma chave canário do backend não apareceu
+  no bundle. Playwright validou teclado, erro, reenvio, esclarecimento e sucesso
+  em desktop e celular; o layout tablet também foi verificado.
+- Os 33 testes SQL de IA passaram em banco PostgreSQL 18 isolado; duas conexões
+  simultâneas confirmaram uma única reserva e um único cadastro/histórico. Docker
+  estava indisponível: o teste nativo usa stubs locais de Realtime e não valida
+  o transporte de notificações nem substitui o teste integrado no Supabase.
+- Ativação, dados enviados, limites e recuperação estão em `docs/AI_TASKS.md`.
+  Nenhum segredo real foi adicionado e nenhuma chamada real à OpenAI foi feita.
+  Produção depende de `OPENAI_API_KEY` nos secrets das Edge Functions, publicação
+  pelo pipeline e teste real com projeto autorizado. Merge depende da aprovação
+  do usuário.
+
+## 70. Teste local da IA antes do merge — 16/10/2026
+
+- Supabase real configurado no Ubuntu/WSL com CLI 2.121.0 e runtime nativo
+  experimental, pois o Docker Desktop falhou ao iniciar. Todas as migrations
+  foram aplicadas em um banco PostgreSQL 17 local novo, com Auth, PostgREST,
+  Realtime e Edge Runtime reais. Contas e projetos foram provisionados localmente.
+- A chave fica em `.supabase/ai-functions.env`, ignorado pelo Git, separado do
+  frontend e com ACL restrita à conta local e ao sistema. Nenhum segredo foi
+  publicado. Vite passou a negar arquivos de ambiente, diretórios privados e
+  credenciais também por HTTP/imports raw; cobertura em Playwright.
+- Os 33 testes SQL de IA passaram no stack real. Login e consulta retornaram 200;
+  função anônima retornou 401 e projeto inacessível 403. A chamada real com
+  `gpt-6-luna` criou uma tarefa local, confirmou autoria/status/valores no banco e
+  recuperou o mesmo registro ao repetir a solicitação. Produção não foi alterada.
+- Operação local e reinício da função após trocar a chave documentados em
+  `docs/AI_TASKS.md`. A aprovação de merge continua pendente do usuário.
+- Lint, estilos/e-mail, arquitetura, TypeScript/build e os dois cenários
+  Playwright de bloqueio de segredos aprovados. O navegador confirmou login,
+  tarefa persistida visível e abertura do formulário de IA sem falhas de rede.

@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc -b --pretty false",
+    "check:ai": "npx --yes deno@2.9.6 check --config supabase/functions/create-ai-task/deno.json supabase/functions/create-ai-task/index.ts",
     "lint": "eslint .",
     "check:styles": "node scripts/check-styles.mjs && npm run check:emails",
     "emails:build": "node scripts/build-invitation-email.mjs",

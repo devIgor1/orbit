@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Archive, ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArrowLeft, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
 import { ConnectionState, EmptyState, ErrorState, LoadingState } from '@/components/shared/query-state'
@@ -20,6 +20,7 @@ import { TaskList } from '@/features/tasks/components/task-list'
 import { TaskDialog } from '@/features/tasks/components/task-dialog'
 import { TaskSheet } from '@/features/tasks/components/task-sheet'
 import { TasksToolbar } from '@/features/tasks/components/tasks-toolbar'
+import { AiTaskDialog } from '@/features/ai-tasks/components/ai-task-dialog'
 
 export function ProjectPage() {
   const { projectId = '' } = useParams()
@@ -29,6 +30,7 @@ export function ProjectPage() {
   const [archiving, setArchiving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [creatingWithAi, setCreatingWithAi] = useState(false)
   const [initialStatus, setInitialStatus] = useState<Task['status']>('todo')
   const selectedId = params.get('task')
   const project = useProject(projectId)
@@ -60,6 +62,7 @@ export function ProjectPage() {
     <Link to="/projects" className="project-back-link"><ArrowLeft aria-hidden="true" />Todos os projetos</Link>
     <PageHeader eyebrow="CADA ETAPA CONTA" title={project.isSuccess && !project.isError ? project.data.title : 'Detalhes do projeto'} description={project.isSuccess && !project.isError ? project.data.description || 'Organize os próximos passos e crie em equipe.' : 'Ideias em movimento. Equipe em sintonia.'} actions={<div className="page-actions">
       {canManage && project.isSuccess && <><Button variant="outline" size="icon" aria-label="Editar projeto" onClick={() => setEditing(true)}><Pencil aria-hidden="true" /></Button>{project.data.status !== 'archived' && <Button variant="outline" size="icon" aria-label="Arquivar projeto" onClick={() => setArchiving(true)}><Archive aria-hidden="true" /></Button>}<Button variant="outline" size="icon" aria-label="Excluir projeto" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" /></Button></>}
+      <Button variant="outline" disabled={!ready} onClick={() => setCreatingWithAi(true)}><Sparkles aria-hidden="true" />Criar com IA</Button>
       <Button disabled={!ready} onClick={() => create()}><Plus aria-hidden="true" />Nova tarefa</Button>
     </div>} />
     {project.isSuccess && !project.isError && tasks.isSuccess && !tasks.isError && <ProjectSummary project={project.data} tasks={tasks.data} />}
@@ -70,6 +73,8 @@ export function ProjectPage() {
       {updateTask.isError && <ErrorState error={updateTask.error} onRetry={() => updateTask.reset()} />}
       {filteredTasks.length === 0 && (search || priority !== 'all') ? <EmptyState title="Nenhuma tarefa encontrada" description="Experimente uma nova busca ou ajuste a prioridade." /> : view === 'board' ? <TaskBoard tasks={filteredTasks} members={team.data} isPending={updateTask.isPending} onOpen={task => setSelectedId(task.id)} onCreate={create} onStatusChange={changeStatus} /> : filteredTasks.length === 0 ? <EmptyState title="Seu próximo passo começa aqui" description="Adicione a primeira tarefa e dê vida ao seu projeto." action={<Button onClick={() => create()}><Plus aria-hidden="true" />Criar tarefa</Button>} /> : <TaskList tasks={filteredTasks} members={team.data} isPending={updateTask.isPending} onOpen={task => setSelectedId(task.id)} onStatusChange={changeStatus} />}
       <TaskDialog open={creating} projectId={projectId} members={team.data} initialStatus={initialStatus} onOpenChange={setCreating} />
+      {workspace.isSuccess && project.isSuccess && <AiTaskDialog key={`${workspace.data.profile.id}:${workspace.data.workspace.id}:${projectId}`}
+        open={creatingWithAi} projectId={projectId} projectTitle={project.data.title} onOpenChange={setCreatingWithAi} onOpenTask={setSelectedId} />}
       {selected && <TaskSheet key={selected.id} task={selected} members={team.data} canDelete={canManage} onClose={() => setSelectedId(null)} />}
     </>}
     {project.isSuccess && !project.isError && <><ProjectDialog open={editing} onOpenChange={setEditing} project={project.data} /><ArchiveProjectDialog open={archiving} onOpenChange={setArchiving} project={project.data} /><DeleteProjectDialog open={deleting} onOpenChange={setDeleting} project={project.data} taskCount={tasks.data?.length ?? 0} /></>}

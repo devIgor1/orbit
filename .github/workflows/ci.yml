@@ -25,6 +25,7 @@ jobs:
       - run: npm run lint
       - run: npm run check:styles
       - run: npm run check:architecture
+      - run: npm run check:ai
       - run: npm test -- --maxWorkers=2
       - run: npm run build
 

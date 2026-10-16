@@ -60,3 +60,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.github-worker]
 verify_jwt = false
+
+# The handler verifies the user's token with Auth before context/model/database calls.
+[functions.create-ai-task]
+verify_jwt = false

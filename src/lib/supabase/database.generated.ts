@@ -332,6 +332,13 @@ export type Database = {
             referencedColumns: ['id']
           },
           {
+            foreignKeyName: 'projects_deleted_by_fkey'
+            columns: ['deleted_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
             foreignKeyName: 'projects_workspace_id_created_by_fkey'
             columns: ['workspace_id', 'created_by']
             isOneToOne: false
@@ -540,6 +547,13 @@ export type Database = {
           {
             foreignKeyName: 'tasks_created_by_fkey'
             columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tasks_deleted_by_fkey'
+            columns: ['deleted_by']
             isOneToOne: false
             referencedRelation: 'profiles'
             referencedColumns: ['id']
@@ -779,7 +793,15 @@ export type Database = {
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'workspaces_deleted_by_fkey'
+            columns: ['deleted_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {
@@ -849,6 +871,10 @@ export type Database = {
       }
       claim_github_jobs: { Args: Record<PropertyKey, never>; Returns: Json }
       clear_project_github_repository: { Args: { target_project: string; target_workspace: string }; Returns: string }
+      complete_ai_task_request: {
+        Args: { clarification?: string; draft: Json; lease: string; request_id: string }
+        Returns: Json
+      }
       consume_github_account_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       consume_github_connection: { Args: { requester: string; state_hash: string }; Returns: Json }
       consume_github_discovery: { Args: { requester: string; state_hash: string }; Returns: string }
@@ -875,9 +901,15 @@ export type Database = {
       delete_task: { Args: { target_task: string; target_workspace: string }; Returns: string }
       deleted_companies: {
         Args: Record<PropertyKey, never>
-        Returns: { deleted_at: string; id: string; name: string; purge_at: string }[]
+        Returns: {
+          deleted_at: string
+          id: string
+          name: string
+          purge_at: string
+        }[]
       }
       disconnect_github_repository: { Args: { target_repository: string; target_workspace: string }; Returns: string }
+      fail_ai_task_request: { Args: { lease: string; request_id: string }; Returns: boolean }
       finish_github_account_connection: {
         Args: { repositories: Json; requester: string; target_workspace: string }
         Returns: number
@@ -977,6 +1009,10 @@ export type Database = {
       }
       notification_inbox: {
         Args: { before_id?: string; before_time?: string; target_workspace: string; unread_only?: boolean }
+        Returns: Json
+      }
+      prepare_ai_task_request: {
+        Args: { prompt_hash: string; request_id: string; target_project: string; target_workspace: string }
         Returns: Json
       }
       prepare_invitation_email: {
