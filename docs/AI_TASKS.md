@@ -3,16 +3,18 @@
 Na página de um projeto, **Criar com IA** abre um formulário para descrever uma
 tarefa. O botão **Criar tarefa com IA** autoriza sua criação imediata. O servidor
 usa `gpt-6-luna` na Responses API e grava somente depois de validar a resposta.
-Pedidos vagos ou fora do escopo retornam uma pergunta; o usuário complementa o
-texto e envia novamente. A tarefa confirmada pode ser aberta no painel existente.
+Pedidos vagos recebem uma orientação fixa para completar os dados. Pedidos fora
+do escopo são recusados sem criar tarefa. O texto permanece no formulário para
+revisão. A tarefa confirmada pode ser aberta no painel existente.
 
 Esta entrega integra a IA dentro do Orbit. Não publica um MCP nem conecta contas
 externas do ChatGPT. O modelo é fixado no backend, sem seleção pelo navegador.
 
 ## Configuração
 
-1. Aplique as migrations `202610160002_ai_task_requests.sql` e
-   `202610160003_ai_task_creation.sql` após as migrations existentes.
+1. Aplique as migrations em ordem, incluindo `202610160002_ai_task_requests.sql`,
+   `202610160003_ai_task_creation.sql`, `202610160004_ai_task_workspace_quota.sql`
+   e `202610160005_ai_task_rejections.sql`.
 2. No projeto Supabase, em **Edge Functions > Secrets**, cadastre
    `OPENAI_API_KEY` com uma chave do projeto OpenAI autorizado a usar `gpt-6-luna`.
    Não coloque o valor no Git, em variáveis `VITE_*`, no frontend, em prompts,
@@ -80,7 +82,12 @@ mesmo registro; chamadas anônimas e a projeto sem acesso foram recusadas.
   nomes/IDs de membros. Não recebe tokens, chaves, e-mails, comentários nem o
   histórico do projeto. `store: false` desabilita o armazenamento da resposta
   pela Responses API; não representa uma promessa de retenção zero do provedor.
-- Somente duas ferramentas são expostas: `create_task` e `request_clarification`.
+- As instruções privilegiadas são fixas. `reference_context` (projeto, membros e
+  data) e `task_request` são serializados como dados em mensagens `user`; nenhum
+  nome, título ou prompt é interpolado em mensagens `developer` ou `instructions`.
+- Somente três ferramentas são expostas: `create_task`, `request_clarification`
+  e `reject_request`. Recusas e esclarecimentos aceitam apenas motivos enumerados;
+  as mensagens vêm do código do Orbit, sem resposta livre escrita pelo modelo.
   Respostas incompletas, múltiplas chamadas, ferramentas desconhecidas, datas
   inválidas ou responsáveis fora do contexto são recusados. Zod valida de novo
   os argumentos, mesmo com schema estrito na OpenAI.
@@ -98,10 +105,28 @@ mesmo registro; chamadas anônimas e a projeto sem acesso foram recusadas.
 
 ## Uso, reenvio e recuperação
 
-O limite inicial é de **10 tentativas em 10 minutos e 100 em 24 horas por usuário**,
-compartilhado entre projetos e empresas. A cota é reservada antes da chamada ao
-modelo e conta tentativas malsucedidas. O timeout do provedor é 30 segundos, o
-limite de saída é 1.600 tokens e `reasoning.effort` é `none`.
+Os limites são cumulativos, em janelas móveis:
+
+| Escopo | Em 10 minutos | Em 24 horas |
+| --- | ---: | ---: |
+| Usuário, somando suas empresas e projetos | 10 | 100 |
+| Empresa (`workspace`), somando membros e projetos | 50 | 500 |
+
+A cota é reservada no PostgreSQL antes da chamada ao modelo. Locks transacionais
+por usuário e depois por empresa impedem ultrapassar a cota com chamadas simultâneas.
+Falhas, recusas e esclarecimentos contam como tentativas; chamadas bloqueadas antes
+da reserva não contam nem chegam à OpenAI. Excesso da empresa retorna HTTP 429 com
+`AI_WORKSPACE_RATE_LIMITED`. O cadastro manual continua disponível.
+
+Os valores são fixos na função `prepare_ai_task_request`; alterações devem passar
+por uma nova migration e testes. São limites de tentativas, não de dólares. O
+timeout do provedor é 30 segundos, o limite de saída é 1.600 tokens e
+`reasoning.effort` é `none`.
+
+Na migração, tentativas antigas continuam contando para o usuário, mas ficam com
+`workspace_id` nulo porque a empresa não era registrada. A cota por empresa começa
+a contabilizar as novas reservas; após 24 horas não há tentativas anteriores na
+janela. Nenhum histórico recebe uma empresa presumida.
 
 O ledger privado armazena identidade, projeto, hash do pedido/fuso, controle da
 tentativa e resultado confirmado. Não armazena o pedido original ou a resposta
@@ -112,13 +137,32 @@ Repetir o mesmo pedido no formulário reutiliza `requestId`; o hash impede troca
 o texto com a mesma chave. Chamadas concorrentes ficam serializadas. Uma concessão
 de 90 segundos permite recuperar execução interrompida; respostas atrasadas de
 uma tentativa anterior não podem gravar. Se o HTTP cair depois do commit, repetir
-o pedido recupera a tarefa existente sem chamar o modelo novamente. Acesso atual
-é revalidado também nessa recuperação.
+o pedido recupera o resultado existente (tarefa, esclarecimento ou recusa) sem
+chamar o modelo ou consumir nova cota, mesmo se o limite foi atingido depois.
+Acesso atual é revalidado também nessa recuperação.
 
 Editar o pedido ou escolher **Criar outra** inicia uma solicitação diferente.
 A proteção é por solicitação, não uma deduplicação semântica de tarefas. O ID fica
 no estado de interação: recarregar a página inicia outro pedido. Depois de uma
 interrupção com recarga, confira a lista antes de solicitar a mesma tarefa.
+
+## Escopo e limites das proteções
+
+Perguntas gerais e pedidos para executar o trabalho são `out_of_scope`; consultas,
+alterações, exclusões e outro projeto são `unsupported_action`; tentativas de mudar
+regras, assumir outro papel ou obter segredos são `instruction_override`. Pedidos
+mistos também devem ser recusados. Falta de detalhes, várias tarefas ou ambiguidade
+de responsável/data recebem esclarecimento com motivo fixo.
+
+A classificação semântica depende do modelo e pode errar. Separar instruções dos
+dados reduz ataques de prompt, mas não os elimina. Uma primeira tentativa fora do
+escopo ainda consome tokens para ser classificada. As cotas, os tamanhos máximos e
+as permissões são controles determinísticos do backend e independem dessa decisão.
+
+O modelo não recebe ferramentas para executar SQL, consultar arbitrariamente o
+banco ou editar/excluir registros. A RPC usa SQL fixo com parâmetros e RLS. Termos
+como SQL injection são permitidos em uma tarefa legítima; não se usa uma lista de
+palavras proibidas como barreira de segurança.
 
 ## Verificação
 
@@ -126,9 +170,31 @@ interrupção com recarga, confira a lista antes de solicitar a mesma tarefa.
 - `npm test`: contratos, autenticação, limites, erros do modelo, preservação do
   formulário, invalidação do cache, reenvios e envios duplicados.
 - `npm run test:db`: inclui `supabase/tests/ai_tasks.test.sql`, com RLS adicional,
-  isolamento, revogação, autoria, datas, histórico, quota e idempotência.
+  isolamento, revogação, autoria, datas, histórico, quota e idempotência. Os novos
+  `ai_task_rejections.test.sql` e `ai_task_workspace_quota.test.sql` cobrem recusas,
+  consumo após falha, janelas, isolamento entre empresas e agregação entre membros.
+- `npm run test:ai:concurrency`: dois usuários em projetos diferentes disputam a
+  última vaga das cotas de 10 minutos e 24 horas. Padrão: Docker local
+  `supabase_db_orbit`. Para PostgreSQL nativo local, configure `ORBIT_AI_TEST_DB_PORT`
+  e opcionalmente `ORBIT_AI_TEST_PSQL`; credenciais locais via `PGPASSWORD`/pgpass,
+  nunca no repositório. O host é sempre `127.0.0.1`.
+- O CI executa os três arquivos SQL de IA e o teste de concorrência em Supabase
+  local, sem secrets hospedados e sem chamadas à OpenAI.
 - `tests/e2e/ai-task.spec.ts`: fixture isolada da interface com respostas
-  interceptadas, teclado e layouts desktop/celular; não consome créditos.
+  interceptadas, teclado, recusa e limite da empresa em desktop/celular; não consome
+  créditos. Testes simulados verificam o contrato e a aplicação das decisões, não
+  medem a precisão de classificação do modelo real.
+- `tests/task-title-safety.test.tsx` e `tests/ai-task-dialog.test.tsx`: títulos com
+  `<b>` e `<img onerror=…>` permanecem texto no quadro, lista, detalhe, notificação
+  e confirmação. A busca de tarefas filtra os mesmos componentes do quadro/lista.
+  Esta versão não implementa exportação CSV/PDF. Guardar tags como texto no banco
+  não implica interpretá-las como HTML; novos destinos devem preservar essa regra.
+
+Para comparar relatos de testes, registre a URL do frontend, a URL do backend e a
+versão publicada da função, sem tokens. Um preview do frontend pode apontar para
+um backend de outra versão. No novo backend, esclarecimentos de solicitações novas
+usam mensagens fixas; resultados antigos do ledger podem conter mensagens geradas
+antes desta mudança. Não confunda reenvio idempotente com uma nova avaliação.
 
 Referências: [modelo](https://developers.openai.com/api/docs/models/gpt-6-luna),
 [function calling](https://developers.openai.com/api/docs/guides/function-calling),

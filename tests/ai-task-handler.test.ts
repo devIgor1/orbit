@@ -93,8 +93,27 @@ describe('AI task boundary', () => {
   })
   it('returns clarification without claiming a task exists', async () => {
     const clarification = { kind: 'clarification' as const, message: 'Qual alteração deve ser feita?' }
-    dependencies.generate.mockResolvedValue(clarification)
+    dependencies.generate.mockResolvedValue({ kind: 'clarification', reason: 'missing_task_details' })
     session.complete.mockResolvedValue(clarification)
     expect(await (await handler(request())).json()).toEqual(clarification)
+  })
+  it('blocks the company quota before inference and preserves the specific error', async () => {
+    session.prepare.mockRejectedValue(new AiTaskError('AI_WORKSPACE_RATE_LIMITED', 429))
+    const response = await handler(request())
+    expect(response.status).toBe(429)
+    expect(await response.json()).toEqual({ code: 'AI_WORKSPACE_RATE_LIMITED' })
+    expect(dependencies.generate).not.toHaveBeenCalled()
+    expect(session.complete).not.toHaveBeenCalled()
+  })
+  it('persists and replays a refusal without generating another response', async () => {
+    const rejected = { kind: 'rejected' as const, reason: 'out_of_scope' as const }
+    dependencies.generate.mockResolvedValue(rejected)
+    session.complete.mockResolvedValue(rejected)
+    expect(await (await handler(request())).json()).toEqual(rejected)
+    expect(session.complete).toHaveBeenCalledWith(aiRequest, aiLease, rejected)
+    session.prepare.mockResolvedValue({ result: rejected })
+    expect(await (await handler(request())).json()).toEqual(rejected)
+    expect(dependencies.generate).toHaveBeenCalledTimes(1)
+    expect(session.complete).toHaveBeenCalledTimes(1)
   })
 })

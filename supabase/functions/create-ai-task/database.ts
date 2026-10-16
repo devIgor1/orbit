@@ -3,6 +3,7 @@ import type { z } from 'zod'
 import type { Database } from '../../../src/lib/supabase/database.generated.ts'
 import { aiTaskResultSchema, type AiTaskRequest } from '../../../src/features/ai-tasks/schemas/ai-task-schema.ts'
 import { contextSchema, reservationSchema, type AiTaskSession } from './contracts.ts'
+import { aiTaskClarificationMessages } from '../../../src/features/ai-tasks/ai-task-messages.ts'
 import { AiTaskError, databaseError } from './errors.ts'
 
 export async function authenticateTaskSession(token: string, url: string, publishableKey: string): Promise<AiTaskSession> {
@@ -41,10 +42,12 @@ export async function authenticateTaskSession(token: string, url: string, publis
       return parsed.data
     },
     async complete(input, lease, decision) {
-      const { data, error } = await db.rpc('complete_ai_task_request', {
+      const { data, error } = decision.kind === 'rejected' ? await db.rpc('reject_ai_task_request', {
+        request_id: input.requestId, lease, reason: decision.reason,
+      }) : await db.rpc('complete_ai_task_request', {
         request_id: input.requestId, lease,
         draft: decision.kind === 'create' ? decision.task : null,
-        ...(decision.kind === 'clarification' ? { clarification: decision.message } : {}),
+        ...(decision.kind === 'clarification' ? { clarification: aiTaskClarificationMessages[decision.reason] } : {}),
       })
       if (error) throw databaseError(error)
       const parsed = aiTaskResultSchema.safeParse(data)

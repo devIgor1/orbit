@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { aiTaskDraftSchema, aiTaskResultSchema, type AiTaskRequest, type AiTaskResult } from '../../../src/features/ai-tasks/schemas/ai-task-schema.ts'
+import { aiTaskClarificationReasonSchema, aiTaskDraftSchema, aiTaskRejectionReasonSchema, aiTaskResultSchema, type AiTaskRequest, type AiTaskResult } from '../../../src/features/ai-tasks/schemas/ai-task-schema.ts'
 
 export const contextSchema = z.object({
   project: z.object({ id: z.uuid(), workspace_id: z.uuid(), title: z.string() }),
@@ -11,7 +11,8 @@ export const reservationSchema = z.union([
 ])
 export const decisionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('create'), task: aiTaskDraftSchema }),
-  z.strictObject({ kind: z.literal('clarification'), message: z.string().trim().min(1).max(600) }),
+  z.strictObject({ kind: z.literal('clarification'), reason: aiTaskClarificationReasonSchema }),
+  z.strictObject({ kind: z.literal('rejected'), reason: aiTaskRejectionReasonSchema }),
 ])
 export type TaskContext = z.infer<typeof contextSchema>
 export type TaskDecision = z.infer<typeof decisionSchema>

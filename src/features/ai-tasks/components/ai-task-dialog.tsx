@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ErrorState } from '@/components/shared/query-state'
 import { aiTaskRequestSchema } from '../schemas/ai-task-schema'
 import { useAiTask } from '../hooks/use-ai-task'
+import { aiTaskRejectionMessages } from '../ai-task-messages'
 
 const promptSchema = aiTaskRequestSchema.pick({ prompt: true })
 type Props = {
@@ -57,6 +58,7 @@ export function AiTaskDialog({ open, projectId, projectTitle, onOpenChange, onOp
         {form.formState.errors.prompt && <p className="form-error" id={`${id}-error`}>Descreva a tarefa usando entre 10 e 3.000 caracteres.</p>}
       </div>
       {result?.kind === 'clarification' && <div className="ai-task-clarification" role="status"><p>{result.message}</p><p>Complete o texto acima e envie novamente.</p></div>}
+      {result?.kind === 'rejected' && <div className="ai-task-clarification" role="status"><p>{aiTaskRejectionMessages[result.reason]}</p><p>Revise o texto acima para solicitar o cadastro de uma tarefa.</p></div>}
       {mutation.isError && <ErrorState error={mutation.error} />}
       <div className="form-actions">
         <Button type="button" variant="outline" disabled={pending} onClick={() => changeOpen(false)}>Fechar</Button>

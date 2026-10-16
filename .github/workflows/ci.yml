@@ -29,9 +29,26 @@ jobs:
       - run: npm test -- --maxWorkers=2
       - run: npm run build
 
+  ai-database:
+    name: Permissões e cotas de IA
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Iniciar Supabase local
+        run: npx --yes supabase@2.121.0 start -x studio,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
+      - name: Testar permissões, recusas e cotas
+        run: npx --yes supabase@2.121.0 test db supabase/tests/ai_tasks.test.sql supabase/tests/ai_task_rejections.test.sql supabase/tests/ai_task_workspace_quota.test.sql
+      - run: npm run test:ai:concurrency
+
   pr-validation:
     name: Validações do PR
-    needs: [quality]
+    needs: [quality, ai-database]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15

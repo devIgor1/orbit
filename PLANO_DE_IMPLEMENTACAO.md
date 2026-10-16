@@ -2136,3 +2136,39 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
 - Lint, estilos/e-mail, arquitetura, TypeScript/build e os dois cenários
   Playwright de bloqueio de segredos aprovados. O navegador confirmou login,
   tarefa persistida visível e abertura do formulário de IA sem falhas de rede.
+
+## 71. Escopo da IA e cotas por empresa — 16/10/2026
+
+- Instruções fixas ficam separadas do contexto e do pedido, serializados como
+  dados em mensagens `user`. Nomes de projetos/membros não entram no nível
+  `developer`. A ferramenta de recusa retorna apenas um motivo enumerado;
+  esclarecimentos também usam motivos fixos com mensagens definidas no Orbit.
+- Pedidos gerais, operações fora da criação no projeto e tentativas de alterar
+  as regras têm recusa explícita, sem tarefa, histórico ou invalidação do cache.
+  O formulário preserva o texto. Reenvios confirmados recuperam o resultado sem
+  outra chamada à IA; alterações do texto geram uma nova solicitação.
+- Cotas por empresa: 50 tentativas em 10 minutos e 500 em 24 horas, agregando
+  usuários e projetos. Permanecem 10/10 minutos e 100/24 horas por usuário.
+  PostgreSQL reserva sob locks transacionais antes da inferência e conta falhas,
+  esclarecimentos e recusas. Excluir uma empresa não apaga o consumo individual.
+  Dados antigos sem empresa continuam na cota individual; não há backfill inferido.
+- Migrations incrementais preservam a criação com SECURITY INVOKER/RLS e adicionam
+  uma RPC de recusa limitada ao ledger privado, com autoria, vínculo e lease
+  revalidados. Tipos regenerados a partir do banco real com migrations aplicadas.
+- Validação: 463 testes Vitest aprovados e um opt-in pulado; 440 testes SQL no
+  Supabase nativo local (PostgreSQL 17, Auth e PostgREST), com seeds reais. Duas
+  conexões de usuários/projetos diferentes disputaram a última vaga de cada janela:
+  uma passou e outra recebeu o limite da empresa. Migrations reaplicadas do zero.
+- Quatro cenários Playwright passaram em desktop/celular, com teclado e inspeção
+  adicional de tablet. Lint, estilos/e-mail, arquitetura, tipagem frontend/Deno e
+  dos testes, build, actionlint e diff check aprovados. CI passa a executar os três
+  testes SQL de IA e a concorrência, com resultado incluído na validação do PR.
+- `docs/AI_TASKS.md` registra configuração, cotas e limites: classificação semântica
+  pode errar e uma primeira recusa ainda consome tokens. Os testes de modelo usam
+  respostas simuladas, sem consumo real da OpenAI; não medem sua precisão. Produção
+  não foi alterada. Entrega em branch/PR, sem merge até aprovação do usuário.
+- Regressões adicionais de apresentação verificam títulos com `<b>` e
+  `<img onerror=…>` na confirmação, quadro, lista, detalhe/formulário e notificações.
+  Os cinco cenários novos passaram junto aos testes do diálogo/adaptador (14 no
+  total), sem chamadas à OpenAI ou escrita em banco. A revisão da busca confirmou
+  o uso do quadro/lista; exportação CSV/PDF não está implementada nesta versão.

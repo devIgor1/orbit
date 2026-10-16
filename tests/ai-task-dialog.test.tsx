@@ -6,6 +6,7 @@ import * as service from '@/features/ai-tasks/services/ai-task-service'
 import { AppError } from '@/lib/errors/app-error'
 import { createTestClient, TestProviders } from './test-providers'
 import { aiCreated, aiRequest, aiUserId } from './fixtures/ai-task'
+import { htmlTaskTitle } from './fixtures/task-html'
 
 vi.mock('@/features/ai-tasks/services/ai-task-service', () => ({ createAiTask: vi.fn() }))
 vi.mock('@/features/workspace/use-query-scope', () => ({ useQueryScope: () => ({
@@ -24,6 +25,14 @@ function setup() {
   return { user: userEvent.setup(), onOpenChange, onOpenTask, invalidation }
 }
 describe('AI task composer', () => {
+  it('renders a saved title containing HTML as literal text in the confirmation', async () => {
+    createTask.mockResolvedValue({ ...aiCreated, task: { ...aiCreated.task, title: htmlTaskTitle } })
+    const { user } = setup()
+    await user.type(screen.getByLabelText('O que precisa ser feito?'), aiRequest.prompt)
+    await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
+    expect(await screen.findByRole('heading', { name: htmlTaskTitle })).toHaveTextContent(htmlTaskTitle)
+    expect(screen.getByRole('dialog').querySelector('b, img[src="x"], script, [onerror]')).toBeNull()
+  })
   it('preserves text and request ID on failure; invalidates only after confirmed creation', async () => {
     createTask.mockRejectedValueOnce(new AppError('network', 'Sem conexão')).mockResolvedValueOnce(aiCreated)
     const { user, invalidation, onOpenTask } = setup()
@@ -64,6 +73,24 @@ describe('AI task composer', () => {
     expect(onOpenChange).not.toHaveBeenCalled()
     resolve(aiCreated)
     await screen.findByText('Tarefa criada')
+  })
+  it('shows a fixed refusal, preserves input, and refreshes no business data', async () => {
+    createTask.mockResolvedValue({ kind: 'rejected', reason: 'out_of_scope' })
+    const { user, invalidation } = setup()
+    const prompt = 'Qual é a capital da França?'
+    await user.type(screen.getByLabelText('O que precisa ser feito?'), prompt)
+    await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
+    expect(await screen.findByText(/A IA do Orbit serve para cadastrar tarefas/)).toBeVisible()
+    expect(screen.queryByText('Tarefa criada')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('O que precisa ser feito?')).toHaveValue(prompt)
+    expect(invalidation).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
+    await waitFor(() => expect(createTask).toHaveBeenCalledTimes(2))
+    expect(createTask.mock.calls[0][0].requestId).toBe(createTask.mock.calls[1][0].requestId)
+    await user.type(screen.getByLabelText('O que precisa ser feito?'), ' Alterado.')
+    await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
+    await waitFor(() => expect(createTask).toHaveBeenCalledTimes(3))
+    expect(createTask.mock.calls[2][0].requestId).not.toBe(createTask.mock.calls[1][0].requestId)
   })
   it('validates an empty prompt and supports explicitly creating another task', async () => {
     createTask.mockResolvedValue(aiCreated)
