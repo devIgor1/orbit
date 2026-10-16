@@ -1,10 +1,12 @@
 import { z } from 'zod'
 
+export const AI_TASK_PROMPT_MAX_LENGTH = 150
+
 export const aiTaskRequestSchema = z.strictObject({
   requestId: z.uuid(),
   workspaceId: z.uuid(),
   projectId: z.uuid(),
-  prompt: z.string().trim().min(10).max(3000),
+  prompt: z.string().max(AI_TASK_PROMPT_MAX_LENGTH).trim().min(10),
   timeZone: z.string().max(80).refine(value => {
     try { new Intl.DateTimeFormat('pt-BR', { timeZone: value }); return true } catch { return false }
   }),

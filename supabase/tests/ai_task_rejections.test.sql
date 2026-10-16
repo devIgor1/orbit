@@ -41,7 +41,7 @@ select is((select count(*) from public.activity_events where workspace_id='a1800
 reset role;
 select is((select count(*) from private.ai_task_attempts where workspace_id='a1800000-0000-4000-8000-000000000010'),1::bigint,'Refusal consumes the original attempt');
 insert into private.ai_task_attempts(user_id,workspace_id)
-select 'a1800000-0000-4000-8000-000000000002','a1800000-0000-4000-8000-000000000010' from generate_series(1,49);
+select 'a1800000-0000-4000-8000-000000000002','a1800000-0000-4000-8000-000000000010' from generate_series(1,74);
 set local role authenticated;
 select is(pg_temp.reserve_ai(current_setting('test.request')::uuid)->'result','{"kind":"rejected","reason":"out_of_scope"}'::jsonb,
   'Confirmed refusal is recovered even when company quota is full');

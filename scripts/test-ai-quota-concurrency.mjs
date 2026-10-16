@@ -23,8 +23,8 @@ try {
     insert into public.projects(id,workspace_id,title,created_by) values
     ${projects.map(id => `('${id}','${company}','Concurrent project','${people[0]}')`).join(',')};`)
   for (const { label, limit, age } of [
-    { label: '10 minutes', limit: 50, age: '0 seconds' },
-    { label: '24 hours', limit: 500, age: '2 hours' },
+    { label: '10 minutes', limit: 75, age: '0 seconds' },
+    { label: '24 hours', limit: 750, age: '2 hours' },
   ]) {
     await sql(`delete from private.ai_task_attempts where workspace_id='${company}';
       delete from private.ai_task_requests where workspace_id='${company}';

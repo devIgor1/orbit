@@ -85,7 +85,7 @@ select throws_ok($$select public.complete_ai_task_request(current_setting('test.
   '{"title":"Checkout","description":null,"priority":"high","assignee_id":null,"due_date":null}',null)$$,'42501',null,'Project trashed during generation cannot receive task');
 reset role;
 update public.projects set deleted_at=null where id='a1600000-0000-4000-8000-000000000030';
-insert into private.ai_task_attempts(user_id) select 'a1600000-0000-4000-8000-000000000001'::uuid from generate_series(1,10);
+insert into private.ai_task_attempts(user_id) select 'a1600000-0000-4000-8000-000000000001'::uuid from generate_series(1,15);
 set local role authenticated;
 select throws_ok($$select public.prepare_ai_task_request(gen_random_uuid(),'a1600000-0000-4000-8000-000000000010','a1600000-0000-4000-8000-000000000030',repeat('a',64))$$,'PT429',null,'Quota limits inference attempts');
 select is(public.prepare_ai_task_request('a1600000-0000-4000-8000-000000000050','a1600000-0000-4000-8000-000000000010','a1600000-0000-4000-8000-000000000030',repeat('a',64))->'result',current_setting('test.ai_result')::jsonb,'Confirmed result recoverable even at quota');

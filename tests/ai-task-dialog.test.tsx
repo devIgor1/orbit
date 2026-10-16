@@ -7,6 +7,8 @@ import { AppError } from '@/lib/errors/app-error'
 import { createTestClient, TestProviders } from './test-providers'
 import { aiCreated, aiRequest, aiUserId } from './fixtures/ai-task'
 import { htmlTaskTitle } from './fixtures/task-html'
+import { aiQuota } from './fixtures/ai-task-quota'
+import { AiTaskQuotaError } from '@/features/ai-tasks/services/ai-task-quota-error'
 
 vi.mock('@/features/ai-tasks/services/ai-task-service', () => ({ createAiTask: vi.fn() }))
 vi.mock('@/features/workspace/use-query-scope', () => ({ useQueryScope: () => ({
@@ -25,6 +27,30 @@ function setup() {
   return { user: userEvent.setup(), onOpenChange, onOpenTask, invalidation }
 }
 describe('AI task composer', () => {
+  it('limits typed and pasted text to 150 characters and shows the current count', async () => {
+    const { user } = setup()
+    const input = screen.getByLabelText('O que precisa ser feito?')
+    expect(screen.getByText('0/150 caracteres')).toBeVisible()
+    await user.type(input, 'a'.repeat(151))
+    expect(input).toHaveValue('a'.repeat(150))
+    expect(screen.getByText('150/150 caracteres')).toBeVisible()
+    await user.clear(input)
+    await user.paste('á'.repeat(151))
+    expect(input).toHaveValue('á'.repeat(150))
+    expect(createTask).not.toHaveBeenCalled()
+  })
+  it('shows usage and wait, keeps the prompt, and never automatically resubmits', async () => {
+    createTask.mockRejectedValue(new AiTaskQuotaError(aiQuota))
+    const { user, invalidation } = setup()
+    await user.type(screen.getByLabelText('O que precisa ser feito?'), aiRequest.prompt)
+    await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Limite de IA atingido')
+    expect(screen.getByRole('alert')).toHaveTextContent('15 de 15')
+    expect(screen.getByRole('timer')).toHaveTextContent('Nova tentativa estimada')
+    expect(screen.getByLabelText('O que precisa ser feito?')).toHaveValue(aiRequest.prompt)
+    expect(invalidation).not.toHaveBeenCalled()
+    expect(createTask).toHaveBeenCalledTimes(1)
+  })
   it('renders a saved title containing HTML as literal text in the confirmation', async () => {
     createTask.mockResolvedValue({ ...aiCreated, task: { ...aiCreated.task, title: htmlTaskTitle } })
     const { user } = setup()
@@ -96,7 +122,7 @@ describe('AI task composer', () => {
     createTask.mockResolvedValue(aiCreated)
     const { user } = setup()
     await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
-    await screen.findByText('Descreva a tarefa usando entre 10 e 3.000 caracteres.')
+    await screen.findByText('Descreva a tarefa usando entre 10 e 150 caracteres.')
     expect(createTask).not.toHaveBeenCalled()
     await user.type(screen.getByLabelText('O que precisa ser feito?'), aiRequest.prompt)
     await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))

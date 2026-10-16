@@ -4,6 +4,7 @@ import { createAiTaskHandler } from '../supabase/functions/create-ai-task/handle
 import { AiTaskError } from '../supabase/functions/create-ai-task/errors'
 import type { AiTaskDependencies, AiTaskSession } from '../supabase/functions/create-ai-task/contracts'
 import { aiRequest, aiContext, aiCreated, aiDecision, aiLease, aiUserId } from './fixtures/ai-task'
+import { aiQuota } from './fixtures/ai-task-quota'
 
 const session = {
   userId: aiUserId, context: vi.fn<AiTaskSession['context']>(), prepare: vi.fn<AiTaskSession['prepare']>(),
@@ -30,6 +31,18 @@ beforeEach(() => {
 })
 
 describe('AI task boundary', () => {
+  it('returns all blocking quotas and Retry-After without calling the provider', async () => {
+    session.prepare.mockRejectedValue(new AiTaskError('AI_RATE_LIMITED', 429, aiQuota))
+    const response = await handler(request())
+    expect(response.status).toBe(429)
+    expect(await response.json()).toEqual({ code: 'AI_RATE_LIMITED', quota: aiQuota })
+    expect(response.headers.get('Retry-After')).toBe('3661')
+    expect(response.headers.get('Access-Control-Expose-Headers')).toBe('Retry-After')
+    expect(dependencies.generate).not.toHaveBeenCalled()
+    expect(session.complete).not.toHaveBeenCalled()
+    expect(session.fail).not.toHaveBeenCalled()
+    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain('blocked')
+  })
   it('rejects anonymous and invalid sessions before model or database work', async () => {
     expect((await handler(request(aiRequest, ''))).status).toBe(401)
     expect(dependencies.authenticate).not.toHaveBeenCalled()
@@ -46,6 +59,21 @@ describe('AI task boundary', () => {
   it('rejects oversized input before consuming quota', async () => {
     expect((await handler(request({ ...aiRequest, prompt: 'a'.repeat(17000) }))).status).toBe(400)
     expect(session.prepare).not.toHaveBeenCalled()
+  })
+  it.each(['a'.repeat(151), `${'a'.repeat(150)} `, 'á'.repeat(151)])(
+    'rejects prompts exceeding 150 characters before context, quota or provider work %#', async prompt => {
+      const response = await handler(request({ ...aiRequest, prompt }))
+      expect(response.status).toBe(400)
+      expect(await response.json()).toEqual({ code: 'AI_INVALID_REQUEST' })
+      expect(session.context).not.toHaveBeenCalled()
+      expect(session.prepare).not.toHaveBeenCalled()
+      expect(dependencies.generate).not.toHaveBeenCalled()
+    })
+  it('accepts a prompt at the 150-character boundary without truncating it', async () => {
+    const prompt = aiRequest.prompt.padEnd(150, 'a')
+    const input = { ...aiRequest, prompt }
+    expect((await handler(request(input))).status).toBe(200)
+    expect(dependencies.generate).toHaveBeenCalledWith(input, aiContext)
   })
   it('does not call OpenAI when access to the project is denied', async () => {
     session.context.mockRejectedValue(new AiTaskError('AI_FORBIDDEN', 403))

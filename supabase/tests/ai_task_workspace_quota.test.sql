@@ -23,10 +23,10 @@ create function pg_temp.reserve_ai(company uuid default 'a1700000-0000-4000-8000
 $$;
 -- Other members' attempts share the company budget, regardless of the project.
 insert into private.ai_task_attempts(user_id,workspace_id)
-select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010' from generate_series(1,49);
+select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010' from generate_series(1,74);
 select set_config('request.jwt.claim.sub','a1700000-0000-4000-8000-000000000001',true);
 set local role authenticated;
-select lives_ok($$select pg_temp.reserve_ai()$$,'The 50th company attempt is allowed');
+select lives_ok($$select pg_temp.reserve_ai()$$,'The 75th company attempt is allowed');
 select set_config('request.jwt.claim.sub','a1700000-0000-4000-8000-000000000002',true);
 select throws_ok($$select pg_temp.reserve_ai()$$,'PT429','AI_WORKSPACE_RATE_LIMITED','Different user cannot exceed company burst');
 select throws_ok($$select pg_temp.reserve_ai('a1700000-0000-4000-8000-000000000010','a1700000-0000-4000-8000-000000000031')$$,
@@ -34,26 +34,26 @@ select throws_ok($$select pg_temp.reserve_ai('a1700000-0000-4000-8000-0000000000
 select lives_ok($$select pg_temp.reserve_ai('a1700000-0000-4000-8000-000000000020','a1700000-0000-4000-8000-000000000040')$$,
   'One company cannot exhaust another company budget');
 reset role;
-select is((select count(*) from private.ai_task_attempts where workspace_id='a1700000-0000-4000-8000-000000000010'),50::bigint,'Rejected reservations add no attempts');
+select is((select count(*) from private.ai_task_attempts where workspace_id='a1700000-0000-4000-8000-000000000010'),75::bigint,'Rejected reservations add no attempts');
 delete from private.ai_task_attempts where user_id::text like 'a1700000-%';
 -- Daily quota still applies when all previous attempts are outside the burst window.
 insert into private.ai_task_attempts(user_id,workspace_id,created_at)
-select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010',now()-interval '2 hours' from generate_series(1,499);
+select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010',now()-interval '2 hours' from generate_series(1,749);
 set local role authenticated;
-select lives_ok($$select pg_temp.reserve_ai()$$,'The 500th daily company attempt is allowed');
-select throws_ok($$select pg_temp.reserve_ai()$$,'PT429','AI_WORKSPACE_RATE_LIMITED','The 501st daily attempt is denied');
+select lives_ok($$select pg_temp.reserve_ai()$$,'The 750th daily company attempt is allowed');
+select throws_ok($$select pg_temp.reserve_ai()$$,'PT429','AI_WORKSPACE_RATE_LIMITED','The 751st daily attempt is denied');
 reset role;
 delete from private.ai_task_attempts where user_id::text like 'a1700000-%';
 insert into private.ai_task_attempts(user_id,workspace_id,created_at)
-select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010',now()-interval '24 hours' from generate_series(1,500);
+select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010',now()-interval '24 hours' from generate_series(1,750);
 insert into private.ai_task_attempts(user_id,workspace_id,created_at)
-select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010',now()-interval '10 minutes' from generate_series(1,50);
+select 'a1700000-0000-4000-8000-000000000003','a1700000-0000-4000-8000-000000000010',now()-interval '10 minutes' from generate_series(1,75);
 set local role authenticated;
 select lives_ok($$select pg_temp.reserve_ai()$$,'Expired windows no longer block company use');
 reset role;
 -- Old rows lacking workspace retain the existing individual limit.
 insert into private.ai_task_attempts(user_id,created_at)
-select 'a1700000-0000-4000-8000-000000000001',now()-interval '2 hours' from generate_series(1,100);
+select 'a1700000-0000-4000-8000-000000000001',now()-interval '2 hours' from generate_series(1,150);
 select set_config('request.jwt.claim.sub','a1700000-0000-4000-8000-000000000001',true);
 set local role authenticated;
 select throws_ok($$select pg_temp.reserve_ai('a1700000-0000-4000-8000-000000000020','a1700000-0000-4000-8000-000000000040')$$,

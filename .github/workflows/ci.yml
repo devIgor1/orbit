@@ -43,7 +43,7 @@ jobs:
       - name: Iniciar Supabase local
         run: npx --yes supabase@2.121.0 start -x studio,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Testar permissões, recusas e cotas
-        run: npx --yes supabase@2.121.0 test db supabase/tests/ai_tasks.test.sql supabase/tests/ai_task_rejections.test.sql supabase/tests/ai_task_workspace_quota.test.sql
+        run: npx --yes supabase@2.121.0 test db supabase/tests/ai_tasks.test.sql supabase/tests/ai_task_rejections.test.sql supabase/tests/ai_task_workspace_quota.test.sql supabase/tests/ai_task_quota_feedback.test.sql
       - run: npm run test:ai:concurrency
 
   pr-validation:

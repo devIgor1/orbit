@@ -1,14 +1,16 @@
 import { useId } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Sparkles } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ErrorState } from '@/components/shared/query-state'
-import { aiTaskRequestSchema } from '../schemas/ai-task-schema'
+import { AI_TASK_PROMPT_MAX_LENGTH, aiTaskRequestSchema } from '../schemas/ai-task-schema'
 import { useAiTask } from '../hooks/use-ai-task'
 import { aiTaskRejectionMessages } from '../ai-task-messages'
+import { AiTaskQuotaError } from '../services/ai-task-quota-error'
+import { AiTaskQuotaNotice } from './ai-task-quota-notice'
 
 const promptSchema = aiTaskRequestSchema.pick({ prompt: true })
 type Props = {
@@ -23,6 +25,7 @@ export function AiTaskDialog({ open, projectId, projectTitle, onOpenChange, onOp
   const id = useId()
   const mutation = useAiTask(projectId)
   const form = useForm<{ prompt: string }>({ resolver: zodResolver(promptSchema), defaultValues: { prompt: '' } })
+  const prompt = useWatch({ control: form.control, name: 'prompt' })
   const result = mutation.isSuccess ? mutation.data.result : undefined
   const pending = mutation.isPending || form.formState.isSubmitting
   function changeOpen(value: boolean) { if (!pending) onOpenChange(value) }
@@ -50,16 +53,18 @@ export function AiTaskDialog({ open, projectId, projectTitle, onOpenChange, onOp
       <div className="ai-task-context"><Sparkles aria-hidden="true" /><div><strong>{projectTitle}</strong><p>Uma tarefa por pedido. Inclua a prioridade e, se quiser, o responsável e o prazo.</p></div></div>
       <div className="form-field">
         <label className="form-label" htmlFor={id}>O que precisa ser feito?</label>
-        <Textarea autoFocus id={id} rows={6} maxLength={3000} disabled={pending}
+        <Textarea autoFocus id={id} rows={6} maxLength={AI_TASK_PROMPT_MAX_LENGTH} disabled={pending}
           placeholder="Crie uma tarefa para revisar a versão mobile do checkout, com prioridade alta e entrega na próxima sexta-feira."
-          aria-invalid={Boolean(form.formState.errors.prompt)} aria-describedby={`${id}-help${form.formState.errors.prompt ? ` ${id}-error` : ''}`}
+          aria-invalid={Boolean(form.formState.errors.prompt)} aria-describedby={`${id}-count ${id}-help${form.formState.errors.prompt ? ` ${id}-error` : ''}`}
           {...form.register('prompt')} />
+        <p className="ai-task-help" id={`${id}-count`}>{prompt.length}/{AI_TASK_PROMPT_MAX_LENGTH} caracteres</p>
         <p className="ai-task-help" id={`${id}-help`}>Seu pedido, o nome do projeto e os nomes dos membros serão enviados à OpenAI. A tarefa será criada em A fazer.</p>
-        {form.formState.errors.prompt && <p className="form-error" id={`${id}-error`}>Descreva a tarefa usando entre 10 e 3.000 caracteres.</p>}
+        {form.formState.errors.prompt && <p className="form-error" id={`${id}-error`}>Descreva a tarefa usando entre 10 e {AI_TASK_PROMPT_MAX_LENGTH} caracteres.</p>}
       </div>
       {result?.kind === 'clarification' && <div className="ai-task-clarification" role="status"><p>{result.message}</p><p>Complete o texto acima e envie novamente.</p></div>}
       {result?.kind === 'rejected' && <div className="ai-task-clarification" role="status"><p>{aiTaskRejectionMessages[result.reason]}</p><p>Revise o texto acima para solicitar o cadastro de uma tarefa.</p></div>}
-      {mutation.isError && <ErrorState error={mutation.error} />}
+      {mutation.isError && (mutation.error instanceof AiTaskQuotaError
+        ? <AiTaskQuotaNotice error={mutation.error} /> : <ErrorState error={mutation.error} />)}
       <div className="form-actions">
         <Button type="button" variant="outline" disabled={pending} onClick={() => changeOpen(false)}>Fechar</Button>
         <Button type="submit" disabled={pending}><Sparkles aria-hidden="true" />{pending ? 'Criando tarefa…' : 'Criar tarefa com IA'}</Button>

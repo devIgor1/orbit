@@ -2,7 +2,9 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { getSupabase } from '@/lib/supabase/client'
 import { AppError, toAppError } from '@/lib/errors/app-error'
-import { aiTaskRequestSchema, aiTaskResultSchema, type AiTaskRequest } from '../schemas/ai-task-schema'
+import { AI_TASK_PROMPT_MAX_LENGTH, aiTaskRequestSchema, aiTaskResultSchema, type AiTaskRequest } from '../schemas/ai-task-schema'
+import { aiTaskQuotaSchema } from '../schemas/ai-task-quota-schema'
+import { AiTaskQuotaError } from './ai-task-quota-error'
 
 const messages: Record<string, string> = {
   AI_NOT_CONFIGURED: 'A criação com IA ainda precisa ser ativada pela administração do Orbit.',
@@ -15,7 +17,7 @@ const messages: Record<string, string> = {
   AI_INVALID_RESPONSE: 'A IA não retornou uma tarefa válida. Revise o pedido e tente novamente.',
   AI_INVALID_TASK: 'Um campo ou responsável não é válido. Confira os dados e o acesso da equipe antes de tentar novamente.',
   AI_CONTEXT_UNAVAILABLE: 'Não foi possível preparar o contexto deste projeto. Tente novamente ou use Nova tarefa.',
-  AI_INVALID_REQUEST: 'Descreva uma tarefa usando entre 10 e 3.000 caracteres.',
+  AI_INVALID_REQUEST: `Descreva uma tarefa usando entre 10 e ${AI_TASK_PROMPT_MAX_LENGTH} caracteres.`,
 }
 
 export async function createAiTask(input: AiTaskRequest, userId: string) {
@@ -26,8 +28,12 @@ export async function createAiTask(input: AiTaskRequest, userId: string) {
       const status = error.context.status
       if (status === 401 || status === 403) throw toAppError({ status })
       const payload: unknown = await error.context.json().catch(() => null)
-      const parsed = z.object({ code: z.string() }).safeParse(payload)
+      const parsed = z.object({ code: z.string(), quota: z.unknown().optional() }).safeParse(payload)
       const code = parsed.success ? parsed.data.code : ''
+      if (status === 429 && ['AI_RATE_LIMITED', 'AI_WORKSPACE_RATE_LIMITED'].includes(code) && parsed.success) {
+        const quota = aiTaskQuotaSchema.safeParse(parsed.data.quota)
+        if (quota.success) throw new AiTaskQuotaError(quota.data)
+      }
       throw new AppError(code === 'AI_NOT_CONFIGURED' ? 'configuration' : 'contract',
         messages[code] ?? 'O servidor não confirmou a criação. Tente novamente com o mesmo texto.')
     }
