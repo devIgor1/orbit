@@ -2172,3 +2172,31 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
   Os cinco cenários novos passaram junto aos testes do diálogo/adaptador (14 no
   total), sem chamadas à OpenAI ou escrita em banco. A revisão da busca confirmou
   o uso do quadro/lista; exportação CSV/PDF não está implementada nesta versão.
+
+## 72. Consumo e espera nas cotas de IA — 16/10/2026
+
+- Bloqueios exibem quantas tentativas foram contabilizadas, o limite de cada janela
+  atingida e o escopo (usuário ou empresa). A interface preserva o pedido e mostra
+  uma contagem regressiva estimada, sem reenvio automático ao terminar.
+- Cotas propostas ampliadas em 50%: usuário 15/10 minutos e 150/24 horas; empresa
+  75/10 minutos e 750/24 horas. A empresa soma todos os membros/projetos; o usuário
+  continua somando suas empresas. A contagem de falhas, recusas e esclarecimentos
+  e a recuperação idempotente de resultados confirmados foram preservadas.
+- Migration incremental `202610160006_ai_task_quota_feedback` calcula os bloqueios
+  no banco sob os locks da reserva. O prazo aguarda a expiração necessária para
+  admitir uma tentativa em todas as cotas atingidas, inclusive histórico acima do
+  teto. Retorna só agregados após autorização; o helper privado não é executável
+  por membros. O HTTP 429 inclui metadados validados e `Retry-After`.
+- Contrato e estados separados em schema, erro tipado e componente da feature,
+  com estilos no CSS central. Backend/frontend antigos continuam compatíveis via
+  códigos anteriores; metadados inválidos não viram contagens inventadas. A espera
+  é estimada porque outros envios podem consumir a próxima vaga.
+- Validação local: 487 testes Vitest aprovados e um opt-in pulado; 462 asserções
+  SQL no Supabase nativo isolado; concorrência real para a última vaga das duas
+  janelas da empresa; seis cenários Playwright em desktop/celular e inspeção de
+  tablet. Lint, estilos/e-mail, arquitetura, tipagem frontend/Deno/testes, build,
+  actionlint e diff check aprovados. Tipos públicos regenerados e comparados sem
+  alteração de contrato. Nenhuma chamada à OpenAI ou escrita em produção.
+- `docs/AI_TASKS.md` documenta a mensagem e simulações de custos com preço oficial
+  consultado em 16/10/2026. As cotas são de tentativas, não orçamento em dólares.
+  Entrega na branch `codex/ai-quota-feedback`, sem merge até aprovação do usuário.

@@ -14,7 +14,7 @@ externas do ChatGPT. O modelo é fixado no backend, sem seleção pelo navegador
 
 1. Aplique as migrations em ordem, incluindo `202610160002_ai_task_requests.sql`,
    `202610160003_ai_task_creation.sql`, `202610160004_ai_task_workspace_quota.sql`
-   e `202610160005_ai_task_rejections.sql`.
+   `202610160005_ai_task_rejections.sql` e `202610160006_ai_task_quota_feedback.sql`.
 2. No projeto Supabase, em **Edge Functions > Secrets**, cadastre
    `OPENAI_API_KEY` com uma chave do projeto OpenAI autorizado a usar `gpt-6-luna`.
    Não coloque o valor no Git, em variáveis `VITE_*`, no frontend, em prompts,
@@ -109,8 +109,8 @@ Os limites são cumulativos, em janelas móveis:
 
 | Escopo | Em 10 minutos | Em 24 horas |
 | --- | ---: | ---: |
-| Usuário, somando suas empresas e projetos | 10 | 100 |
-| Empresa (`workspace`), somando membros e projetos | 50 | 500 |
+| Usuário, somando suas empresas e projetos | 15 | 150 |
+| Empresa (`workspace`), somando membros e projetos | 75 | 750 |
 
 A cota é reservada no PostgreSQL antes da chamada ao modelo. Locks transacionais
 por usuário e depois por empresa impedem ultrapassar a cota com chamadas simultâneas.
@@ -118,10 +118,71 @@ Falhas, recusas e esclarecimentos contam como tentativas; chamadas bloqueadas an
 da reserva não contam nem chegam à OpenAI. Excesso da empresa retorna HTTP 429 com
 `AI_WORKSPACE_RATE_LIMITED`. O cadastro manual continua disponível.
 
-Os valores são fixos na função `prepare_ai_task_request`; alterações devem passar
+Os valores são fixos no helper privado `ai_task_quota_status`, chamado pela reserva
+`prepare_ai_task_request`; alterações devem passar
 por uma nova migration e testes. São limites de tentativas, não de dólares. O
 timeout do provedor é 30 segundos, o limite de saída é 1.600 tokens e
 `reasoning.effort` é `none`.
+
+### Mensagem de cota e prazo de liberação
+
+O HTTP 429 mantém os códigos anteriores e acrescenta `quota.blocked`, com todos os
+limites atingidos: `scope` (`user` ou `workspace`), `windowSeconds` (600 ou 86400),
+`used`, `limit` e `retryAfterSeconds`. O campo `quota.retryAfterSeconds` e o header
+`Retry-After` usam a maior espera entre os bloqueios. Exemplo para um bloqueio individual:
+
+```json
+{
+  "code": "AI_RATE_LIMITED",
+  "quota": {
+    "blocked": [{ "scope": "user", "windowSeconds": 600, "used": 15, "limit": 15, "retryAfterSeconds": 125 }],
+    "retryAfterSeconds": 125
+  }
+}
+```
+
+As contagens são agregados confirmados no instante da reserva, sob os mesmos locks
+da cota; não são inferidas pelo número de tarefas criadas. A consulta privada não
+é executável por usuários e a reserva verifica vínculo/projeto antes de retornar
+qualquer consumo. Não há exposição de identidade ou pedidos de outros membros.
+
+O prazo corresponde à expiração necessária para admitir **uma nova tentativa**,
+mesmo se o histórico estiver acima do limite. Não é o horário de zerar toda a cota:
+as janelas são móveis. Frações de segundo arredondam para cima. Tentativas bloqueadas
+não reservam nem reiniciam a janela. Recuperação de resultados confirmados continua
+disponível sem outra reserva, inclusive com cota cheia.
+
+A interface mostra os limites atingidos e uma contagem regressiva a partir do tempo
+retornado pelo servidor. Outras abas ou membros podem consumir uma vaga antes do
+reenvio; por isso o prazo é estimado. Ao terminar, a interface orienta verificar a
+disponibilidade por um envio manual; não faz chamadas automáticas. O pedido é
+preservado e a criação manual segue disponível. Respostas antigas ou metadados
+inválidos mantêm a mensagem genérica segura, sem inventar consumo ou tempo restante.
+
+### Estimativa de custo com as cotas ampliadas
+
+Em 30 dias, 150 tentativas/24 h permitem até 4.500 por usuário, e 750/24 h até 22.500
+por empresa, somando todos os membros. Os limites não se somam: a parte do usuário
+já está incluída na empresa. Empresas diferentes têm cotas independentes; não há
+um orçamento financeiro global do Orbit implementado por esta mudança.
+
+Preços Standard consultados em 16/10/2026: US$ 0,10 por milhão de tokens de entrada
+e US$ 0,50 por milhão de saída para contexto curto de
+[GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna).
+Simulações sem cache, impostos ou custos de infraestrutura:
+
+| Tokens de entrada + saída por tentativa | 4.500 tentativas | 22.500 tentativas |
+| --- | ---: | ---: |
+| 2.000 + 300 | US$ 1,58 | US$ 7,88 |
+| 4.000 + 500 | US$ 2,93 | US$ 14,63 |
+| 10.000 + 1.600 | US$ 8,10 | US$ 40,50 |
+
+Esses tamanhos são hipóteses, não médias medidas nem um teto de custo. Instruções,
+ferramentas, projeto, membros e pedido compõem a entrada; equipes e textos maiores
+alteram o total. O gasto depende das chamadas efetivas e dos tokens faturados.
+Uma cota de tentativas não garante um limite em dólares.
+
+### Histórico e reenvios
 
 Na migração, tentativas antigas continuam contando para o usuário, mas ficam com
 `workspace_id` nulo porque a empresa não era registrada. A cota por empresa começa
@@ -171,14 +232,16 @@ palavras proibidas como barreira de segurança.
   formulário, invalidação do cache, reenvios e envios duplicados.
 - `npm run test:db`: inclui `supabase/tests/ai_tasks.test.sql`, com RLS adicional,
   isolamento, revogação, autoria, datas, histórico, quota e idempotência. Os novos
-  `ai_task_rejections.test.sql` e `ai_task_workspace_quota.test.sql` cobrem recusas,
+  `ai_task_rejections.test.sql`, `ai_task_workspace_quota.test.sql` e
+  `ai_task_quota_feedback.test.sql` cobrem recusas, detalhes seguros de consumo,
+  expiração das janelas, espera para múltiplos bloqueios,
   consumo após falha, janelas, isolamento entre empresas e agregação entre membros.
 - `npm run test:ai:concurrency`: dois usuários em projetos diferentes disputam a
   última vaga das cotas de 10 minutos e 24 horas. Padrão: Docker local
   `supabase_db_orbit`. Para PostgreSQL nativo local, configure `ORBIT_AI_TEST_DB_PORT`
   e opcionalmente `ORBIT_AI_TEST_PSQL`; credenciais locais via `PGPASSWORD`/pgpass,
   nunca no repositório. O host é sempre `127.0.0.1`.
-- O CI executa os três arquivos SQL de IA e o teste de concorrência em Supabase
+- O CI executa os quatro arquivos SQL de IA e o teste de concorrência em Supabase
   local, sem secrets hospedados e sem chamadas à OpenAI.
 - `tests/e2e/ai-task.spec.ts`: fixture isolada da interface com respostas
   interceptadas, teclado, recusa e limite da empresa em desktop/celular; não consome

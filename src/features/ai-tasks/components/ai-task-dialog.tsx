@@ -9,6 +9,8 @@ import { ErrorState } from '@/components/shared/query-state'
 import { aiTaskRequestSchema } from '../schemas/ai-task-schema'
 import { useAiTask } from '../hooks/use-ai-task'
 import { aiTaskRejectionMessages } from '../ai-task-messages'
+import { AiTaskQuotaError } from '../services/ai-task-quota-error'
+import { AiTaskQuotaNotice } from './ai-task-quota-notice'
 
 const promptSchema = aiTaskRequestSchema.pick({ prompt: true })
 type Props = {
@@ -59,7 +61,8 @@ export function AiTaskDialog({ open, projectId, projectTitle, onOpenChange, onOp
       </div>
       {result?.kind === 'clarification' && <div className="ai-task-clarification" role="status"><p>{result.message}</p><p>Complete o texto acima e envie novamente.</p></div>}
       {result?.kind === 'rejected' && <div className="ai-task-clarification" role="status"><p>{aiTaskRejectionMessages[result.reason]}</p><p>Revise o texto acima para solicitar o cadastro de uma tarefa.</p></div>}
-      {mutation.isError && <ErrorState error={mutation.error} />}
+      {mutation.isError && (mutation.error instanceof AiTaskQuotaError
+        ? <AiTaskQuotaNotice error={mutation.error} /> : <ErrorState error={mutation.error} />)}
       <div className="form-actions">
         <Button type="button" variant="outline" disabled={pending} onClick={() => changeOpen(false)}>Fechar</Button>
         <Button type="submit" disabled={pending}><Sparkles aria-hidden="true" />{pending ? 'Criando tarefa…' : 'Criar tarefa com IA'}</Button>

@@ -2,12 +2,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { createAiTask } from '@/features/ai-tasks/services/ai-task-service'
 import { aiRequest, aiCreated, aiUserId } from './fixtures/ai-task'
+import { aiQuota } from './fixtures/ai-task-quota'
+import { AiTaskQuotaError } from '@/features/ai-tasks/services/ai-task-quota-error'
 
 const backend = vi.hoisted(() => ({ invoke: vi.fn() }))
 vi.mock('@/lib/supabase/client', () => ({ getSupabase: () => ({ functions: backend }) }))
 beforeEach(() => vi.resetAllMocks())
 
 describe('AI task frontend contract', () => {
+  it('preserves validated quota details in a typed error', async () => {
+    backend.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(Response.json(
+      { code: 'AI_RATE_LIMITED', quota: aiQuota }, { status: 429 })) })
+    const result = createAiTask(aiRequest, aiUserId)
+    await expect(result).rejects.toBeInstanceOf(AiTaskQuotaError)
+    await expect(result).rejects.toMatchObject({ quota: aiQuota })
+    expect(backend.invoke).toHaveBeenCalledTimes(1)
+  })
+  it('uses a safe fallback for malformed quota details', async () => {
+    backend.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(Response.json(
+      { code: 'AI_WORKSPACE_RATE_LIMITED', quota: { ...aiQuota, secret: 'PRIVATE' } }, { status: 429 })) })
+    await expect(createAiTask(aiRequest, aiUserId)).rejects.toMatchObject({
+      message: 'Sua empresa atingiu o limite de uso da IA. Aguarde e tente novamente mais tarde ou use Nova tarefa.',
+    })
+  })
   it('sends only the authorized request shape and confirms returned scope', async () => {
     backend.invoke.mockResolvedValue({ data: aiCreated, error: null })
     expect(await createAiTask(aiRequest, aiUserId)).toEqual(aiCreated)

@@ -679,6 +679,12 @@ body:has(.app-shell,.login-page,.companies-page) {
 .ai-task-result .ai-task-result-label { font-weight: 600; color: var(--foreground); }
 .ai-task-clarification { padding: var(--space-4); border-left: 2px solid var(--primary); background: var(--surface-muted); overflow-wrap: anywhere; }
 .ai-task-clarification p:first-child { color: var(--foreground); margin-bottom: var(--space-2); }
+.ai-task-quota { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--danger-border); border-radius: var(--radius); background: var(--danger-soft); font-size: var(--font-size-label); line-height: 1.6; overflow-wrap: anywhere; }
+.ai-task-quota h3 { display: flex; align-items: center; gap: var(--space-2); color: var(--danger); font-size: var(--font-size-body); }
+.ai-task-quota h3 svg { width: var(--space-5); height: var(--space-5); flex-shrink: 0; }
+.ai-task-quota ul { display: flex; flex-direction: column; gap: var(--space-2); padding-left: var(--space-4); list-style: disc; }
+.ai-task-quota p { color: var(--muted-foreground); }
+.ai-task-quota [role="timer"] { font-weight: 600; color: var(--foreground); font-variant-numeric: tabular-nums; }
 
 /* 07 — Team */
 .team-intro { display: flex; align-items: center; gap: 22px; padding: 27px 30px; border: 1px solid var(--primary-border); background: var(--primary-soft); border-radius: var(--radius); }

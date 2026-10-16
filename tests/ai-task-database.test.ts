@@ -4,6 +4,7 @@ import { authenticateTaskSession } from '../supabase/functions/create-ai-task/da
 import { databaseError } from '../supabase/functions/create-ai-task/errors'
 import { aiTaskClarificationMessages } from '../src/features/ai-tasks/ai-task-messages'
 import { aiRequest, aiLease, aiUserId } from './fixtures/ai-task'
+import { aiQuota } from './fixtures/ai-task-quota'
 
 const backend = vi.hoisted(() => ({ rpc: vi.fn(), auth: { getUser: vi.fn() } }))
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => backend }))
@@ -14,6 +15,21 @@ beforeEach(() => {
 const session = () => authenticateTaskSession('test-user-token', 'http://127.0.0.1:56521', 'test-public-key')
 
 describe('AI task persistence adapter', () => {
+  it('reads PostgreSQL quota details without reserving or retrying again', async () => {
+    backend.rpc.mockResolvedValue({ data: null, error: {
+      code: 'PT429', message: 'AI_RATE_LIMITED', details: JSON.stringify(aiQuota),
+    } })
+    await expect((await session()).prepare(aiRequest)).rejects.toMatchObject({
+      code: 'AI_RATE_LIMITED', status: 429, quota: aiQuota,
+    })
+    expect(backend.rpc).toHaveBeenCalledTimes(1)
+  })
+  it.each(['PRIVATE query error', '{"secret":"PRIVATE"}', JSON.stringify({ ...aiQuota, retryAfterSeconds: -1 })])(
+    'never forwards unvalidated database details %#', details => {
+      expect(databaseError({ code: 'PT429', message: 'PRIVATE', details })).toMatchObject({
+        code: 'AI_RATE_LIMITED', quota: undefined,
+      })
+    })
   it('uses the rejection ledger RPC without sending any task draft', async () => {
     const rejected = { kind: 'rejected' as const, reason: 'unsupported_action' as const }
     backend.rpc.mockResolvedValue({ data: rejected, error: null })

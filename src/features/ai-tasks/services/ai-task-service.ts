@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { getSupabase } from '@/lib/supabase/client'
 import { AppError, toAppError } from '@/lib/errors/app-error'
 import { aiTaskRequestSchema, aiTaskResultSchema, type AiTaskRequest } from '../schemas/ai-task-schema'
+import { aiTaskQuotaSchema } from '../schemas/ai-task-quota-schema'
+import { AiTaskQuotaError } from './ai-task-quota-error'
 
 const messages: Record<string, string> = {
   AI_NOT_CONFIGURED: 'A criação com IA ainda precisa ser ativada pela administração do Orbit.',
@@ -26,8 +28,12 @@ export async function createAiTask(input: AiTaskRequest, userId: string) {
       const status = error.context.status
       if (status === 401 || status === 403) throw toAppError({ status })
       const payload: unknown = await error.context.json().catch(() => null)
-      const parsed = z.object({ code: z.string() }).safeParse(payload)
+      const parsed = z.object({ code: z.string(), quota: z.unknown().optional() }).safeParse(payload)
       const code = parsed.success ? parsed.data.code : ''
+      if (status === 429 && ['AI_RATE_LIMITED', 'AI_WORKSPACE_RATE_LIMITED'].includes(code) && parsed.success) {
+        const quota = aiTaskQuotaSchema.safeParse(parsed.data.quota)
+        if (quota.success) throw new AiTaskQuotaError(quota.data)
+      }
       throw new AppError(code === 'AI_NOT_CONFIGURED' ? 'configuration' : 'contract',
         messages[code] ?? 'O servidor não confirmou a criação. Tente novamente com o mesmo texto.')
     }

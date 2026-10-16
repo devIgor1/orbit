@@ -7,12 +7,14 @@ const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Expose-Headers': 'Retry-After',
   'Cache-Control': 'no-store',
 }
 
 export function createAiTaskHandler(dependencies: AiTaskDependencies) {
   return async (request: Request): Promise<Response> => {
-    const respond = (body: object, status = 200) => Response.json(body, { status, headers: cors })
+    const respond = (body: object, status = 200, headers: Record<string, string> = {}) =>
+      Response.json(body, { status, headers: { ...cors, ...headers } })
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
     if (request.method !== 'POST') return respond({ code: 'METHOD_NOT_ALLOWED' }, 405)
     let session: AiTaskSession | undefined
@@ -41,7 +43,8 @@ export function createAiTaskHandler(dependencies: AiTaskDependencies) {
       }
       const failure = error instanceof AiTaskError ? error : new AiTaskError('AI_UNAVAILABLE', 503)
       console.error('create-ai-task', { code: failure.code })
-      return respond({ code: failure.code }, failure.status)
+      return respond({ code: failure.code, ...(failure.quota ? { quota: failure.quota } : {}) }, failure.status,
+        failure.quota ? { 'Retry-After': String(failure.quota.retryAfterSeconds) } : {})
     }
   }
 }
