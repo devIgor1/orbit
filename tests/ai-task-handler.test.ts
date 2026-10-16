@@ -60,6 +60,21 @@ describe('AI task boundary', () => {
     expect((await handler(request({ ...aiRequest, prompt: 'a'.repeat(17000) }))).status).toBe(400)
     expect(session.prepare).not.toHaveBeenCalled()
   })
+  it.each(['a'.repeat(151), `${'a'.repeat(150)} `, 'á'.repeat(151)])(
+    'rejects prompts exceeding 150 characters before context, quota or provider work %#', async prompt => {
+      const response = await handler(request({ ...aiRequest, prompt }))
+      expect(response.status).toBe(400)
+      expect(await response.json()).toEqual({ code: 'AI_INVALID_REQUEST' })
+      expect(session.context).not.toHaveBeenCalled()
+      expect(session.prepare).not.toHaveBeenCalled()
+      expect(dependencies.generate).not.toHaveBeenCalled()
+    })
+  it('accepts a prompt at the 150-character boundary without truncating it', async () => {
+    const prompt = aiRequest.prompt.padEnd(150, 'a')
+    const input = { ...aiRequest, prompt }
+    expect((await handler(request(input))).status).toBe(200)
+    expect(dependencies.generate).toHaveBeenCalledWith(input, aiContext)
+  })
   it('does not call OpenAI when access to the project is denied', async () => {
     session.context.mockRejectedValue(new AiTaskError('AI_FORBIDDEN', 403))
     expect((await handler(request())).status).toBe(403)

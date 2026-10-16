@@ -27,6 +27,18 @@ function setup() {
   return { user: userEvent.setup(), onOpenChange, onOpenTask, invalidation }
 }
 describe('AI task composer', () => {
+  it('limits typed and pasted text to 150 characters and shows the current count', async () => {
+    const { user } = setup()
+    const input = screen.getByLabelText('O que precisa ser feito?')
+    expect(screen.getByText('0/150 caracteres')).toBeVisible()
+    await user.type(input, 'a'.repeat(151))
+    expect(input).toHaveValue('a'.repeat(150))
+    expect(screen.getByText('150/150 caracteres')).toBeVisible()
+    await user.clear(input)
+    await user.paste('á'.repeat(151))
+    expect(input).toHaveValue('á'.repeat(150))
+    expect(createTask).not.toHaveBeenCalled()
+  })
   it('shows usage and wait, keeps the prompt, and never automatically resubmits', async () => {
     createTask.mockRejectedValue(new AiTaskQuotaError(aiQuota))
     const { user, invalidation } = setup()
@@ -110,7 +122,7 @@ describe('AI task composer', () => {
     createTask.mockResolvedValue(aiCreated)
     const { user } = setup()
     await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))
-    await screen.findByText('Descreva a tarefa usando entre 10 e 3.000 caracteres.')
+    await screen.findByText('Descreva a tarefa usando entre 10 e 150 caracteres.')
     expect(createTask).not.toHaveBeenCalled()
     await user.type(screen.getByLabelText('O que precisa ser feito?'), aiRequest.prompt)
     await user.click(screen.getByRole('button', { name: 'Criar tarefa com IA' }))

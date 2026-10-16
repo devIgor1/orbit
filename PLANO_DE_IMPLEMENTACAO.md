@@ -2191,12 +2191,17 @@ incompatibilidade de `vercel link --scope` com o token limitado ao projeto.
   com estilos no CSS central. Backend/frontend antigos continuam compatíveis via
   códigos anteriores; metadados inválidos não viram contagens inventadas. A espera
   é estimada porque outros envios podem consumir a próxima vaga.
-- Validação local: 487 testes Vitest aprovados e um opt-in pulado; 462 asserções
+- Validação local: 493 testes Vitest aprovados e um opt-in pulado; 462 asserções
   SQL no Supabase nativo isolado; concorrência real para a última vaga das duas
-  janelas da empresa; seis cenários Playwright em desktop/celular e inspeção de
+  janelas da empresa; oito cenários Playwright em desktop/celular e inspeção de
   tablet. Lint, estilos/e-mail, arquitetura, tipagem frontend/Deno/testes, build,
   actionlint e diff check aprovados. Tipos públicos regenerados e comparados sem
   alteração de contrato. Nenhuma chamada à OpenAI ou escrita em produção.
 - `docs/AI_TASKS.md` documenta a mensagem e simulações de custos com preço oficial
   consultado em 16/10/2026. As cotas são de tentativas, não orçamento em dólares.
   Entrega na branch `codex/ai-quota-feedback`, sem merge até aprovação do usuário.
+- O prompt passa a aceitar de 10 a 150 caracteres. Uma constante compartilhada
+  define o máximo no schema e no campo, que também exibe um contador. Digitação e
+  colagem respeitam o limite; o backend recusa envios diretos maiores antes de
+  consultar contexto, reservar cota ou chamar a IA. O máximo inclui espaços e o
+  mínimo considera o texto sem espaços nas extremidades.

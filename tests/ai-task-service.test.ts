@@ -10,6 +10,10 @@ vi.mock('@/lib/supabase/client', () => ({ getSupabase: () => ({ functions: backe
 beforeEach(() => vi.resetAllMocks())
 
 describe('AI task frontend contract', () => {
+  it('rejects overlong prompts before any HTTP request', async () => {
+    await expect(createAiTask({ ...aiRequest, prompt: 'a'.repeat(151) }, aiUserId)).rejects.toThrow()
+    expect(backend.invoke).not.toHaveBeenCalled()
+  })
   it('preserves validated quota details in a typed error', async () => {
     backend.invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(Response.json(
       { code: 'AI_RATE_LIMITED', quota: aiQuota }, { status: 429 })) })

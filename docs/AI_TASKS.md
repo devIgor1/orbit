@@ -73,8 +73,13 @@ mesmo registro; chamadas anônimas e a projeto sem acesso foram recusadas.
 
 ## Contratos e permissões
 
-- Entrada: `requestId`, `workspaceId`, `projectId`, `prompt` (10–3.000 caracteres)
+- Entrada: `requestId`, `workspaceId`, `projectId`, `prompt` (10–150 caracteres)
   e fuso IANA. Campos adicionais, como autor, modelo ou chave, são recusados.
+- O campo limita digitação/colagem a 150 e mostra a contagem. O mesmo limite é
+  validado no backend antes de contexto, reserva de cota ou chamada à OpenAI.
+  Envios diretos acima do limite retornam HTTP 400, sem truncamento silencioso.
+  Espaços contam no máximo; o mínimo de 10 é verificado após remover espaços nas
+  extremidades. A contagem segue o `maxLength` do navegador (unidades UTF-16).
 - O projeto fica fixo na página aberta. O servidor busca seu título e até 200
   membros ativos pelo cliente autenticado. Se o contexto ultrapassar esse limite,
   retorna erro explícito; não trunca silenciosamente a equipe.
