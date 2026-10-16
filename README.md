@@ -1,5 +1,8 @@
 # Orbit
 
+Criação de tarefas por descrição com `gpt-6-luna`: configuração segura do backend,
+permissões e testes em [docs/AI_TASKS.md](docs/AI_TASKS.md).
+
 Integração de desenvolvimento: [cadastro do GitHub App, credenciais, publicação e validação](docs/GITHUB_APP.md).
 
 Um workspace para equipes criativas, com interface em português, projetos,
